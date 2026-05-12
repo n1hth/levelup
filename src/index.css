@@ -1,0 +1,269 @@
+@import "tailwindcss";
+
+@theme {
+  --color-system-blue: #00d2ff;
+  --color-system-cyan: #00fff2;
+  --color-system-bg: #f8fbff;
+  --color-system-border: rgba(255, 255, 255, 0.7);
+  --radius-system: 18px;
+}
+
+:root {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --system-glow: 0 0 20px rgba(0, 210, 255, 0.3);
+  --bg-primary: #f0f8ff;
+  --bg-secondary: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-accent: #2563eb;
+  --panel-bg: rgba(255, 255, 255, 0.45);
+  --panel-border: rgba(255, 255, 255, 0.7);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  background-image: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%),
+    radial-gradient(at 0% 0%, rgba(0, 210, 255, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 210, 255, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.5s ease, color 0.5s ease;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   HEAVENLY SYSTEM — Glass Panels
+   ═══════════════════════════════════════════════ */
+
+.system-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--panel-border);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-system);
+}
+
+/* ═══════════════════════════════════════════════
+   FRUTIGER AERO — Gloss Overlay
+   ═══════════════════════════════════════════════ */
+
+.aero-gloss {
+  position: relative;
+  overflow: hidden;
+}
+
+.aero-gloss::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════
+   SYSTEM BUTTONS
+   ═══════════════════════════════════════════════ */
+
+.btn-system {
+  position: relative;
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  color: white;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 14px 28px;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 15px rgba(0, 210, 255, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.btn-system:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+}
+
+.btn-system:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-system::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.btn-system:hover::after {
+  left: 100%;
+}
+
+.btn-system:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-system:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+}
+
+.btn-system:disabled::after {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════
+   HUD PROGRESS BAR
+   ═══════════════════════════════════════════════ */
+
+.hud-progress {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.hud-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d2ff, #00fff2);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.6);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
+@keyframes heavenly-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.heavenly-float {
+  animation: heavenly-float 6s ease-in-out infinite;
+}
+
+@keyframes system-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+}
+
+.system-pulse {
+  animation: system-pulse 2s infinite;
+}
+
+@keyframes xp-count {
+  from { opacity: 0; transform: translateY(10px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rank-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 210, 255, 0.3)); }
+  50% { filter: drop-shadow(0 0 12px rgba(0, 210, 255, 0.8)); }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR HIDING
+   ═══════════════════════════════════════════════ */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ═══════════════════════════════════════════════
+   FOCUS TIMER SPECIFIC
+   ═══════════════════════════════════════════════ */
+
+.timer-ring-track {
+  fill: none;
+  stroke: rgba(59, 130, 246, 0.1);
+  stroke-width: 6;
+}
+
+.timer-ring-progress {
+  fill: none;
+  stroke: url(#timer-gradient);
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 12px rgba(0, 210, 255, 0.6));
+  transition: stroke-dashoffset 1s linear;
+}
+
+.timer-ring-active .timer-ring-progress {
+  filter: drop-shadow(0 0 20px rgba(0, 210, 255, 0.9));
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════ */
+
+.text-gradient-system {
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

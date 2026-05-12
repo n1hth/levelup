@@ -1,0 +1,1059 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { generateId } from './utils';
+import { getLevelFromXp, getRankFromLevel, getXpProgress } from './xp';
+import { applyReview, defaultSM2, isDue, RATING_XP, type Rating, type CardSM2, type MasteryState } from './sm2';
+import { supabase } from './supabase';
+import { type Session } from '@supabase/supabase-js';
+
+// ═══════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════
+
+export interface User {
+  id: string;
+  name: string;
+  school?: string;
+  onboardingCompleted?: boolean;
+  createdAt: string;
+}
+
+export interface FocusSession {
+  id: string;
+  plannedDuration: number;
+  actualDuration: number;
+  pauseCount: number;
+  xpEarned: number;
+  completedAt: string;
+  isCompleted: boolean;
+  noPauseChallenge: boolean;
+}
+
+export interface Deck {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  tags: string[];
+  color: string;
+  createdAt: string;
+  lastStudiedAt: string | null;
+}
+
+export interface Card extends CardSM2 {
+  id: string;
+  deckId: string;
+  front: string;
+  back: string;
+  createdAt: string;
+}
+
+export interface DeckStudySession {
+  id: string;
+  deckId: string;
+  cardsReviewed: number;
+  xpEarned: number;
+  accuracy: number;
+  completedAt: string;
+}
+
+export type ArenaDifficulty = 'blitz' | 'standard' | 'marathon';
+
+export interface ArenaSession {
+  id: string;
+  deckId: string;
+  difficulty: ArenaDifficulty;
+  totalCards: number;
+  correctCount: number;
+  wrongCount: number;
+  avgResponseTime: number;
+  bestStreak: number;
+  xpEarned: number;
+  completedAt: string;
+}
+
+export interface AppState {
+  user: User | null;
+  totalXp: number;
+  streak: number;
+  momentum: number;
+  focusSessions: FocusSession[];
+  decks: Deck[];
+  cards: Card[];
+  deckStudySessions: DeckStudySession[];
+  arenaSessions: ArenaSession[];
+  lastActiveDate: string | null;
+}
+
+// ═══════════════════════════════════════════════
+// CONTEXT TYPE
+// ═══════════════════════════════════════════════
+
+interface AppContextType {
+  state: AppState;
+  isLoading: boolean;
+  // User
+  setUser: (user: User | null) => void;
+  resetUser: () => void;
+  // XP
+  addXp: (amount: number) => Promise<{ newLevel: number; oldLevel: number; leveledUp: boolean; newRank: string; oldRank: string; rankChanged: boolean }>;
+  getLevel: () => number;
+  getRank: () => string;
+  getXpProgress: () => { level: number; currentLevelXp: number; nextLevelXp: number; progress: number };
+  // Focus
+  addFocusSession: (session: Omit<FocusSession, 'id'>) => Promise<void>;
+  getTodayFocusTime: () => number;
+  getTodaySessionCount: () => number;
+  getLongestSession: () => number;
+  getFocusStreak: () => number;
+  getWeeklyFocusData: () => { day: string; minutes: number }[];
+  // Decks
+  addDeck: (deck: Omit<Deck, 'id' | 'createdAt' | 'lastStudiedAt'>) => Promise<Deck>;
+  updateDeck: (id: string, patch: Partial<Omit<Deck, 'id' | 'createdAt'>>) => Promise<void>;
+  deleteDeck: (id: string) => Promise<void>;
+  // Cards
+  addCard: (card: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>) => Promise<Card>;
+  addCards: (cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => Card[];
+  updateCard: (id: string, patch: Partial<Card>) => Promise<void>;
+  deleteCard: (id: string) => Promise<void>;
+  getDeckCards: (deckId: string) => Card[];
+  getDueCards: (deckId: string) => Card[];
+  getDeckStats: (deckId: string) => { total: number; due: number; mastery: number; masteryBreakdown: Record<MasteryState, number> };
+  reviewCard: (cardId: string, rating: Rating) => number;
+  // Deck sessions
+  addDeckStudySession: (session: Omit<DeckStudySession, 'id'>) => Promise<void>;
+  // Profile
+  getTotalFocusTime: () => number;
+  getTotalCardsStudied: () => number;
+  getTotalCardsMastered: () => number;
+  getStudyHeatmap: () => { date: string; minutes: number; sessions: number }[];
+  getAchievements: () => { id: string; title: string; description: string; icon: string; unlocked: boolean }[];
+  // Dashboard
+  getTodayXp: () => number;
+  getTodayDeckSessions: () => DeckStudySession[];
+  getTodayCardsReviewed: () => number;
+  getDailyMissions: () => { id: string; title: string; description: string; icon: string; current: number; target: number; done: boolean }[];
+  getRecentActivity: () => { id: string; type: 'focus' | 'study' | 'arena'; title: string; subtitle: string; xp: number; timestamp: string }[];
+  getAllDueCards: () => number;
+  // Arenas
+  addArenaSession: (session: Omit<ArenaSession, 'id'>) => Promise<void>;
+  getArenaStats: () => { totalArenas: number; bestStreak: number; avgAccuracy: number; totalArenaXp: number };
+  getDeckArenaHistory: (deckId: string) => ArenaSession[];
+  // Social & Insights
+  getWeeklyInsights: () => {
+    thisWeekXp: number;
+    lastWeekXp: number;
+    bestDay: { day: string; minutes: number } | null;
+    mostStudiedDeck: { title: string; sessions: number } | null;
+    consistency: number;
+  };
+  getMilestones: () => { id: string; title: string; date: string; description: string; icon: string }[];
+  // Social Extended
+  searchUsers: (query: string) => Promise<{ id: string; name: string; total_xp: number }[]>;
+  sendFriendRequest: (friendId: string) => Promise<void>;
+  getFriends: () => Promise<{ id: string; name: string; status: string; total_xp: number }[]>;
+  getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
+  sendMessage: (receiverId: string, content: string) => Promise<void>;
+  getMessages: (otherId: string) => Promise<{ id: string; sender_id: string; content: string; created_at: string }[]>;
+  // Battle
+  joinMatchmaking: (deckId: string) => Promise<void>;
+  leaveMatchmaking: () => Promise<void>;
+  getMatch: () => Promise<{ id: string; opponent: { id: string; name: string }; topic: string } | null>;
+}
+
+// ═══════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════
+
+const STORAGE_KEY = 'levelup_state';
+
+const defaultState: AppState = {
+  user: null,
+  totalXp: 0,
+  streak: 0,
+  momentum: 0,
+  focusSessions: [],
+  decks: [],
+  cards: [],
+  deckStudySessions: [],
+  arenaSessions: [],
+  lastActiveDate: null,
+};
+
+function loadState(): AppState {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return { ...defaultState, ...JSON.parse(saved) };
+    }
+  } catch (e) {
+    console.error('Failed to load state:', e);
+  }
+  return defaultState;
+}
+
+function saveState(state: AppState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save state:', e);
+  }
+}
+
+function isToday(dateStr: string): boolean {
+  return new Date(dateStr).toDateString() === new Date().toDateString();
+}
+
+function isYesterday(dateStr: string): boolean {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return new Date(dateStr).toDateString() === yesterday.toDateString();
+}
+
+// ═══════════════════════════════════════════════
+// PROVIDER
+// ═══════════════════════════════════════════════
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AppState>(defaultState);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // 1. Initial Auth Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthChange(session);
+    });
+
+    // 2. Listen for Auth Changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthChange(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuthChange = async (session: Session | null) => {
+    if (!session) {
+      setState(defaultState);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch Profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+      }
+
+      // If no profile, create one (Initial Signup)
+      if (!profile) {
+        const newProfile = {
+          id: session.user.id,
+          name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Operator',
+          total_xp: 0,
+          streak: 0,
+          momentum: 0,
+          created_at: new Date().toISOString(),
+        };
+        await supabase.from('profiles').insert(newProfile);
+        
+        setState(prev => ({
+          ...prev,
+          user: {
+            id: newProfile.id,
+            name: newProfile.name,
+            createdAt: newProfile.created_at,
+          },
+          totalXp: 0,
+          streak: 0,
+          momentum: 0,
+        }));
+      } else {
+        // Fetch All Data
+        const [decksRes, cardsRes, focusRes, studyRes, arenaRes] = await Promise.all([
+          supabase.from('decks').select('*').eq('user_id', session.user.id),
+          supabase.from('cards').select('*').eq('user_id', session.user.id),
+          supabase.from('focus_sessions').select('*').eq('user_id', session.user.id),
+          supabase.from('deck_study_sessions').select('*').eq('user_id', session.user.id),
+          supabase.from('arena_sessions').select('*').eq('user_id', session.user.id),
+        ]);
+
+        setState({
+          user: {
+            id: profile.id,
+            name: profile.name,
+            school: profile.school,
+            onboardingCompleted: profile.onboarding_completed,
+            createdAt: profile.created_at,
+          },
+          totalXp: profile.total_xp,
+          streak: profile.streak,
+          momentum: profile.momentum,
+          focusSessions: focusRes.data || [],
+          decks: decksRes.data || [],
+          cards: cardsRes.data || [],
+          deckStudySessions: studyRes.data || [],
+          arenaSessions: arenaRes.data || [],
+          lastActiveDate: profile.last_active_date,
+        });
+      }
+    } catch (err) {
+      console.error('Error syncing with Supabase:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // We no longer use localStorage for the main state, but we could keep it as a fallback
+    // if (!isLoading) saveState(state);
+  }, [state, isLoading]);
+
+  // ── User ──────────────────────────────────────
+
+  const setUser = useCallback((user: User | null) => {
+    setState(prev => ({ ...prev, user }));
+  }, []);
+
+  const resetUser = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setState(defaultState);
+  }, []);
+
+  // ── XP ───────────────────────────────────────
+
+  const addXp = useCallback(async (amount: number) => {
+    const oldLevel = getLevelFromXp(state.totalXp);
+    const oldRank = getRankFromLevel(oldLevel);
+    const newTotalXp = state.totalXp + amount;
+    const newLevel = getLevelFromXp(newTotalXp);
+    const newRank = getRankFromLevel(newLevel);
+    const result = { oldLevel, newLevel, leveledUp: newLevel > oldLevel, oldRank, newRank, rankChanged: newRank !== oldRank };
+
+    if (!state.user) return result;
+
+    const today = new Date().toISOString();
+    let newStreak = state.streak;
+    let newMomentum = state.momentum;
+    if (!state.lastActiveDate || !isToday(state.lastActiveDate)) {
+      newStreak = state.lastActiveDate && isYesterday(state.lastActiveDate) ? state.streak + 1 : 1;
+      newMomentum = Math.min(state.momentum + 1, 10);
+    }
+
+    // Update State
+    setState(prev => ({ ...prev, totalXp: newTotalXp, streak: newStreak, momentum: newMomentum, lastActiveDate: today }));
+
+    // Sync with Supabase
+    await supabase.from('profiles').update({
+      total_xp: newTotalXp,
+      streak: newStreak,
+      momentum: newMomentum,
+      last_active_date: today
+    }).eq('id', state.user.id);
+
+    return result;
+  }, [state.totalXp, state.streak, state.momentum, state.lastActiveDate, state.user]);
+
+  const getLevel = useCallback(() => getLevelFromXp(state.totalXp), [state.totalXp]);
+  const getRank = useCallback(() => getRankFromLevel(getLevelFromXp(state.totalXp)), [state.totalXp]);
+  const getXpProgressData = useCallback(() => getXpProgress(state.totalXp), [state.totalXp]);
+
+  // ── Focus ─────────────────────────────────────
+
+  const addFocusSession = useCallback(async (session: Omit<FocusSession, 'id'>) => {
+    if (!state.user) return;
+    const newSession = { ...session, id: generateId() };
+    setState(prev => ({
+      ...prev,
+      focusSessions: [newSession, ...prev.focusSessions].slice(0, 200),
+    }));
+
+    await supabase.from('focus_sessions').insert({
+      id: newSession.id,
+      user_id: state.user.id,
+      planned_duration: newSession.plannedDuration,
+      actual_duration: newSession.actualDuration,
+      pause_count: newSession.pauseCount,
+      xp_earned: newSession.xpEarned,
+      no_pause_challenge: newSession.noPauseChallenge,
+      is_completed: newSession.isCompleted,
+      completed_at: newSession.completedAt
+    });
+  }, [state.user]);
+
+  const getTodayFocusTime = useCallback(() =>
+    state.focusSessions.filter(s => isToday(s.completedAt)).reduce((sum, s) => sum + s.actualDuration, 0),
+    [state.focusSessions]);
+
+  const getTodaySessionCount = useCallback(() =>
+    state.focusSessions.filter(s => isToday(s.completedAt)).length,
+    [state.focusSessions]);
+
+  const getLongestSession = useCallback(() =>
+    state.focusSessions.length === 0 ? 0 : Math.max(...state.focusSessions.map(s => s.actualDuration)),
+    [state.focusSessions]);
+
+  const getFocusStreak = useCallback(() => {
+    const sessions = [...state.focusSessions].sort((a, b) =>
+      new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+    if (sessions.length === 0) return 0;
+    let streak = 0;
+    const checkDate = new Date();
+    for (let i = 0; i < 365; i++) {
+      const dayStr = checkDate.toDateString();
+      const has = sessions.some(s => new Date(s.completedAt).toDateString() === dayStr && s.actualDuration >= 1500);
+      if (has) streak++;
+      else if (i > 0) break;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    return streak;
+  }, [state.focusSessions]);
+
+  const getWeeklyFocusData = useCallback(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      const dayStr = date.toDateString();
+      const totalSec = state.focusSessions
+        .filter(s => new Date(s.completedAt).toDateString() === dayStr)
+        .reduce((sum, s) => sum + s.actualDuration, 0);
+      return { day: days[date.getDay()], minutes: Math.round(totalSec / 60) };
+    });
+  }, [state.focusSessions]);
+
+  // ── Decks ─────────────────────────────────────
+
+  const addDeck = useCallback(async (deck: Omit<Deck, 'id' | 'createdAt' | 'lastStudiedAt'>) => {
+    if (!state.user) return null as any;
+    const newDeck: Deck = { ...deck, id: generateId(), createdAt: new Date().toISOString(), lastStudiedAt: null };
+    
+    setState(prev => ({ ...prev, decks: [newDeck, ...prev.decks] }));
+    
+    await supabase.from('decks').insert({
+      id: newDeck.id,
+      user_id: state.user.id,
+      title: newDeck.title,
+      subject: newDeck.subject,
+      description: newDeck.description,
+      color: newDeck.color,
+      tags: newDeck.tags,
+      created_at: newDeck.createdAt
+    });
+
+    return newDeck;
+  }, [state.user]);
+
+  const updateDeck = useCallback(async (id: string, patch: Partial<Omit<Deck, 'id' | 'createdAt'>>) => {
+    setState(prev => ({
+      ...prev,
+      decks: prev.decks.map(d => d.id === id ? { ...d, ...patch } : d),
+    }));
+
+    await supabase.from('decks').update(patch).eq('id', id);
+  }, []);
+
+  const deleteDeck = useCallback(async (id: string) => {
+    setState(prev => ({
+      ...prev,
+      decks: prev.decks.filter(d => d.id !== id),
+      cards: prev.cards.filter(c => c.deckId !== id),
+    }));
+
+    await Promise.all([
+      supabase.from('decks').delete().eq('id', id),
+      supabase.from('cards').delete().eq('deck_id', id)
+    ]);
+  }, []);
+
+  // ── Cards ─────────────────────────────────────
+
+  const addCard = useCallback(async (card: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>) => {
+    if (!state.user) return null as any;
+    const newCard: Card = {
+      ...card,
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+      ...defaultSM2(),
+    };
+    setState(prev => ({ ...prev, cards: [...prev.cards, newCard] }));
+
+    await supabase.from('cards').insert({
+      id: newCard.id,
+      user_id: state.user.id,
+      deck_id: newCard.deckId,
+      front: newCard.front,
+      back: newCard.back,
+      interval: newCard.interval,
+      repetitions: newCard.repetitions,
+      ease_factor: newCard.easeFactor,
+      due_date: newCard.dueDate,
+      mastery_state: newCard.masteryState,
+      created_at: newCard.createdAt
+    });
+
+    return newCard;
+  }, [state.user]);
+
+  const addCards = useCallback((cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => {
+    const newCards: Card[] = cards.map(c => ({
+      ...c,
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+      ...defaultSM2(),
+    }));
+    setState(prev => ({ ...prev, cards: [...prev.cards, ...newCards] }));
+    return newCards;
+  }, []);
+
+  const updateCard = useCallback(async (id: string, patch: Partial<Card>) => {
+    setState(prev => ({
+      ...prev,
+      cards: prev.cards.map(c => c.id === id ? { ...c, ...patch } : c),
+    }));
+
+    // Map camelCase to snake_case if needed
+    const dbPatch: any = { ...patch };
+    if (patch.dueDate) dbPatch.due_date = patch.dueDate;
+    if (patch.easeFactor) dbPatch.ease_factor = patch.easeFactor;
+    if (patch.masteryState) dbPatch.mastery_state = patch.masteryState;
+    delete dbPatch.dueDate;
+    delete dbPatch.easeFactor;
+    delete dbPatch.masteryState;
+
+    await supabase.from('cards').update(dbPatch).eq('id', id);
+  }, []);
+
+  const deleteCard = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, cards: prev.cards.filter(c => c.id !== id) }));
+    await supabase.from('cards').delete().eq('id', id);
+  }, []);
+
+  const getDeckCards = useCallback((deckId: string) =>
+    state.cards.filter(c => c.deckId === deckId),
+    [state.cards]);
+
+  const getDueCards = useCallback((deckId: string) =>
+    state.cards.filter(c => c.deckId === deckId && isDue(c)),
+    [state.cards]);
+
+  const getDeckStats = useCallback((deckId: string) => {
+    const cards = state.cards.filter(c => c.deckId === deckId);
+    const total = cards.length;
+    const due = cards.filter(c => isDue(c)).length;
+    const masteryBreakdown: Record<MasteryState, number> = { new: 0, learning: 0, reviewing: 0, mastered: 0 };
+    cards.forEach(c => masteryBreakdown[c.masteryState]++);
+    const mastery = total === 0 ? 0 : Math.round((masteryBreakdown.mastered / total) * 100);
+    return { total, due, mastery, masteryBreakdown };
+  }, [state.cards]);
+
+  const reviewCard = useCallback((cardId: string, rating: Rating) => {
+    const xp = RATING_XP[rating];
+    setState(prev => ({
+      ...prev,
+      cards: prev.cards.map(c => {
+        if (c.id !== cardId) return c;
+        const sm2Result = applyReview(c, rating);
+        return { ...c, ...sm2Result };
+      }),
+    }));
+    return xp;
+  }, []);
+
+  // ── Deck Study Sessions ───────────────────────
+
+  const addDeckStudySession = useCallback(async (session: Omit<DeckStudySession, 'id'>) => {
+    if (!state.user) return;
+    const newSession = { ...session, id: generateId() };
+    
+    setState(prev => ({
+      ...prev,
+      decks: prev.decks.map(d =>
+        d.id === session.deckId ? { ...d, lastStudiedAt: session.completedAt } : d
+      ),
+      deckStudySessions: [newSession, ...prev.deckStudySessions].slice(0, 500),
+    }));
+
+    await Promise.all([
+      supabase.from('deck_study_sessions').insert({
+        id: newSession.id,
+        user_id: state.user.id,
+        deck_id: newSession.deckId,
+        cards_reviewed: newSession.cardsReviewed,
+        xp_earned: newSession.xpEarned,
+        accuracy: newSession.accuracy,
+        completed_at: newSession.completedAt
+      }),
+      supabase.from('decks').update({ last_studied_at: session.completedAt }).eq('id', session.deckId)
+    ]);
+  }, [state.user]);
+
+  // ── Profile Analytics ─────────────────────────
+
+  const getTotalFocusTime = useCallback(() =>
+    state.focusSessions.reduce((sum, s) => sum + s.actualDuration, 0),
+    [state.focusSessions]);
+
+  const getTotalCardsStudied = useCallback(() =>
+    state.cards.filter(c => c.masteryState !== 'new').length,
+    [state.cards]);
+
+  const getTotalCardsMastered = useCallback(() =>
+    state.cards.filter(c => c.masteryState === 'mastered').length,
+    [state.cards]);
+
+  const getStudyHeatmap = useCallback(() => {
+    const days: { date: string; minutes: number; sessions: number }[] = [];
+    for (let i = 83; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayStr = d.toDateString();
+      const dateStr = d.toISOString().split('T')[0];
+      const focusMin = state.focusSessions
+        .filter(s => new Date(s.completedAt).toDateString() === dayStr)
+        .reduce((sum, s) => sum + s.actualDuration, 0) / 60;
+      const deckSessions = state.deckStudySessions
+        .filter(s => new Date(s.completedAt).toDateString() === dayStr).length;
+      const focusSess = state.focusSessions
+        .filter(s => new Date(s.completedAt).toDateString() === dayStr).length;
+      days.push({ date: dateStr, minutes: Math.round(focusMin), sessions: focusSess + deckSessions });
+    }
+    return days;
+  }, [state.focusSessions, state.deckStudySessions]);
+
+  const getAchievements = useCallback(() => {
+    const totalFocus = state.focusSessions.reduce((s, f) => s + f.actualDuration, 0);
+    const longestSess = state.focusSessions.length > 0 ? Math.max(...state.focusSessions.map(s => s.actualDuration)) : 0;
+    const hasNoPause = state.focusSessions.some(s => s.noPauseChallenge && s.pauseCount === 0 && s.isCompleted);
+    const masteredCards = state.cards.filter(c => c.masteryState === 'mastered').length;
+    const level = getLevelFromXp(state.totalXp);
+
+    return [
+      { id: 'first_focus', title: 'First Focus', description: 'Complete your first focus session', icon: '⏱', unlocked: state.focusSessions.length > 0 },
+      { id: 'deck_creator', title: 'Deck Creator', description: 'Create your first deck', icon: '📚', unlocked: state.decks.length > 0 },
+      { id: 'card_scholar', title: 'Card Scholar', description: 'Master 10 cards', icon: '🎓', unlocked: masteredCards >= 10 },
+      { id: 'focus_warrior', title: 'Focus Warrior', description: 'Reach a 3-day streak', icon: '🔥', unlocked: state.streak >= 3 },
+      { id: 'marathon', title: 'Marathon', description: 'Complete a 60+ minute session', icon: '🏃', unlocked: longestSess >= 3600 },
+      { id: 'no_pause', title: 'No-Pause Legend', description: 'Complete a no-pause challenge', icon: '🛡', unlocked: hasNoPause },
+      { id: 'centurion', title: 'Centurion', description: 'Reach Level 10', icon: '⚔', unlocked: level >= 10 },
+      { id: 'vault', title: 'Knowledge Vault', description: 'Create 50+ flashcards', icon: '🏛', unlocked: state.cards.length >= 50 },
+    ];
+  }, [state.focusSessions, state.decks, state.cards, state.streak, state.totalXp]);
+
+  // ── Dashboard Analytics ───────────────────────
+
+  const getTodayXp = useCallback(() => {
+    const focusXp = state.focusSessions
+      .filter(s => isToday(s.completedAt))
+      .reduce((sum, s) => sum + s.xpEarned, 0);
+    const deckXp = state.deckStudySessions
+      .filter(s => isToday(s.completedAt))
+      .reduce((sum, s) => sum + s.xpEarned, 0);
+    return focusXp + deckXp;
+  }, [state.focusSessions, state.deckStudySessions]);
+
+  const getTodayDeckSessions = useCallback(() =>
+    state.deckStudySessions.filter(s => isToday(s.completedAt)),
+    [state.deckStudySessions]);
+
+  const getTodayCardsReviewed = useCallback(() =>
+    state.deckStudySessions
+      .filter(s => isToday(s.completedAt))
+      .reduce((sum, s) => sum + s.cardsReviewed, 0),
+    [state.deckStudySessions]);
+
+  const getAllDueCards = useCallback(() =>
+    state.cards.filter(c => isDue(c)).length,
+    [state.cards]);
+
+  const getDailyMissions = useCallback(() => {
+    const level = getLevelFromXp(state.totalXp);
+    const focusTarget = Math.min(15 + level * 2, 90); // minutes
+    const todayFocusMin = Math.round(state.focusSessions
+      .filter(s => isToday(s.completedAt))
+      .reduce((sum, s) => sum + s.actualDuration, 0) / 60);
+
+    const dueCount = state.cards.filter(c => isDue(c)).length;
+    const cardTarget = Math.min(Math.max(dueCount, 5), 20);
+    const todayCards = state.deckStudySessions
+      .filter(s => isToday(s.completedAt))
+      .reduce((sum, s) => sum + s.cardsReviewed, 0);
+
+    const todaySessions = state.focusSessions.filter(s => isToday(s.completedAt)).length
+      + state.deckStudySessions.filter(s => isToday(s.completedAt)).length;
+
+    const missions = [
+      {
+        id: 'focus_daily',
+        title: `Focus for ${focusTarget} min`,
+        description: 'Complete focused study time',
+        icon: '⏱',
+        current: Math.min(todayFocusMin, focusTarget),
+        target: focusTarget,
+        done: todayFocusMin >= focusTarget,
+      },
+      {
+        id: 'review_cards',
+        title: `Review ${cardTarget} cards`,
+        description: dueCount > 0 ? `${dueCount} cards due` : 'Study your decks',
+        icon: '🃏',
+        current: Math.min(todayCards, cardTarget),
+        target: cardTarget,
+        done: todayCards >= cardTarget,
+      },
+      {
+        id: 'session_count',
+        title: 'Complete 3 sessions',
+        description: 'Any focus or study session',
+        icon: '🏆',
+        current: Math.min(todaySessions, 3),
+        target: 3,
+        done: todaySessions >= 3,
+      },
+    ];
+    return missions;
+  }, [state.totalXp, state.focusSessions, state.deckStudySessions, state.cards]);
+
+  const getRecentActivity = useCallback(() => {
+    const focusEvents = state.focusSessions.slice(0, 10).map(s => ({
+      id: s.id,
+      type: 'focus' as const,
+      title: s.isCompleted ? 'Focus Session Complete' : 'Focus Session',
+      subtitle: `${Math.round(s.actualDuration / 60)} min${s.noPauseChallenge && s.pauseCount === 0 ? ' · No-Pause ✓' : ''}`,
+      xp: s.xpEarned,
+      timestamp: s.completedAt,
+    }));
+    const deckEvents = state.deckStudySessions.slice(0, 10).map(s => {
+      const deck = state.decks.find(d => d.id === s.deckId);
+      return {
+        id: s.id,
+        type: 'study' as const,
+        title: deck ? `Studied ${deck.title}` : 'Deck Study',
+        subtitle: `${s.cardsReviewed} cards · ${s.accuracy}% accuracy`,
+        xp: s.xpEarned,
+        timestamp: s.completedAt,
+      };
+    });
+    const arenaEvents = state.arenaSessions.slice(0, 10).map(s => {
+      const deck = state.decks.find(d => d.id === s.deckId);
+      return {
+        id: s.id,
+        type: 'arena' as const,
+        title: deck ? `Arena: ${deck.title}` : 'Arena Challenge',
+        subtitle: `${s.correctCount}/${s.totalCards} correct · ${s.difficulty}`,
+        xp: s.xpEarned,
+        timestamp: s.completedAt,
+      };
+    });
+    return [...focusEvents, ...deckEvents, ...arenaEvents]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5);
+  }, [state.focusSessions, state.deckStudySessions, state.arenaSessions, state.decks]);
+
+  // ── Arenas ────────────────────────────────────
+
+  const addArenaSession = useCallback(async (session: Omit<ArenaSession, 'id'>) => {
+    if (!state.user) return;
+    const newSession = { ...session, id: generateId() };
+    
+    setState(prev => ({
+      ...prev,
+      arenaSessions: [newSession, ...prev.arenaSessions].slice(0, 500),
+    }));
+
+    await supabase.from('arena_sessions').insert({
+      id: newSession.id,
+      user_id: state.user.id,
+      deck_id: newSession.deckId,
+      difficulty: newSession.difficulty,
+      total_cards: newSession.totalCards,
+      correct_count: newSession.correctCount,
+      wrong_count: newSession.wrongCount,
+      avg_response_time: newSession.avgResponseTime,
+      best_streak: newSession.bestStreak,
+      xp_earned: newSession.xpEarned,
+      completed_at: newSession.completedAt
+    });
+  }, [state.user]);
+
+  const getArenaStats = useCallback(() => {
+    const sessions = state.arenaSessions;
+    const totalArenas = sessions.length;
+    const bestStreak = sessions.length > 0 ? Math.max(...sessions.map(s => s.bestStreak)) : 0;
+    const avgAccuracy = totalArenas > 0
+      ? Math.round(sessions.reduce((sum, s) => sum + (s.correctCount / s.totalCards) * 100, 0) / totalArenas)
+      : 0;
+    const totalArenaXp = sessions.reduce((sum, s) => sum + s.xpEarned, 0);
+    return { totalArenas, bestStreak, avgAccuracy, totalArenaXp };
+  }, [state.arenaSessions]);
+
+  const getDeckArenaHistory = useCallback((deckId: string) =>
+    state.arenaSessions.filter(s => s.deckId === deckId),
+    [state.arenaSessions]);
+
+  // ── Social & Insights ─────────────────────────
+
+  const getWeeklyInsights = useCallback(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday
+    // Let's assume week starts on Monday
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const startOfThisWeek = new Date(today);
+    startOfThisWeek.setDate(today.getDate() - daysSinceMonday);
+    
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    let thisWeekXp = 0;
+    let lastWeekXp = 0;
+
+    const allSessions = [
+      ...state.focusSessions.map(s => ({ date: new Date(s.completedAt), xp: s.xpEarned, min: s.actualDuration / 60 })),
+      ...state.deckStudySessions.map(s => ({ date: new Date(s.completedAt), xp: s.xpEarned, min: 0 })),
+      ...state.arenaSessions.map(s => ({ date: new Date(s.completedAt), xp: s.xpEarned, min: 0 }))
+    ];
+
+    const thisWeekDays = new Set<string>();
+
+    const dayMinutes: Record<string, number> = {};
+    const deckSessionsCount: Record<string, number> = {};
+
+    allSessions.forEach(s => {
+      if (s.date >= startOfThisWeek) {
+        thisWeekXp += s.xp;
+        thisWeekDays.add(s.date.toDateString());
+        const dayStr = s.date.toLocaleDateString('en-US', { weekday: 'long' });
+        dayMinutes[dayStr] = (dayMinutes[dayStr] || 0) + s.min;
+      } else if (s.date >= startOfLastWeek && s.date < startOfThisWeek) {
+        lastWeekXp += s.xp;
+      }
+    });
+
+    state.deckStudySessions.forEach(s => {
+      const d = new Date(s.completedAt);
+      if (d >= startOfThisWeek) {
+        deckSessionsCount[s.deckId] = (deckSessionsCount[s.deckId] || 0) + 1;
+      }
+    });
+
+    let bestDay = null;
+    let maxMin = 0;
+    for (const [day, min] of Object.entries(dayMinutes)) {
+      if (min > maxMin) { maxMin = min; bestDay = { day, minutes: Math.round(min) }; }
+    }
+
+    let mostStudiedDeck = null;
+    let maxSess = 0;
+    for (const [deckId, sess] of Object.entries(deckSessionsCount)) {
+      if (sess > maxSess) {
+        maxSess = sess;
+        const deck = state.decks.find(d => d.id === deckId);
+        if (deck) mostStudiedDeck = { title: deck.title, sessions: sess };
+      }
+    }
+
+    const consistency = Math.round((thisWeekDays.size / 7) * 100);
+
+    return { thisWeekXp, lastWeekXp, bestDay, mostStudiedDeck, consistency };
+  }, [state.focusSessions, state.deckStudySessions, state.arenaSessions, state.decks]);
+
+  const getMilestones = useCallback(() => {
+    const milestones: { id: string; title: string; date: string; description: string; icon: string }[] = [];
+    
+    if (state.user) {
+      milestones.push({
+        id: 'account_created',
+        title: 'Journey Began',
+        date: new Date(state.user.createdAt).toISOString(),
+        description: 'You joined the system.',
+        icon: '🌟'
+      });
+    }
+
+    if (state.focusSessions.length > 0) {
+      const first = state.focusSessions[state.focusSessions.length - 1]; // assuming reverse chronological if un-sorted, wait, we prepend, so last is first
+      // wait, let's sort them all chronologically first
+      const sortedFocus = [...state.focusSessions].sort((a,b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
+      if (sortedFocus.length > 0) {
+        milestones.push({
+          id: 'first_focus',
+          title: 'First Focus Session',
+          date: sortedFocus[0].completedAt,
+          description: `Focused for ${Math.round(sortedFocus[0].actualDuration / 60)} minutes.`,
+          icon: '⏱'
+        });
+      }
+    }
+
+    if (state.decks.length > 0) {
+      const sortedDecks = [...state.decks].sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      milestones.push({
+        id: 'first_deck',
+        title: 'First Deck Created',
+        date: sortedDecks[0].createdAt,
+        description: `Created "${sortedDecks[0].title}".`,
+        icon: '📚'
+      });
+    }
+
+    if (state.arenaSessions.length > 0) {
+      const sortedArenas = [...state.arenaSessions].sort((a,b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
+      milestones.push({
+        id: 'first_arena',
+        title: 'First Arena',
+        date: sortedArenas[0].completedAt,
+        description: `Survived ${sortedArenas[0].difficulty} mode.`,
+        icon: '⚔'
+      });
+    }
+
+    // Rank milestones
+    const level = getLevelFromXp(state.totalXp);
+    if (level >= 5) milestones.push({ id: 'lvl5', title: 'Level 5 Reached', date: new Date().toISOString(), description: 'Solid foundation.', icon: '🏆' });
+    if (level >= 10) milestones.push({ id: 'lvl10', title: 'Level 10 Reached', date: new Date().toISOString(), description: 'Centurion!', icon: '🏆' });
+    if (level >= 25) milestones.push({ id: 'lvl25', title: 'Level 25 Reached', date: new Date().toISOString(), description: 'Quarter century.', icon: '🏆' });
+
+    if (state.streak >= 3) milestones.push({ id: 'streak3', title: '3-Day Streak', date: new Date().toISOString(), description: 'Building the habit.', icon: '🔥' });
+    if (state.streak >= 7) milestones.push({ id: 'streak7', title: '7-Day Streak', date: new Date().toISOString(), description: 'One full week of focus.', icon: '🔥' });
+
+    return milestones.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [state.user, state.focusSessions, state.decks, state.arenaSessions, state.totalXp, state.streak]);
+
+  // ── Social & Competitive ─────────────────────
+
+  const searchUsers = useCallback(async (query: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, total_xp')
+      .ilike('name', `%${query}%`)
+      .limit(10);
+    return data || [];
+  }, []);
+
+  const sendFriendRequest = useCallback(async (friendId: string) => {
+    if (!state.user) return;
+    await supabase.from('friends').insert({
+      user_id: state.user.id,
+      friend_id: friendId,
+      status: 'pending'
+    });
+  }, [state.user]);
+
+  const getFriends = useCallback(async () => {
+    if (!state.user) return [];
+    const { data } = await supabase
+      .from('friends')
+      .select('status, profiles!friends_friend_id_fkey(id, name, total_xp)')
+      .eq('user_id', state.user.id);
+    
+    return (data || []).map((f: any) => ({
+      id: f.profiles.id,
+      name: f.profiles.name,
+      status: f.status,
+      total_xp: f.profiles.total_xp
+    }));
+  }, [state.user]);
+
+  const getLeaderboard = useCallback(async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, total_xp')
+      .order('total_xp', { ascending: false })
+      .limit(50);
+    
+    return (data || []).map(p => ({
+      ...p,
+      rank: getRankFromLevel(getLevelFromXp(p.total_xp))
+    }));
+  }, []);
+
+  const sendMessage = useCallback(async (receiverId: string, content: string) => {
+    if (!state.user) return;
+    await supabase.from('messages').insert({
+      sender_id: state.user.id,
+      receiver_id: receiverId,
+      content
+    });
+  }, [state.user]);
+
+  const getMessages = useCallback(async (otherId: string) => {
+    if (!state.user) return [];
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`and(sender_id.eq.${state.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${state.user.id})`)
+      .order('created_at', { ascending: true });
+    return data || [];
+  }, [state.user]);
+
+  // ── Battle & Matchmaking ──────────────────────
+
+  const joinMatchmaking = useCallback(async (deckId: string) => {
+    if (!state.user) return;
+    await supabase.from('matchmaking_queue').upsert({
+      user_id: state.user.id,
+      deck_id: deckId,
+      joined_at: new Date().toISOString()
+    });
+  }, [state.user]);
+
+  const leaveMatchmaking = useCallback(async () => {
+    if (!state.user) return;
+    await supabase.from('matchmaking_queue').delete().eq('user_id', state.user.id);
+  }, [state.user]);
+
+  const getMatch = useCallback(async () => {
+    if (!state.user) return null;
+    // Simple logic: find someone else in the queue
+    const { data } = await supabase
+      .from('matchmaking_queue')
+      .select('*, profiles!matchmaking_queue_user_id_fkey(name)')
+      .neq('user_id', state.user.id)
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      return {
+        id: 'match_' + generateId(),
+        opponent: { id: data.user_id, name: data.profiles.name },
+        topic: 'Explain Quantum Entanglement like I am five' // Random topic for now
+      };
+    }
+    return null;
+  }, [state.user]);
+
+  return (
+    <AppContext.Provider value={{
+      state, isLoading,
+      setUser, resetUser,
+      addXp, getLevel, getRank, getXpProgress: getXpProgressData,
+      addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
+      addDeck, updateDeck, deleteDeck,
+      addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
+      addDeckStudySession,
+      getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
+      getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
+      addArenaSession, getArenaStats, getDeckArenaHistory,
+      getWeeklyInsights, getMilestones,
+      searchUsers, sendFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages,
+      joinMatchmaking, leaveMatchmaking, getMatch
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (!context) throw new Error('useApp must be used within an AppProvider');
+  return context;
+}
