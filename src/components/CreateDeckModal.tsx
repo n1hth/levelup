@@ -51,7 +51,7 @@ export function CreateDeckModal({ onClose, onCreated }: CreateDeckModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center px-4 pb-32 sm:pb-0"
         style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)' }}
         onClick={e => e.target === e.currentTarget && onClose()}
       >
