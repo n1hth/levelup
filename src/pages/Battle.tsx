@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Target, Trophy, Search, ChevronRight, Zap, Crown, MessageCircle, Swords as DuelIcon } from 'lucide-react';
+import { Swords, Target, Trophy, Search, ChevronRight, Zap, Crown, MessageCircle, Users, Swords as DuelIcon } from 'lucide-react';
 import { useApp, type Deck } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
@@ -22,6 +22,7 @@ export function Battle() {
   const { state, getDeckCards, getArenaStats, getDeckArenaHistory, joinMatchmaking, leaveMatchmaking, getMatch, getFriends, sendDuelInvite, createDuel } = useApp();
   const [friends, setFriends] = useState<any[]>([]);
   const [isInviting, setIsInviting] = useState(false);
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
 
   const arenaStats = getArenaStats();
   const eligibleDecks = state.decks.filter(d => getDeckCards(d.id).length >= MIN_CARDS);
@@ -30,32 +31,10 @@ export function Battle() {
     setIsMatching(true);
     const mode = duelMode;
     const deckId = mode === 'deck' ? eligibleDecks[0]?.id : 'writing_mode';
-    await joinMatchmaking(deckId);
     
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts++;
-      const match = await getMatch();
-      if (match) {
-        clearInterval(interval);
-        let duelId = (match as any).duelId;
-        
-        if (!duelId) {
-          duelId = await createDuel(mode as any, (match as any).opponentId);
-          await supabase.from('matchmaking_queue').update({ matched_duel_id: duelId }).eq('user_id', (match as any).opponentId);
-        }
-
-        setIsMatching(false);
-        navigate(`/duels/${duelId}`);
-        await leaveMatchmaking();
-      }
-      if (attempts > 40) {
-        clearInterval(interval);
-        setIsMatching(false);
-        await leaveMatchmaking();
-        alert("No opponents found. Try again later.");
-      }
-    }, 1500);
+    // Create a "pending" duel record to host the search
+    const duelId = await createDuel(mode as any, 'searching'); 
+    navigate(`/duels/${duelId}`);
   };
 
   const handleInviteFriend = async (friendId: string) => {
@@ -268,32 +247,49 @@ export function Battle() {
                           </div>
 
                           {duelOpponent === 'friend' && (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                               <p className="text-[8px] font-black text-blue-900 uppercase tracking-widest px-1">Select Friend to Challenge</p>
-                              {friends.filter(f => f.status === 'accepted').length > 0 ? (
-                                friends.filter(f => f.status === 'accepted').map(friend => (
-                                  <button 
-                                    key={friend.id}
-                                    disabled={isInviting}
-                                    onClick={() => handleInviteFriend(friend.id)}
-                                    className="w-full p-3 rounded-xl bg-white border border-blue-100 flex items-center justify-between hover:border-blue-500 transition-all active:scale-95 disabled:opacity-50"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-black text-[10px]">
-                                        {friend.name.charAt(0).toUpperCase()}
+                              <div className="space-y-2">
+                                {friends.filter(f => f.status === 'accepted').length > 0 ? (
+                                  friends.filter(f => f.status === 'accepted').map(friend => (
+                                    <button 
+                                      key={friend.id}
+                                      onClick={() => setSelectedFriendId(friend.id)}
+                                      className={cn(
+                                        "w-full p-4 rounded-2xl border transition-all flex items-center justify-between",
+                                        selectedFriendId === friend.id ? "bg-blue-600 border-blue-400 text-white shadow-lg" : "bg-white border-blue-50"
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs", selectedFriendId === friend.id ? "bg-white/20" : "bg-blue-50 text-blue-600")}>
+                                          {friend.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="text-left">
+                                          <div className={cn("text-xs font-black uppercase", selectedFriendId === friend.id ? "text-white" : "text-blue-900")}>{friend.name}</div>
+                                          <div className={cn("text-[8px] font-bold uppercase opacity-60")}>Rank E</div>
+                                        </div>
                                       </div>
-                                      <div className="text-left">
-                                        <div className="text-[10px] font-black text-blue-900 uppercase">{friend.name}</div>
-                                        <div className="text-[8px] font-bold text-blue-400 uppercase">Rank {state.totalXp > 1000 ? 'S' : 'E'}</div>
-                                      </div>
-                                    </div>
-                                    <Zap size={14} className="text-yellow-500" />
-                                  </button>
-                                ))
-                              ) : (
-                                <div className="p-4 text-center rounded-xl bg-blue-50/50 border border-dashed border-blue-200">
-                                  <p className="text-[9px] font-bold text-blue-400 uppercase">No active syndicate links found</p>
-                                </div>
+                                      <Zap size={14} className={selectedFriendId === friend.id ? "text-white" : "text-yellow-500"} />
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-10 text-center rounded-2xl border-2 border-dashed border-slate-200 opacity-40">
+                                    <Users size={32} className="mx-auto mb-2 text-blue-900" />
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-900">No Friends Found</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {selectedFriendId && (
+                                <motion.button
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  onClick={() => handleInviteFriend(selectedFriendId)}
+                                  disabled={isInviting}
+                                  className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-[0.3em] text-[11px] shadow-xl shadow-blue-500/20 active:scale-95 transition-all mt-4"
+                                >
+                                  {isInviting ? "Establishing Link..." : "Initiate Duel"}
+                                </motion.button>
                               )}
                             </div>
                           )}
