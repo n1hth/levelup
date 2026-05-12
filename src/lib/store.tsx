@@ -976,17 +976,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getFriends = useCallback(async () => {
     if (!state.user) return [];
-    const { data } = await supabase
+    
+    // Fetch where I am the requester
+    const { data: outgoing } = await supabase
       .from('friends')
       .select('status, profiles!friends_friend_id_fkey(id, name, total_xp)')
       .eq('user_id', state.user.id);
+
+    // Fetch where I am the recipient
+    const { data: incoming } = await supabase
+      .from('friends')
+      .select('status, profiles!friends_user_id_fkey(id, name, total_xp)')
+      .eq('friend_id', state.user.id);
     
-    return (data || []).map((f: any) => ({
+    const formattedOutgoing = (outgoing || []).map((f: any) => ({
       id: f.profiles.id,
       name: f.profiles.name,
       status: f.status,
       total_xp: f.profiles.total_xp
     }));
+
+    const formattedIncoming = (incoming || []).map((f: any) => ({
+      id: f.profiles.id,
+      name: f.profiles.name,
+      status: f.status,
+      total_xp: f.profiles.total_xp
+    }));
+
+    return [...formattedOutgoing, ...formattedIncoming];
   }, [state.user]);
 
   const getLeaderboard = useCallback(async () => {
