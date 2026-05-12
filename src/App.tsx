@@ -12,6 +12,7 @@ import { Profile } from './pages/Profile.tsx';
 import { Dashboard } from './pages/Dashboard.tsx';
 import { Battle } from './pages/Battle.tsx';
 import { ArenaPlay } from './pages/ArenaPlay.tsx';
+import { ArenaDuel } from './pages/ArenaDuel.tsx';
 import { Social } from './pages/Social.tsx';
 
 function AppContent() {
@@ -51,6 +52,7 @@ function AppContent() {
           <Route path="battle" element={<Battle />} />
           <Route path="arenas" element={<Navigate to="/battle" replace />} />
           <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
+          <Route path="duels/:opponentId/:topic" element={<ArenaDuel />} />
           <Route path="social" element={<Social />} />
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/home" replace />} />

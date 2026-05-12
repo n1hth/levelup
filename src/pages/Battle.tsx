@@ -41,7 +41,7 @@ export function Battle() {
         setIsMatching(false);
         // After 2s of celebration, navigate to duel (mocking navigation for now)
         setTimeout(() => {
-          alert(`Match found against ${match.opponent.name}! Topic: ${match.topic}`);
+          navigate(`/duels/${match.opponent.id}/${encodeURIComponent(match.topic)}`);
           setMatchFound(null);
         }, 2000);
       }

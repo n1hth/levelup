@@ -1043,11 +1043,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const acceptFriendRequest = useCallback(async (friendId: string) => {
     if (!state.user) return;
     try {
-      // Try updating where I am the recipient
       const { error } = await supabase
         .from('friends')
         .update({ status: 'accepted' })
-        .or(`and(user_id.eq.${friendId},friend_id.eq.${state.user.id}),and(user_id.eq.${state.user.id},friend_id.eq.${friendId})`);
+        .match({ user_id: friendId, friend_id: state.user.id });
       
       if (error) throw error;
     } catch (err) {
@@ -1103,22 +1102,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getMatch = useCallback(async () => {
     if (!state.user) return null;
-    // Simple logic: find someone else in the queue
-    const { data } = await supabase
-      .from('matchmaking_queue')
-      .select('*, profiles!matchmaking_queue_user_id_fkey(name)')
-      .neq('user_id', state.user.id)
-      .limit(1)
-      .maybeSingle();
-    
-    if (data) {
+    try {
+      const { data, error } = await supabase
+        .from('matchmaking_queue')
+        .select('*')
+        .neq('user_id', state.user.id)
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      if (!data) return null;
+
+      // Fetch opponent profile separately
+      const { data: prof } = await supabase.from('profiles').select('name').eq('id', data.user_id).single();
+
       return {
-        id: 'match_' + generateId(),
-        opponent: { id: data.user_id, name: data.profiles.name },
-        topic: 'Explain Quantum Entanglement like I am five' // Random topic for now
+        id: data.id,
+        opponent: { id: data.user_id, name: prof?.name || 'Opponent' },
+        topic: data.deck_id === 'writing_mode' ? 'Universal Logic' : 'Deck Duel'
       };
+    } catch (err) {
+      console.error("Get match failed:", err);
+      return null;
     }
-    return null;
   }, [state.user]);
 
   return (
