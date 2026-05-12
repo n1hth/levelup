@@ -10,6 +10,7 @@ type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: 'friends', label: 'Friends', icon: Users },
+  { id: 'requests', label: 'Requests', icon: UserPlus },
   { id: 'guilds', label: 'Guilds', icon: Shield },
   { id: 'community', label: 'Community', icon: Globe },
   { id: 'ranks', label: 'Ranks', icon: Trophy },
@@ -34,7 +35,7 @@ export function Social() {
   const rankTitle = getRankTitle(rank);
 
   useEffect(() => {
-    if (activeTab === 'friends') {
+    if (activeTab === 'friends' || activeTab === 'requests') {
       getFriends().then(setFriends);
     } else if (activeTab === 'ranks') {
       getLeaderboard().then(setLeaderboard);
@@ -102,11 +103,20 @@ export function Social() {
       <div className="flex gap-1 p-1 bg-white/60 border border-white/80 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
         {TABS.map(tab => {
           const Icon = tab.icon;
+          const incomingPendingCount = friends.filter(f => f.status === 'pending' && f.isIncoming).length;
+          const showBadge = tab.id === 'requests' && incomingPendingCount > 0;
+
           return (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={cn("flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-widest transition-all min-w-[56px]",
+              className={cn("flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-widest transition-all min-w-[56px] relative",
                 activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" : "text-blue-400 hover:bg-blue-50")}>
-              <Icon size={15} />{tab.label}
+              <div className="relative">
+                <Icon size={15} />
+                {showBadge && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse" />
+                )}
+              </div>
+              {tab.label}
             </button>
           );
         })}
@@ -159,31 +169,16 @@ export function Social() {
               <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Active Friends</h3>
               {friends.length > 0 ? (
                 <div className="space-y-2">
-                  {friends.map(friend => (
-                    <div key={friend.id} className="system-panel p-3 border-white/60 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 font-black">
-                          {friend.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                          <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.status} · {friend.total_xp.toLocaleString()} XP</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {friend.status === 'pending' && friend.isIncoming && (
-                          <button onClick={() => handleAcceptFriend(friend.id)} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-sm">
-                            Accept
-                          </button>
-                        )}
-                        <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
-                          <MessageCircle size={16} />
-                        </button>
+                        <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.total_xp.toLocaleString()} XP</div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
+                    <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
+                      <MessageCircle size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
                   <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><Users size={28} className="text-blue-200" /></div>
                   <h4 className="text-sm font-black text-blue-900 mb-1">No Contacts Found</h4>
@@ -191,6 +186,60 @@ export function Social() {
                 </div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* ═══ REQUESTS ═══ */}
+        {activeTab === 'requests' && (
+          <motion.div key="requests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+            <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Incoming Requests</h3>
+            {friends.filter(f => f.isIncoming && f.status === 'pending').length > 0 ? (
+              <div className="space-y-2">
+                {friends.filter(f => f.isIncoming && f.status === 'pending').map(friend => (
+                  <div key={friend.id} className="system-panel p-4 border-emerald-100 bg-emerald-50/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs">
+                        {friend.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
+                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">New Invitation Received</div>
+                      </div>
+                    </div>
+                    <button onClick={() => handleAcceptFriend(friend.id)} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95">
+                      Accept
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
+                <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest italic">No pending invitations...</p>
+              </div>
+            )}
+
+            <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1 mt-6">Sent Requests</h3>
+            {friends.filter(f => !f.isIncoming && f.status === 'pending').length > 0 ? (
+              <div className="space-y-2">
+                {friends.filter(f => !f.isIncoming && f.status === 'pending').map(friend => (
+                  <div key={friend.id} className="system-panel p-4 border-white/60 opacity-70 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-400 font-black text-xs">
+                        {friend.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
+                        <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Awaiting Response</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest italic">No outgoing requests...</p>
+              </div>
+            )}
           </motion.div>
         )}
 
