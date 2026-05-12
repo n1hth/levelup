@@ -68,6 +68,9 @@ export function Dashboard() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 pb-8"
     >
+      <div className="w-full bg-orange-600 text-white py-4 text-center text-xs font-black uppercase tracking-[0.5em] shadow-2xl rounded-2xl mb-4">
+        V5 SYNC: FOLDER [/app/api/chat/src/pages] ACTIVE
+      </div>
       {/* ═══ Greeting ═══ */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -392,7 +395,10 @@ export function Dashboard() {
           </div>
         </div>
         {(insights.bestDay || insights.mostStudiedDeck) && (
-          <div className="space-y-2 mt-3">
+          <div className="space-y-8 pb-32">
+            <div className="w-full bg-orange-600 text-white py-4 text-center text-xs font-black uppercase tracking-[0.5em] shadow-2xl rounded-2xl mb-4">
+              V5 SYNC: FOLDER [/app/api/chat/src/pages] ACTIVE
+            </div>
             {insights.bestDay && (
               <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white border border-blue-50 shadow-sm">
                 <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">

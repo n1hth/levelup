@@ -52,7 +52,7 @@ function AppContent() {
           <Route path="battle" element={<Battle />} />
           <Route path="arenas" element={<Navigate to="/battle" replace />} />
           <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
-          <Route path="duels/:opponentId/:topic" element={<ArenaDuel />} />
+          <Route path="duels/:duelId" element={<ArenaDuel />} />
           <Route path="social" element={<Social />} />
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/home" replace />} />

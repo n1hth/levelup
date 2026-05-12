@@ -153,9 +153,13 @@ interface AppContextType {
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
-  sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
+  sendDuelInvite: (friendId: string, duelId: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<void>;
   getNotifications: () => Promise<any[]>;
+  createDuel: (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => Promise<string>;
+  updateDuel: (duelId: string, updates: any) => Promise<void>;
+  getDuel: (duelId: string) => Promise<any>;
+  voteDuel: (duelId: string, targetId: string, isFair: boolean) => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
@@ -163,7 +167,7 @@ interface AppContextType {
   // Battle
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
-  getMatch: () => Promise<{ id: string; opponent: { id: string; name: string }; topic: string } | null>;
+  getMatch: () => Promise<any>;
   // Auth
   session: Session | null;
   signOut: () => Promise<void>;
@@ -1007,13 +1011,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
-  const sendDuelInvite = useCallback(async (friendId: string, deckId?: string) => {
+  const sendDuelInvite = useCallback(async (friendId: string, duelId: string) => {
     if (!state.user) return;
     try {
       const { error } = await supabase.from('duel_requests').insert({
         sender_id: state.user.id,
         receiver_id: friendId,
-        deck_id: deckId || null,
+        duel_id: duelId,
         status: 'pending'
       });
       if (error) throw error;
@@ -1063,7 +1067,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           type: 'duel',
           sender: (r as any).sender.name,
           username: (r as any).sender.username,
-          deck_id: r.deck_id,
+          duel_id: r.duel_id,
           timestamp: r.created_at
         }))
       ];
@@ -1205,9 +1209,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getMatch = useCallback(async () => {
     if (!state.user) return null;
     try {
+      // 1. Check if WE have been matched by someone else
+      const { data: myEntry } = await supabase
+        .from('matchmaking_queue')
+        .select('matched_duel_id')
+        .eq('user_id', state.user.id)
+        .single();
+      
+      if (myEntry?.matched_duel_id) {
+        return { duelId: myEntry.matched_duel_id };
+      }
+
+      // 2. Look for someone else to match with
       const { data, error } = await supabase
         .from('matchmaking_queue')
         .select('*')
+        .is('matched_duel_id', null)
         .neq('user_id', state.user.id)
         .limit(1)
         .maybeSingle();
@@ -1215,17 +1232,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (!data) return null;
 
-      // Fetch opponent profile separately
-      const { data: prof } = await supabase.from('profiles').select('name').eq('id', data.user_id).single();
-
       return {
-        id: data.id,
-        opponent: { id: data.user_id, name: prof?.name || 'Opponent' },
-        topic: data.deck_id === 'writing_mode' ? 'Universal Logic' : 'Deck Duel'
+        opponentId: data.user_id,
+        opponentName: 'Hunter detected'
       };
     } catch (err) {
       console.error("Get match failed:", err);
       return null;
+    }
+  }, [state.user]);
+
+  const createDuel = useCallback(async (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => {
+    if (!state.user) return '';
+    try {
+      const { data, error } = await supabase.from('duels').insert({
+        player1_id: state.user.id,
+        player2_id: opponentId,
+        mode,
+        p1_deck_id: deckId || null,
+        status: 'setup'
+      }).select().single();
+      if (error) throw error;
+      return data.id;
+    } catch (err) {
+      console.error("Create duel failed:", err);
+      return '';
+    }
+  }, [state.user]);
+
+  const updateDuel = useCallback(async (duelId: string, updates: any) => {
+    try {
+      const { error } = await supabase.from('duels').update(updates).eq('id', duelId);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Update duel failed:", err);
+    }
+  }, []);
+
+  const getDuel = useCallback(async (duelId: string) => {
+    try {
+      const { data, error } = await supabase.from('duels')
+        .select('*, p1:player1_id(name), p2:player2_id(name)')
+        .eq('id', duelId)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error("Get duel failed:", err);
+      return null;
+    }
+  }, []);
+
+  const voteDuel = useCallback(async (duelId: string, targetId: string, isFair: boolean) => {
+    if (!state.user) return;
+    try {
+      const { error } = await supabase.from('duel_votes').insert({
+        duel_id: duelId,
+        voter_id: state.user.id,
+        target_player_id: targetId,
+        is_fair: isFair
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Vote failed:", err);
     }
   }, [state.user]);
 
@@ -1244,7 +1313,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       sendDuelInvite, acceptDuelInvite, getNotifications,
-      joinMatchmaking, leaveMatchmaking, getMatch
+      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, voteDuel
     }}>
       {children}
     </AppContext.Provider>

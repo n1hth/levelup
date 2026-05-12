@@ -1,172 +1,171 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Swords, Zap, Timer, Trophy, Shield, AlertCircle, Send } from 'lucide-react';
+import { Swords, Zap, Timer, Trophy, Shield, AlertCircle, Send, BookOpen, Check, X, Users, MessageSquare, ChevronRight, Loader2 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
-import { supabase } from '@/src/lib/supabase';
+
+type DuelPhase = 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW' | 'COMMUNITY' | 'RESULTS';
 
 export function ArenaDuel() {
-  const { opponentId, topic } = useParams();
+  const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, addXp } = useApp();
+  const { state } = useApp();
   
-  const [timeLeft, setTimeLeft] = useState(90);
-  const [answer, setAnswer] = useState('');
-  const [isFinished, setIsFinished] = useState(false);
-  const [opponentName, setOpponentName] = useState('Opponent');
-  const [opponentProgress, setOpponentProgress] = useState(0); // 0-100%
+  // FOR THE UI-FIRST BUILD: We will use a local state to toggle phases for your review
+  const [phase, setPhase] = useState<DuelPhase>('LOBBY');
+  const [duelMode, setDuelMode] = useState<'writing' | 'deck'>('writing');
+  const [localInput, setLocalInput] = useState('');
 
-  useEffect(() => {
-    // Fetch opponent name
-    if (opponentId) {
-      supabase.from('profiles').select('name').eq('id', opponentId).single().then(({ data }) => {
-        if (data) setOpponentName(data.name);
-      });
-    }
-
-    // Timer logic
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsFinished(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // Mock opponent progress (in a real app, this would be real-time sync)
-    const progInterval = setInterval(() => {
-      setOpponentProgress(p => Math.min(p + Math.random() * 5, 100));
-    }, 2000);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(progInterval);
-    };
-  }, [opponentId]);
-
-  const handleFinish = () => {
-    setIsFinished(true);
-    addXp(500); // Massive XP for completing a duel
-    alert("Duel Completed! Reviewing results...");
-    navigate('/battle');
-  };
+  // UI-ONLY Mock Data
+  const opponent = { name: 'Viper_Hunter_X', rank: 'S' };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-6 flex flex-col font-sans">
-      {/* HUD */}
-      <header className="flex items-center justify-between mb-8 pt-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center border border-white/20 shadow-lg shadow-blue-500/20">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col relative overflow-hidden font-sans">
+      {/* ═══ SYSTEM HEADER ═══ */}
+      <header className="p-6 flex items-center justify-between z-50 bg-slate-950/50 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center border border-white/20 shadow-[0_0_15px_rgba(37,99,235,0.4)]">
             <Shield size={24} className="text-white" />
           </div>
           <div>
-            <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest">Syndicate Duel</h3>
-            <p className="text-lg font-black tracking-tight uppercase italic">Arena #{Math.floor(Math.random() * 9999)}</p>
-          </div>
-        </div>
-        
-        <div className="flex flex-col items-center">
-          <div className={cn(
-            "w-20 h-20 rounded-full border-4 flex items-center justify-center relative",
-            timeLeft < 20 ? "border-red-500 animate-pulse" : "border-blue-500"
-          )}>
-            <Timer className={cn("absolute -top-2 bg-slate-900 px-1", timeLeft < 20 ? "text-red-500" : "text-blue-500")} size={20} />
-            <span className={cn("text-2xl font-black", timeLeft < 20 ? "text-red-500" : "text-white")}>{timeLeft}s</span>
+            <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Channel_Duel_{duelId?.slice(0,4)}</div>
+            <h1 className="text-lg font-black uppercase italic tracking-tighter text-white">{phase}</h1>
           </div>
         </div>
 
-        <div className="text-right">
-          <h3 className="text-xs font-black text-red-400 uppercase tracking-widest">Target</h3>
-          <p className="text-lg font-black tracking-tight uppercase italic">{opponentName}</p>
+        {/* Phase Debugger (Will be removed after you approve UI) */}
+        <div className="flex gap-1">
+          {['LOBBY', 'EXCHANGE', 'TRIAL', 'REVIEW', 'COMMUNITY'].map(p => (
+            <button key={p} onClick={() => setPhase(p as DuelPhase)} className={cn("px-2 py-1 rounded text-[8px] font-black", phase === p ? "bg-white text-slate-950" : "bg-white/5 text-white/40")}>
+              {p.charAt(0)}
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Main Duel Interface */}
-      <main className="flex-1 flex flex-col gap-6">
-        <div className="bg-slate-800/50 border border-white/10 rounded-[32px] p-8 relative overflow-hidden backdrop-blur-xl">
-           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500" />
-           
-           <div className="flex items-center gap-2 mb-4">
-             <AlertCircle size={14} className="text-blue-400" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Intelligence Briefing</span>
-           </div>
-           
-           <h2 className="text-2xl font-black mb-2 tracking-tight uppercase italic">Topic: {topic || 'Universal Logic'}</h2>
-           <p className="text-sm text-slate-400 font-medium leading-relaxed">
-             Provide a comprehensive explanation and analysis of the subject above. Your response will be peer-reviewed by the community for accuracy and depth.
-           </p>
-        </div>
-
-        {/* Comparison Bars */}
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-blue-400 px-1">
-              <span>You (Operator)</span>
-              <span>{Math.round((answer.length / 500) * 100)}%</span>
-            </div>
-            <div className="h-3 bg-slate-800 rounded-full overflow-hidden border border-white/5 shadow-inner">
-               <motion.div 
-                 initial={{ width: 0 }}
-                 animate={{ width: `${Math.min((answer.length / 500) * 100, 100)}%` }}
-                 className="h-full bg-gradient-to-r from-blue-600 to-cyan-400"
-               />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-red-400 px-1">
-              <span>{opponentName} (Target)</span>
-              <span>{Math.round(opponentProgress)}%</span>
-            </div>
-            <div className="h-3 bg-slate-800 rounded-full overflow-hidden border border-white/5 shadow-inner">
-               <motion.div 
-                 initial={{ width: 0 }}
-                 animate={{ width: `${opponentProgress}%` }}
-                 className="h-full bg-gradient-to-r from-red-600 to-orange-400"
-               />
-            </div>
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="flex-1 flex flex-col gap-4">
-          <textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            disabled={isFinished}
-            placeholder="SYSTEM READY... START TYPING YOUR RESPONSE..."
-            className="flex-1 w-full bg-slate-800/80 border-2 border-white/5 rounded-[24px] p-6 text-lg font-bold placeholder:text-slate-600 focus:border-blue-500 outline-none transition-all resize-none shadow-2xl no-scrollbar"
-          />
+      <main className="flex-1 flex flex-col z-10 max-w-lg mx-auto w-full p-6">
+        <AnimatePresence mode="wait">
           
-          <button
-            onClick={handleFinish}
-            disabled={isFinished || answer.length < 20}
-            className={cn(
-              "w-full py-5 rounded-[24px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-95",
-              answer.length >= 20 ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20" : "bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed"
-            )}
-          >
-            <Send size={20} />
-            Transmit Data
-          </button>
-        </div>
+          {/* ═══ 1. LOBBY UI ═══ */}
+          {phase === 'LOBBY' && (
+            <motion.div key="lobby" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }} className="flex-1 flex flex-col items-center justify-center text-center space-y-12">
+              <div className="relative">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="w-64 h-64 rounded-full border-2 border-dashed border-blue-500/20 flex items-center justify-center" />
+                <motion.div animate={{ rotate: -360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute inset-0 rounded-full border-2 border-dashed border-red-500/10" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-40 h-40 rounded-full bg-blue-600/10 border-4 border-blue-500 flex flex-col items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)]">
+                    <Loader2 size={48} className="text-blue-500 animate-spin mb-2" />
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Neural Link</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-tight">Waiting for <br/> <span className="text-blue-500">Opponent...</span></h2>
+                <div className="flex items-center justify-center gap-3 bg-white/5 py-3 px-6 rounded-2xl border border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Connection Stable</span>
+                </div>
+              </div>
+
+              <button onClick={() => navigate('/battle')} className="w-full py-5 rounded-2xl bg-red-950/30 border-2 border-red-500/50 text-red-500 font-black uppercase text-[10px] tracking-[0.4em] hover:bg-red-500 hover:text-white transition-all">Abort Combat Link</button>
+            </motion.div>
+          )}
+
+          {/* ═══ 2. EXCHANGE UI ═══ */}
+          {phase === 'EXCHANGE' && (
+            <motion.div key="exchange" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col space-y-6">
+              <div className="system-panel p-8 bg-blue-600/5 border-blue-500/30 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+                <h2 className="text-3xl font-black uppercase italic mb-2 tracking-tighter text-white">Deploy <br/> Subject</h2>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Universal Mode: {duelMode}</p>
+              </div>
+
+              <div className="flex-1 flex flex-col space-y-4">
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Neural Input Required</div>
+                <textarea 
+                  value={localInput}
+                  onChange={(e) => setLocalInput(e.target.value)}
+                  placeholder="TYPE YOUR TOPIC OR SELECT DECK..."
+                  className="flex-1 w-full bg-slate-900 border-2 border-white/5 rounded-[32px] p-8 text-xl font-black uppercase outline-none focus:border-blue-500 transition-all placeholder:text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="system-panel p-5 border-white/10 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase italic text-slate-500">You</span>
+                  <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                </div>
+                <div className="system-panel p-5 border-white/10 flex items-center justify-between opacity-50">
+                  <span className="text-[10px] font-black uppercase italic text-slate-500">{opponent.name}</span>
+                  <div className="w-3 h-3 rounded-full bg-slate-700" />
+                </div>
+              </div>
+
+              <button className="w-full py-6 rounded-[32px] bg-blue-600 text-white font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl">Confirm Deployment</button>
+            </motion.div>
+          )}
+
+          {/* ═══ 3. TRIAL UI ═══ */}
+          {phase === 'TRIAL' && (
+            <motion.div key="trial" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col space-y-6">
+              <div className="system-panel p-6 border-red-500/40 bg-red-950/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle size={14} className="text-red-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Target Protocol</span>
+                </div>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Subject: Genetic Algorithms</h3>
+              </div>
+
+              <textarea 
+                placeholder="TYPE YOUR ANALYSIS..."
+                className="flex-1 w-full bg-slate-900/50 border-2 border-white/5 rounded-[40px] p-10 text-xl font-bold outline-none focus:border-red-500 transition-all"
+              />
+
+              <div className="flex items-center justify-between px-4">
+                <div className="flex items-center gap-2">
+                  <Timer size={16} className="text-slate-500" />
+                  <span className="text-lg font-black text-slate-500">01:24</span>
+                </div>
+                <button className="px-8 py-4 rounded-2xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest">Submit Trial</button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══ 4. REVIEW UI ═══ */}
+          {phase === 'REVIEW' && (
+            <motion.div key="review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex-1 flex flex-col space-y-6">
+              <div className="system-panel p-8 border-purple-500/30 bg-purple-950/20">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-4 italic">Opponent's Submission</h3>
+                <p className="text-lg font-bold leading-relaxed text-slate-300">"Genetic algorithms are inspired by Darwin's theory of evolution. They use mutation and crossover..."</p>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Neural Grading</h3>
+                <textarea 
+                  placeholder="ENTER FEEDBACK..."
+                  className="w-full h-32 bg-slate-900 border-2 border-white/5 rounded-3xl p-6 outline-none focus:border-purple-500 transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button className="py-5 rounded-2xl bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 font-black uppercase text-[10px] tracking-widest">Accept (Fair)</button>
+                <button className="py-5 rounded-2xl bg-red-600/20 border border-red-500/50 text-red-400 font-black uppercase text-[10px] tracking-widest">Reject (Unfair)</button>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </main>
 
-      {/* Footer Info */}
-      <footer className="mt-6 flex justify-center gap-8">
-        <div className="flex items-center gap-2">
-          <Zap size={14} className="text-yellow-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Reward: 500 XP</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Swords size={14} className="text-red-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Bet: Rank Points</span>
-        </div>
-      </footer>
+      {/* Cinematic Overlays */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-600/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-red-600/10 to-transparent" />
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-red-500/10 rounded-full blur-[120px]" />
+      </div>
     </div>
   );
 }
