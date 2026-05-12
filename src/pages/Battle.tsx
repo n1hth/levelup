@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Target, Trophy, Search, ChevronRight, Zap, Crown, MessageCircle, Swords as DuelIcon } from 'lucide-react';
@@ -18,19 +18,17 @@ export function Battle() {
   const [isMatching, setIsMatching] = useState(false);
   const [matchFound, setMatchFound] = useState<{ id: string; opponent: { id: string; name: string }; topic: string } | null>(null);
 
-  const { state, getDeckCards, getArenaStats, getDeckArenaHistory, joinMatchmaking, leaveMatchmaking, getMatch } = useApp();
+  const { state, getDeckCards, getArenaStats, getDeckArenaHistory, joinMatchmaking, leaveMatchmaking, getMatch, getFriends, sendDuelInvite } = useApp();
+  const [friends, setFriends] = useState<any[]>([]);
+  const [isInviting, setIsInviting] = useState(false);
 
   const arenaStats = getArenaStats();
   const eligibleDecks = state.decks.filter(d => getDeckCards(d.id).length >= MIN_CARDS);
 
   const handleStartMatchmaking = async () => {
     setIsMatching(true);
-    // Use the first eligible deck for now if in deck mode
     const deckId = duelMode === 'deck' ? eligibleDecks[0]?.id : 'writing_mode';
-    
     await joinMatchmaking(deckId);
-
-    // Poll for match
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
@@ -39,20 +37,34 @@ export function Battle() {
         clearInterval(interval);
         setMatchFound(match);
         setIsMatching(false);
-        // After 2s of celebration, navigate to duel (mocking navigation for now)
         setTimeout(() => {
           navigate(`/duels/${match.opponent.id}/${encodeURIComponent(match.topic)}`);
           setMatchFound(null);
         }, 2000);
       }
-      if (attempts > 30) { // 30 seconds timeout
+      if (attempts > 30) {
         clearInterval(interval);
         setIsMatching(false);
         await leaveMatchmaking();
-        alert("No opponents found in range. Try again later.");
+        alert("No opponents found. Try again later.");
       }
     }, 1000);
   };
+
+  const handleInviteFriend = async (friendId: string) => {
+    setIsInviting(true);
+    const deckId = duelMode === 'deck' ? eligibleDecks[0]?.id : undefined;
+    await sendDuelInvite(friendId, deckId);
+    setIsInviting(false);
+    alert("Challenge Sent! Wait for acceptance in your Hub.");
+    setDuelOpponent(null);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'duels') {
+      getFriends().then(setFriends);
+    }
+  }, [activeTab, getFriends]);
 
   const DIFFICULTIES = [
     { id: 'blitz', label: 'Blitz', icon: '⚡', time: 15, description: '15s per card — pure instinct', color: '#ef4444' },
@@ -220,33 +232,56 @@ export function Battle() {
                 {/* 2. Opponent Selection */}
                 <AnimatePresence>
                   {duelMode && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                      <div className="pt-2">
-                        <p className="text-[9px] font-bold text-blue-400 mb-3 uppercase tracking-widest">2. Select Opponent</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button 
-                            onClick={() => setDuelOpponent('random')}
-                            className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all", duelOpponent === 'random' ? "bg-blue-600 border-blue-400 text-white shadow-xl" : "bg-white border-white hover:border-blue-200")}
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-xl shrink-0">🎲</div>
-                            <div className="text-center">
-                              <span className="text-[10px] font-black block uppercase">Random</span>
-                              <span className={cn("text-[8px] font-bold", duelOpponent === 'random' ? "text-blue-100" : "text-blue-400")}>Match Instantly</span>
+                        <div className="pt-2">
+                          <p className="text-[9px] font-bold text-blue-400 mb-3 uppercase tracking-widest">2. Select Opponent</p>
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <button 
+                              onClick={() => setDuelOpponent('random')}
+                              className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all", duelOpponent === 'random' ? "bg-blue-600 border-blue-400 text-white shadow-xl" : "bg-white border-white hover:border-blue-200")}
+                            >
+                              <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-xl shrink-0">🎲</div>
+                              <span className="text-[10px] font-black uppercase">Random</span>
+                            </button>
+                            <button 
+                              onClick={() => setDuelOpponent('friend')}
+                              className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all", duelOpponent === 'friend' ? "bg-blue-600 border-blue-400 text-white shadow-xl" : "bg-white border-white hover:border-blue-200")}
+                            >
+                              <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-xl shrink-0">⚔️</div>
+                              <span className="text-[10px] font-black uppercase">Friend</span>
+                            </button>
+                          </div>
+
+                          {duelOpponent === 'friend' && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                              <p className="text-[8px] font-black text-blue-900 uppercase tracking-widest px-1">Select Friend to Challenge</p>
+                              {friends.filter(f => f.status === 'accepted').length > 0 ? (
+                                friends.filter(f => f.status === 'accepted').map(friend => (
+                                  <button 
+                                    key={friend.id}
+                                    disabled={isInviting}
+                                    onClick={() => handleInviteFriend(friend.id)}
+                                    className="w-full p-3 rounded-xl bg-white border border-blue-100 flex items-center justify-between hover:border-blue-500 transition-all active:scale-95 disabled:opacity-50"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-black text-[10px]">
+                                        {friend.name.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div className="text-left">
+                                        <div className="text-[10px] font-black text-blue-900 uppercase">{friend.name}</div>
+                                        <div className="text-[8px] font-bold text-blue-400 uppercase">Rank {state.totalXp > 1000 ? 'S' : 'E'}</div>
+                                      </div>
+                                    </div>
+                                    <Zap size={14} className="text-yellow-500" />
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="p-4 text-center rounded-xl bg-blue-50/50 border border-dashed border-blue-200">
+                                  <p className="text-[9px] font-bold text-blue-400 uppercase">No active syndicate links found</p>
+                                </div>
+                              )}
                             </div>
-                          </button>
-                          <button 
-                            onClick={() => setDuelOpponent('friend')}
-                            className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all", duelOpponent === 'friend' ? "bg-blue-600 border-blue-400 text-white shadow-xl" : "bg-white border-white hover:border-blue-200")}
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-xl shrink-0">⚔️</div>
-                            <div className="text-center">
-                              <span className="text-[10px] font-black block uppercase">Challenge</span>
-                              <span className={cn("text-[8px] font-bold", duelOpponent === 'friend' ? "text-blue-100" : "text-blue-400")}>Invite Friend</span>
-                            </div>
-                          </button>
+                          )}
                         </div>
-                      </div>
-                    </motion.div>
                   )}
                 </AnimatePresence>
 

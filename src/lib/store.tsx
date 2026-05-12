@@ -153,6 +153,9 @@ interface AppContextType {
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
+  sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
+  acceptDuelInvite: (requestId: string) => Promise<void>;
+  getNotifications: () => Promise<any[]>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
@@ -1004,6 +1007,73 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
+  const sendDuelInvite = useCallback(async (friendId: string, deckId?: string) => {
+    if (!state.user) return;
+    try {
+      const { error } = await supabase.from('duel_requests').insert({
+        sender_id: state.user.id,
+        receiver_id: friendId,
+        deck_id: deckId || null,
+        status: 'pending'
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Duel invite failed:", err);
+    }
+  }, [state.user]);
+
+  const acceptDuelInvite = useCallback(async (requestId: string) => {
+    if (!state.user) return;
+    try {
+      const { error } = await supabase
+        .from('duel_requests')
+        .update({ status: 'accepted' })
+        .eq('id', requestId);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Accept duel failed:", err);
+    }
+  }, [state.user]);
+
+  const getNotifications = useCallback(async () => {
+    if (!state.user) return [];
+    try {
+      const { data: friendReqs } = await supabase
+        .from('friends')
+        .select('*, sender:profiles!friends_user_id_fkey(name, username)')
+        .eq('friend_id', state.user.id)
+        .eq('status', 'pending');
+
+      const { data: duelReqs } = await supabase
+        .from('duel_requests')
+        .select('*, sender:profiles!duel_requests_sender_id_fkey(name, username)')
+        .eq('receiver_id', state.user.id)
+        .eq('status', 'pending');
+
+      const notifications = [
+        ...(friendReqs || []).map(r => ({
+          id: r.id,
+          type: 'friend',
+          sender: (r as any).sender.name,
+          username: (r as any).sender.username,
+          timestamp: r.created_at
+        })),
+        ...(duelReqs || []).map(r => ({
+          id: r.id,
+          type: 'duel',
+          sender: (r as any).sender.name,
+          username: (r as any).sender.username,
+          deck_id: r.deck_id,
+          timestamp: r.created_at
+        }))
+      ];
+      return notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    } catch (err) {
+      console.error("Fetch notifications failed:", err);
+      return [];
+    }
+  }, [state.user]);
+
   const getFriends = useCallback(async () => {
     if (!state.user) return [];
     
@@ -1173,6 +1243,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addArenaSession, getArenaStats, getDeckArenaHistory,
       getWeeklyInsights, getMilestones,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+      sendDuelInvite, acceptDuelInvite, getNotifications,
       joinMatchmaking, leaveMatchmaking, getMatch
     }}>
       {children}

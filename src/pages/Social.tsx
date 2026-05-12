@@ -19,11 +19,10 @@ import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
-type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community' | 'requests';
+type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: 'friends', label: 'Friends', icon: Users },
-  { id: 'requests', label: 'Requests', icon: UserPlus },
   { id: 'guilds', label: 'Guilds', icon: Shield },
   { id: 'community', label: 'Community', icon: Globe },
   { id: 'ranks', label: 'Ranks', icon: Trophy },
@@ -49,7 +48,7 @@ export function Social() {
   const rankTitle = getRankTitle(rank);
 
   useEffect(() => {
-    if (activeTab === 'friends' || activeTab === 'requests') {
+    if (activeTab === 'friends') {
       getFriends().then(setFriends);
     } else if (activeTab === 'ranks') {
       getLeaderboard().then(setLeaderboard);
@@ -131,24 +130,17 @@ export function Social() {
       <div className="flex gap-1 p-1 bg-white/60 border border-white/80 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
         {TABS.map(tab => {
           const Icon = tab.icon;
-          // Deduplicate incoming pending requests
-          const incomingPending = Array.from(new Map(
-            friends.filter(f => f.status === 'pending' && f.isIncoming).map(f => [f.id, f])
-          ).values());
-          const incomingPendingCount = incomingPending.length;
-          const showBadge = tab.id === 'requests' && incomingPendingCount > 0;
-
           return (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={cn("flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-widest transition-all min-w-[56px] relative",
-                activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" : "text-blue-400 hover:bg-blue-50")}>
-              <div className="relative">
-                <Icon size={15} />
-                {showBadge && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse" />
-                )}
-              </div>
-              {tab.label}
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all relative",
+                activeTab === tab.id ? "bg-blue-600 text-white shadow-lg" : "text-blue-900/40 hover:text-blue-600 hover:bg-blue-50"
+              )}
+            >
+              <Icon size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">{tab.label}</span>
             </button>
           );
         })}
@@ -231,78 +223,6 @@ export function Social() {
                 </div>
               )}
             </div>
-          </motion.div>
-        )}
-
-        {/* ═══ REQUESTS ═══ */}
-        {activeTab === 'requests' && (
-          <motion.div key="requests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-            <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Incoming Requests</h3>
-            {friends.filter(f => f.isIncoming && f.status === 'pending').length > 0 ? (
-              <div className="space-y-2">
-                {friends.filter(f => f.isIncoming && f.status === 'pending').map(friend => (
-                  <div key={friend.friendshipId} className="system-panel p-4 border-emerald-100 bg-emerald-50/20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs">
-                        {friend.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Incoming Request</div>
-                      </div>
-                    </div>
-                    <AnimatePresence mode="wait">
-                      {acceptingIds.has(friend.friendshipId) ? (
-                        <motion.div 
-                          key="tick"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600"
-                        >
-                          <Check size={20} strokeWidth={4} />
-                        </motion.div>
-                      ) : (
-                        <motion.button 
-                          key="btn"
-                          exit={{ scale: 0, opacity: 0 }}
-                          onClick={() => handleAcceptFriend(friend.friendshipId)} 
-                          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95"
-                        >
-                          Accept
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
-                <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest italic">No pending invitations...</p>
-              </div>
-            )}
-
-            <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1 mt-6">Sent Requests</h3>
-            {friends.filter(f => !f.isIncoming && f.status === 'pending').length > 0 ? (
-              <div className="space-y-2">
-                {friends.filter(f => !f.isIncoming && f.status === 'pending').map(friend => (
-                  <div key={friend.id} className="system-panel p-4 border-white/60 opacity-70 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-400 font-black text-xs">
-                        {friend.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                        <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Awaiting Response</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center">
-                <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest italic">No outgoing requests...</p>
-              </div>
-            )}
           </motion.div>
         )}
 

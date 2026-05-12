@@ -4,6 +4,7 @@ import { Home, BookOpen, Timer, User, Users, Swords, Zap, Triangle, Crosshair } 
 import { cn } from '@/src/lib/utils.ts';
 import { useApp } from '@/src/lib/store.tsx';
 import { type ReactNode } from 'react';
+import { NotificationHub } from './NotificationHub.tsx';
 
 export function Layout() {
   const { state, getLevel, getRank, getXpProgress } = useApp();
@@ -51,16 +52,19 @@ export function Layout() {
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-2 relative z-10">
-            <div className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-xl border border-white/80 shadow-sm transition-all hover:bg-white/80">
-              <span className="text-orange-500 font-bold text-xl leading-none drop-shadow-sm">🔥</span>
-              <span className="font-black text-blue-900 text-sm tracking-tight">{state.streak}</span>
-            </div>
-            {state.momentum > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-lg border border-purple-100">
-                <span className="text-[8px] font-black text-purple-500 uppercase tracking-widest">⚡ ×{(1 + state.momentum * 0.1).toFixed(1)}</span>
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2 bg-white/60 px-4 py-2 rounded-xl border border-white/80 shadow-sm transition-all hover:bg-white/80">
+                <span className="text-orange-500 font-bold text-xl leading-none drop-shadow-sm">🔥</span>
+                <span className="font-black text-blue-900 text-sm tracking-tight">{state.streak}</span>
               </div>
-            )}
+              {state.momentum > 0 && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-lg border border-purple-100">
+                  <span className="text-[8px] font-black text-purple-500 uppercase tracking-widest">⚡ ×{(1 + state.momentum * 0.1).toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+            <NotificationHub />
           </div>
         </header>
 
