@@ -1043,11 +1043,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const acceptFriendRequest = useCallback(async (friendId: string) => {
     if (!state.user) return;
     try {
+      // Try updating where I am the recipient
       const { error } = await supabase
         .from('friends')
         .update({ status: 'accepted' })
-        .eq('user_id', friendId)
-        .eq('friend_id', state.user.id);
+        .or(`and(user_id.eq.${friendId},friend_id.eq.${state.user.id}),and(user_id.eq.${state.user.id},friend_id.eq.${friendId})`);
+      
       if (error) throw error;
     } catch (err) {
       console.error("Accept friend failed:", err);
