@@ -48,7 +48,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     return () => { channel.unsubscribe(); };
   }, [duelId, fetchDuel, searching]);
 
-  // Neural Handshake (Matchmaking Worker)
+  // Neural Handshake (Dual-Path Matchmaking)
   useEffect(() => {
     if (!searching) return;
     
@@ -56,8 +56,10 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
       await joinMatchmaking('writing_mode');
       
       const interval = setInterval(async () => {
-        // 1. Check if WE were matched by another device
-        const { data: myEntry } = await supabase.from('matchmaking_queue').select('matched_duel_id').eq('user_id', state.user?.id).single();
+        if (!state.user) return;
+
+        // PATH A: Check matchmaking queue for a direct match ID
+        const { data: myEntry } = await supabase.from('matchmaking_queue').select('matched_duel_id').eq('user_id', state.user.id).single();
         if (myEntry?.matched_duel_id) {
           clearInterval(interval);
           await leaveMatchmaking();
@@ -65,12 +67,21 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
           return;
         }
 
-        // 2. Look for another hunter to match with
-        const { data: opponentEntry } = await supabase.from('matchmaking_queue').select('*').is('matched_duel_id', null).neq('user_id', state.user?.id).limit(1).maybeSingle();
+        // PATH B: Fail-safe - Check duels table for any invitation
+        const { data: invite } = await supabase.from('duels').select('id').eq('player2_id', state.user.id).eq('status', 'setup').order('created_at', { ascending: false }).limit(1).maybeSingle();
+        if (invite) {
+          clearInterval(interval);
+          await leaveMatchmaking();
+          navigate(`/duels/${invite.id}`, { replace: true });
+          return;
+        }
+
+        // PATH C: Look for someone else to match with (We become Player 1)
+        const { data: opponentEntry } = await supabase.from('matchmaking_queue').select('*').is('matched_duel_id', null).neq('user_id', state.user.id).limit(1).maybeSingle();
         if (opponentEntry) {
           clearInterval(interval);
           const newDuelId = await createDuel('writing', opponentEntry.user_id);
-          // Mark the opponent as matched with this Duel ID
+          // Try to update their queue entry (Silent fail if column missing)
           await supabase.from('matchmaking_queue').update({ matched_duel_id: newDuelId }).eq('user_id', opponentEntry.user_id);
           
           await leaveMatchmaking();
@@ -85,7 +96,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     };
 
     startSearch();
-  }, [searching, state.user?.id, joinMatchmaking, leaveMatchmaking, createDuel, navigate]);
+  }, [searching, state.user, joinMatchmaking, leaveMatchmaking, createDuel, navigate]);
 
   // Timer logic
   useEffect(() => {
