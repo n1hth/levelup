@@ -1014,6 +1014,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const friendId = f.user_id === state.user!.id ? f.friend_id : f.user_id;
         const profile = friendProfiles?.find(p => p.id === friendId);
         return {
+          friendshipId: f.id,
           id: friendId,
           name: profile?.name || 'Unknown User',
           status: f.status,
@@ -1040,13 +1041,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const acceptFriendRequest = useCallback(async (friendId: string) => {
+  const acceptFriendRequest = useCallback(async (friendshipId: string) => {
     if (!state.user) return;
     try {
       const { error } = await supabase
         .from('friends')
         .update({ status: 'accepted' })
-        .match({ user_id: friendId, friend_id: state.user.id });
+        .eq('id', friendshipId);
       
       if (error) throw error;
     } catch (err) {

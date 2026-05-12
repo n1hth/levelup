@@ -223,7 +223,7 @@ export function Social() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleAcceptFriend(friend.id)} 
+                      onClick={() => handleAcceptFriend(friend.friendshipId)} 
                       className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
                     >
                       Accept
