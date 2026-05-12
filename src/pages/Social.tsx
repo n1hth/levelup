@@ -103,7 +103,11 @@ export function Social() {
       <div className="flex gap-1 p-1 bg-white/60 border border-white/80 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
         {TABS.map(tab => {
           const Icon = tab.icon;
-          const incomingPendingCount = friends.filter(f => f.status === 'pending' && f.isIncoming).length;
+          // Deduplicate incoming pending requests
+          const incomingPending = Array.from(new Map(
+            friends.filter(f => f.status === 'pending' && f.isIncoming).map(f => [f.id, f])
+          ).values());
+          const incomingPendingCount = incomingPending.length;
           const showBadge = tab.id === 'requests' && incomingPendingCount > 0;
 
           return (
@@ -167,18 +171,27 @@ export function Social() {
 
             <div className="space-y-3">
               <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Active Friends</h3>
-              {friends.length > 0 ? (
+              {friends.filter(f => f.status === 'accepted').length > 0 ? (
                 <div className="space-y-2">
-                        <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.total_xp.toLocaleString()} XP</div>
+                  {/* Deduplicate by ID just in case */}
+                  {Array.from(new Map(friends.filter(f => f.status === 'accepted').map(f => [f.id, f])).values()).map(friend => (
+                    <div key={friend.id} className="system-panel p-3 border-white/60 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 font-black">
+                          {friend.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
+                          <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.total_xp.toLocaleString()} XP</div>
+                        </div>
                       </div>
+                      <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all active:scale-90">
+                        <MessageCircle size={16} />
+                      </button>
                     </div>
-                    <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
-                      <MessageCircle size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
+                  ))}
+                </div>
+              ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
                   <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><Users size={28} className="text-blue-200" /></div>
                   <h4 className="text-sm font-black text-blue-900 mb-1">No Contacts Found</h4>
@@ -195,7 +208,10 @@ export function Social() {
             <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Incoming Requests</h3>
             {friends.filter(f => f.isIncoming && f.status === 'pending').length > 0 ? (
               <div className="space-y-2">
-                {friends.filter(f => f.isIncoming && f.status === 'pending').map(friend => (
+                {/* Deduplicate incoming requests */}
+                {Array.from(new Map(
+                  friends.filter(f => f.isIncoming && f.status === 'pending').map(f => [f.id, f])
+                ).values()).map(friend => (
                   <div key={friend.id} className="system-panel p-4 border-emerald-100 bg-emerald-50/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs">
@@ -206,7 +222,10 @@ export function Social() {
                         <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">New Invitation Received</div>
                       </div>
                     </div>
-                    <button onClick={() => handleAcceptFriend(friend.id)} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95">
+                    <button 
+                      onClick={() => handleAcceptFriend(friend.id)} 
+                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
+                    >
                       Accept
                     </button>
                   </div>
