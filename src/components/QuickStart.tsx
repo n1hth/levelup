@@ -57,12 +57,23 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
       const timer = setTimeout(() => {
         // We just need to make sure the onboarding_completed is set in the database
         supabase.auth.getUser().then(({ data: { user } }) => {
+        supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
+            const finalName = formData.name || user.user_metadata.full_name || user.email?.split('@')[0] || 'Operator';
             supabase.from('profiles').update({ 
               onboarding_completed: true, 
               school: formData.school,
-              name: formData.name || user.user_metadata.full_name || user.email?.split('@')[0]
-            }).eq('id', user.id);
+              name: finalName
+            }).eq('id', user.id).then(() => {
+              // Update local state to trigger transition
+              setUser({
+                id: user.id,
+                name: finalName,
+                school: formData.school,
+                onboardingCompleted: true,
+                createdAt: user.created_at
+              });
+            });
           }
         });
       }, 4500);
