@@ -957,53 +957,74 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Social & Competitive ─────────────────────
 
   const searchUsers = useCallback(async (query: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, name, total_xp')
-      .ilike('name', `%${query}%`)
-      .limit(10);
-    return data || [];
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, total_xp')
+        .ilike('name', `%${query}%`)
+        .limit(10);
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error("Search failed:", err);
+      return [];
+    }
   }, []);
 
   const sendFriendRequest = useCallback(async (friendId: string) => {
     if (!state.user) return;
-    await supabase.from('friends').insert({
-      user_id: state.user.id,
-      friend_id: friendId,
-      status: 'pending'
-    });
+    try {
+      const { error } = await supabase.from('friends').insert({
+        user_id: state.user.id,
+        friend_id: friendId,
+        status: 'pending'
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Friend request failed:", err);
+      alert("Failed to send request. Database link error.");
+    }
   }, [state.user]);
 
   const getFriends = useCallback(async () => {
     if (!state.user) return [];
     
-    // Fetch where I am the requester
-    const { data: outgoing } = await supabase
-      .from('friends')
-      .select('status, profiles!friends_friend_id_fkey(id, name, total_xp)')
-      .eq('user_id', state.user.id);
+    try {
+      // Fetch both directions
+      const { data: friendships, error } = await supabase
+        .from('friends')
+        .select('*')
+        .or(`user_id.eq.${state.user.id},friend_id.eq.${state.user.id}`);
 
-    // Fetch where I am the recipient
-    const { data: incoming } = await supabase
-      .from('friends')
-      .select('status, profiles!friends_user_id_fkey(id, name, total_xp)')
-      .eq('friend_id', state.user.id);
-    
-    const formattedOutgoing = (outgoing || []).map((f: any) => ({
-      id: f.profiles.id,
-      name: f.profiles.name,
-      status: f.status,
-      total_xp: f.profiles.total_xp
-    }));
+      if (error) throw error;
+      if (!friendships || friendships.length === 0) return [];
 
-    const formattedIncoming = (incoming || []).map((f: any) => ({
-      id: f.profiles.id,
-      name: f.profiles.name,
-      status: f.status,
-      total_xp: f.profiles.total_xp
-    }));
+      // Extract unique friend IDs
+      const friendIds = friendships.map(f => f.user_id === state.user!.id ? f.friend_id : f.user_id);
 
-    return [...formattedOutgoing, ...formattedIncoming];
+      // Fetch profiles for those IDs
+      const { data: friendProfiles, error: profError } = await supabase
+        .from('profiles')
+        .select('id, name, total_xp')
+        .in('id', friendIds);
+
+      if (profError) throw profError;
+
+      return friendships.map(f => {
+        const friendId = f.user_id === state.user!.id ? f.friend_id : f.user_id;
+        const profile = friendProfiles?.find(p => p.id === friendId);
+        return {
+          id: friendId,
+          name: profile?.name || 'Unknown User',
+          status: f.status,
+          total_xp: profile?.total_xp || 0,
+          isIncoming: f.friend_id === state.user!.id
+        };
+      });
+    } catch (err) {
+      console.error("Fetch friends failed:", err);
+      return [];
+    }
   }, [state.user]);
 
   const getLeaderboard = useCallback(async () => {
@@ -1019,23 +1040,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const acceptFriendRequest = useCallback(async (friendId: string) => {
+    if (!state.user) return;
+    try {
+      const { error } = await supabase
+        .from('friends')
+        .update({ status: 'accepted' })
+        .eq('user_id', friendId)
+        .eq('friend_id', state.user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Accept friend failed:", err);
+    }
+  }, [state.user]);
+
   const sendMessage = useCallback(async (receiverId: string, content: string) => {
     if (!state.user) return;
-    await supabase.from('messages').insert({
-      sender_id: state.user.id,
-      receiver_id: receiverId,
-      content
-    });
+    try {
+      const { error } = await supabase.from('messages').insert({
+        sender_id: state.user.id,
+        receiver_id: receiverId,
+        content
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Message send failed:", err);
+    }
   }, [state.user]);
 
   const getMessages = useCallback(async (otherId: string) => {
     if (!state.user) return [];
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`and(sender_id.eq.${state.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${state.user.id})`)
-      .order('created_at', { ascending: true });
-    return data || [];
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${state.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${state.user.id})`)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error("Fetch messages failed:", err);
+      return [];
+    }
   }, [state.user]);
 
   // ── Battle & Matchmaking ──────────────────────

@@ -17,14 +17,14 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 ];
 
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [guildSearch, setGuildSearch] = useState('');
   const [dmInput, setDmInput] = useState('');
   const [selectedDm, setSelectedDm] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; total_xp: number }[]>([]);
-  const [friends, setFriends] = useState<{ id: string; name: string; status: string; total_xp: number }[]>([]);
+  const [friends, setFriends] = useState<{ id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -83,6 +83,12 @@ export function Social() {
     setSearchResults(prev => prev.filter(r => r.id !== id));
     getFriends().then(setFriends);
     alert("Friend request sent!");
+  };
+
+  const handleAcceptFriend = async (id: string) => {
+    await acceptFriendRequest(id);
+    getFriends().then(setFriends);
+    alert("Friend request accepted!");
   };
 
   return (
@@ -164,9 +170,16 @@ export function Social() {
                           <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.status} · {friend.total_xp.toLocaleString()} XP</div>
                         </div>
                       </div>
-                      <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
-                        <MessageCircle size={16} />
-                      </button>
+                      <div className="flex gap-2">
+                        {friend.status === 'pending' && friend.isIncoming && (
+                          <button onClick={() => handleAcceptFriend(friend.id)} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-sm">
+                            Accept
+                          </button>
+                        )}
+                        <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
+                          <MessageCircle size={16} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
