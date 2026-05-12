@@ -11,7 +11,7 @@ type DuelPhase = 'SEARCHING' | 'EXCHANGE' | 'TRIAL' | 'REVIEW' | 'FINISHED';
 export function ArenaDuel({ searching = false }: { searching?: boolean }) {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, addXp, getDuel, updateDuel, joinMatchmaking, leaveMatchmaking, getMatch, createDuel } = useApp();
+  const { state, addXp, getDuel, updateDuel, joinMatchmaking, leaveMatchmaking, getMatch, createDuel, getFriends } = useApp();
   
   const [duel, setDuel] = useState<any>(null);
   const [phase, setPhase] = useState<DuelPhase>(searching ? 'SEARCHING' : 'EXCHANGE');
@@ -19,6 +19,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
   const [localTopic, setLocalTopic] = useState('');
   const [answer, setAnswer] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [searchingStatus, setSearchingStatus] = useState('Initializing Search...');
 
   const isPlayer1 = duel?.player1_id === state.user?.id;
   const opponent = isPlayer1 ? duel?.p2 : duel?.p1;
@@ -48,55 +49,51 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     return () => { channel.unsubscribe(); };
   }, [duelId, fetchDuel, searching]);
 
-  // Neural Handshake (Dual-Path Matchmaking)
+  // Presence-Based Matchmaking Handshake
   useEffect(() => {
-    if (!searching) return;
+    if (!searching || !state.user) return;
     
-    const startSearch = async () => {
-      await joinMatchmaking('writing_mode');
-      
-      const interval = setInterval(async () => {
-        if (!state.user) return;
+    const lobbyChannel = supabase.channel('arena-lobby', {
+      config: { presence: { key: state.user.id } }
+    });
 
-        // PATH A: Check matchmaking queue for a direct match ID
-        const { data: myEntry } = await supabase.from('matchmaking_queue').select('matched_duel_id').eq('user_id', state.user.id).single();
-        if (myEntry?.matched_duel_id) {
-          clearInterval(interval);
-          await leaveMatchmaking();
-          navigate(`/duels/${myEntry.matched_duel_id}`, { replace: true });
-          return;
+    lobbyChannel
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = lobbyChannel.presenceState();
+        const users = Object.values(presenceState).flat() as any[];
+        
+        // Find someone else in the lobby
+        const opponent = users.find(u => u.user_id !== state.user?.id);
+        if (opponent && state.user) {
+          // Rule: The player with the "smaller" ID is the Master who creates the duel
+          if (state.user.id < opponent.user_id) {
+            setSearchingStatus(`Matched with ${opponent.name || 'Hunter'}! Creating Arena...`);
+            createDuel('writing', opponent.user_id).then(newId => {
+              lobbyChannel.send({
+                type: 'broadcast',
+                event: 'match_found',
+                payload: { duelId: newId, targetId: opponent.user_id }
+              });
+              setTimeout(() => navigate(`/duels/${newId}`, { replace: true }), 1000);
+            });
+          }
         }
-
-        // PATH B: Fail-safe - Check duels table for any invitation
-        const { data: invite } = await supabase.from('duels').select('id').eq('player2_id', state.user.id).eq('status', 'setup').order('created_at', { ascending: false }).limit(1).maybeSingle();
-        if (invite) {
-          clearInterval(interval);
-          await leaveMatchmaking();
-          navigate(`/duels/${invite.id}`, { replace: true });
-          return;
+      })
+      .on('broadcast', { event: 'match_found' }, ({ payload }) => {
+        if (payload.targetId === state.user?.id) {
+          setSearchingStatus('Combat Link Received! Initializing...');
+          setTimeout(() => navigate(`/duels/${payload.duelId}`, { replace: true }), 1000);
         }
-
-        // PATH C: Look for someone else to match with (We become Player 1)
-        const { data: opponentEntry } = await supabase.from('matchmaking_queue').select('*').is('matched_duel_id', null).neq('user_id', state.user.id).limit(1).maybeSingle();
-        if (opponentEntry) {
-          clearInterval(interval);
-          const newDuelId = await createDuel('writing', opponentEntry.user_id);
-          // Try to update their queue entry (Silent fail if column missing)
-          await supabase.from('matchmaking_queue').update({ matched_duel_id: newDuelId }).eq('user_id', opponentEntry.user_id);
-          
-          await leaveMatchmaking();
-          navigate(`/duels/${newDuelId}`, { replace: true });
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await lobbyChannel.track({ user_id: state.user?.id, name: state.user?.name, online_at: new Date().toISOString() });
+          setSearchingStatus('Broadcasting Hunter Signature...');
         }
-      }, 2000);
+      });
 
-      return () => {
-        clearInterval(interval);
-        leaveMatchmaking();
-      };
-    };
-
-    startSearch();
-  }, [searching, state.user, joinMatchmaking, leaveMatchmaking, createDuel, navigate]);
+    return () => { lobbyChannel.unsubscribe(); };
+  }, [searching, state.user, createDuel, navigate]);
 
   // Timer logic
   useEffect(() => {
@@ -154,7 +151,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
           </motion.div>
         </div>
         <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-4 z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Neural Network Scan</h2>
-        <p className="text-blue-400 text-[11px] font-black uppercase tracking-[0.5em] animate-pulse z-10">Establishing Combat Link...</p>
+        <p className="text-blue-400 text-[11px] font-black uppercase tracking-[0.5em] animate-pulse z-10">{searchingStatus}</p>
         <button onClick={() => navigate('/battle')} className="mt-16 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-400 z-10 transition-colors">Abort Protocol</button>
       </div>
     );

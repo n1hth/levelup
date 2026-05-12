@@ -52,10 +52,30 @@ export function Battle() {
   };
 
   useEffect(() => {
+    if (!state.user) return;
+    
+    // Listen for incoming friend duels
+    const channel = supabase
+      .channel('incoming-duels')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'duels', 
+        filter: `player2_id=eq.${state.user.id}` 
+      }, (payload) => {
+        if (payload.new.status === 'setup') {
+          // Auto-redirect to the duel
+          navigate(`/duels/${payload.new.id}`);
+        }
+      })
+      .subscribe();
+
     if (activeTab === 'duels') {
       getFriends().then(setFriends);
     }
-  }, [activeTab, getFriends]);
+    
+    return () => { channel.unsubscribe(); };
+  }, [activeTab, getFriends, state.user, navigate]);
 
   const DIFFICULTIES = [
     { id: 'blitz', label: 'Blitz', icon: '⚡', time: 15, description: '15s per card — pure instinct', color: '#ef4444' },
