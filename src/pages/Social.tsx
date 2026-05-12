@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Shield, Trophy, MessageCircle, Search, UserPlus, Crown, Swords, ChevronRight, Send, Plus, Zap, Globe } from 'lucide-react';
+import { Users, Shield, Trophy,  MessageCircle, 
+  Send, 
+  Search, 
+  Plus, 
+  Zap, 
+  ChevronRight, 
+  MessageSquare, 
+  Trash2, 
+  Check,
+  AtSign,
+  UserPlus,
+  Crown,
+  Globe
+} from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
@@ -18,14 +31,15 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 ];
 
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [guildSearch, setGuildSearch] = useState('');
   const [dmInput, setDmInput] = useState('');
   const [selectedDm, setSelectedDm] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; total_xp: number }[]>([]);
-  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
+  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
+  const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -87,8 +101,23 @@ export function Social() {
   };
 
   const handleAcceptFriend = async (id: string) => {
+    setAcceptingIds(prev => new Set(prev).add(id));
     await acceptFriendRequest(id);
-    getFriends().then(setFriends);
+    setTimeout(() => {
+      getFriends().then(setFriends);
+      setAcceptingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 1500);
+  };
+
+  const handleRemoveFriend = async (id: string) => {
+    if (confirm("Sever this syndicate link?")) {
+      await removeFriend(id);
+      getFriends().then(setFriends);
+    }
   };
 
   return (
@@ -157,17 +186,6 @@ export function Social() {
               </div>
             )}
             
-            <div className="system-panel p-4 border-white/60 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black text-white shadow-md" style={{ background: `linear-gradient(135deg, ${rankColor}, ${rankColor}88)` }}>
-                {state.user?.name?.charAt(0).toUpperCase() || '?'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block">Your Operator ID</span>
-                <span className="text-sm font-black text-blue-900 tracking-wider">LVL-{state.user?.name?.slice(0,3).toUpperCase() || 'XXX'}-{String(state.totalXp).padStart(4,'0').slice(-4)}</span>
-              </div>
-              <button className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-100 text-[9px] font-black text-blue-600 uppercase tracking-widest hover:bg-blue-100 transition-colors">Copy</button>
-            </div>
-
             <div className="space-y-3">
               <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Active Friends</h3>
               {friends.filter(f => f.status === 'accepted').length > 0 ? (
@@ -179,14 +197,27 @@ export function Social() {
                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 font-black">
                           {friend.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                          <div className="text-[9px] font-bold text-blue-400 uppercase">{friend.total_xp.toLocaleString()} XP</div>
+                          <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                            <AtSign size={8} /> {friend.username || friend.name.toLowerCase().replace(/\s/g, '_')}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }}
+                            className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
+                          >
+                            <MessageSquare size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleRemoveFriend(friend.friendshipId)}
+                            className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
-                      <button onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all active:scale-90">
-                        <MessageCircle size={16} />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -215,15 +246,30 @@ export function Social() {
                       </div>
                       <div>
                         <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Wants to join your syndicate</div>
+                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Incoming Request</div>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleAcceptFriend(friend.friendshipId)} 
-                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95"
-                    >
-                      Accept
-                    </button>
+                    <AnimatePresence mode="wait">
+                      {acceptingIds.has(friend.friendshipId) ? (
+                        <motion.div 
+                          key="tick"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600"
+                        >
+                          <Check size={20} strokeWidth={4} />
+                        </motion.div>
+                      ) : (
+                        <motion.button 
+                          key="btn"
+                          exit={{ scale: 0, opacity: 0 }}
+                          onClick={() => handleAcceptFriend(friend.friendshipId)} 
+                          className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95"
+                        >
+                          Accept
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
                   </div>
                 ))}
               </div>

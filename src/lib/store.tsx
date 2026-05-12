@@ -151,6 +151,7 @@ interface AppContextType {
   searchUsers: (query: string) => Promise<{ id: string; name: string; total_xp: number }[]>;
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
+  removeFriend: (friendshipId: string) => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
@@ -1057,6 +1058,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
+  const removeFriend = useCallback(async (friendshipId: string) => {
+    if (!state.user) return;
+    try {
+      const { error } = await supabase
+        .from('friends')
+        .delete()
+        .eq('id', friendshipId);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Remove friend failed:", err);
+    }
+  }, [state.user]);
+
   const sendMessage = useCallback(async (receiverId: string, content: string) => {
     if (!state.user) return;
     try {
@@ -1143,7 +1157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
       addArenaSession, getArenaStats, getDeckArenaHistory,
       getWeeklyInsights, getMilestones,
-      searchUsers, sendFriendRequest, acceptFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages,
+      searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       joinMatchmaking, leaveMatchmaking, getMatch
     }}>
       {children}

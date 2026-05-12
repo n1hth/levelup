@@ -16,7 +16,9 @@ import {
   CheckCircle2,
   Search,
   Plus,
-  School
+  School,
+  AtSign,
+  User
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils';
@@ -36,11 +38,12 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [schoolSearch, setSchoolSearch] = useState('');
   const [isAddingCustomSchool, setIsAddingCustomSchool] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    school: ''
+  const [formData, setFormData] = useState({ 
+    email: '', 
+    password: '', 
+    name: '', 
+    username: '',
+    school: '' 
   });
   const { state, setUser } = useApp();
 
@@ -62,7 +65,8 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             supabase.from('profiles').update({ 
               onboarding_completed: true, 
               school: formData.school,
-              name: finalName
+              name: finalName,
+              username: formData.username || finalName.toLowerCase().replace(/\s/g, '_')
             }).eq('id', user.id).then(() => {
               // Update local state to trigger transition
               setUser({
@@ -338,27 +342,39 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 <p className="text-[10px] font-black tracking-widest text-blue-400/60 uppercase">How should the system address you?</p>
               </div>
 
-              <div className="relative mb-6">
+              <div className="relative mb-4">
                 <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
-                  <Zap size={18} />
+                  <UserIcon size={18} />
                 </div>
                 <input
                   autoFocus
                   type="text"
-                  placeholder="CHOOSE YOUR DESIGNATION"
+                  placeholder="FULL NAME"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
-                  value={formData.name || (state.user?.name !== 'Operator' ? state.user?.name : '')}
+                  value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  onKeyDown={(e) => e.key === 'Enter' && formData.name.length > 2 && setPhase(3)}
+                />
+              </div>
+
+              <div className="relative mb-8">
+                <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
+                  <AtSign size={18} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="USERNAME"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})}
                 />
               </div>
 
               <button
-                disabled={!formData.name || formData.name.length < 2}
+                disabled={!formData.name || !formData.username || formData.username.length < 3}
                 onClick={() => setPhase(3)}
                 className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
               >
-                CONFIRM DESIGNATION
+                CONFIRM IDENTITY
               </button>
             </div>
           </motion.div>
