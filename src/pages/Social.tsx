@@ -30,14 +30,12 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 ];
 
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, voteDuel } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [guildSearch, setGuildSearch] = useState('');
   const [dmInput, setDmInput] = useState('');
   const [selectedDm, setSelectedDm] = useState<string | null>(null);
-  const [communityDuels, setCommunityDuels] = useState<any[]>([]);
-  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number }[]>([]);
   const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
@@ -54,12 +52,6 @@ export function Social() {
       getFriends().then(setFriends);
     } else if (activeTab === 'ranks') {
       getLeaderboard().then(setLeaderboard);
-    } else if (activeTab === 'community') {
-      supabase.from('duels')
-        .select('*, p1:profiles!duels_player1_id_fkey(name), p2:profiles!duels_player2_id_fkey(name)')
-        .eq('status', 'community')
-        .order('created_at', { ascending: false })
-        .then(({ data }) => setCommunityDuels(data || []));
     }
   }, [activeTab, getFriends, getLeaderboard]);
 
@@ -260,62 +252,24 @@ export function Social() {
           </motion.div>
         )}
 
+        {/* ═══ COMMUNITY ═══ */}
         {activeTab === 'community' && (
           <motion.div key="community" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
              <div className="system-panel p-6 bg-gradient-to-br from-blue-600 to-indigo-700 border-blue-500 text-white relative overflow-hidden text-center">
                 <div className="absolute inset-0 aero-gloss opacity-20" />
                 <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Community Hall</h3>
-                <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">Review duels and ensure fairness</p>
+                <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em] mb-6">Review duels and ensure fairness</p>
+                <button className="w-full btn-system bg-white text-blue-600 border-white shadow-xl">
+                  Browse Active Duels
+                </button>
              </div>
 
-             <div className="space-y-4">
-                {communityDuels.length > 0 ? communityDuels.map(duel => (
-                  <div key={duel.id} className="system-panel p-5 border-white/60 space-y-4 bg-white/40">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">Review Log #{duel.id.slice(0, 4)}</span>
-                      <div className="px-2 py-1 rounded-full bg-blue-100 text-[8px] font-black text-blue-600 uppercase tracking-widest">{duel.mode} Mode</div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="p-3 rounded-xl bg-white/60 border border-white">
-                        <div className="text-[8px] font-black text-blue-400 uppercase mb-1">{duel.p1.name}'s Answer</div>
-                        <p className="text-[10px] font-bold text-blue-900 line-clamp-3">{duel.p1_answer}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-purple-50 border border-purple-100">
-                        <div className="text-[8px] font-black text-purple-400 uppercase mb-1">{duel.p2.name}'s Correction</div>
-                        <p className="text-[10px] font-bold text-purple-900">{duel.p2_correction}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => { voteDuel(duel.id, duel.player2_id, true); setVotedIds(prev => new Set(prev).add(duel.id)); }}
-                        disabled={votedIds.has(duel.id)}
-                        className={cn(
-                          "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          votedIds.has(duel.id) ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500 text-white hover:bg-emerald-600"
-                        )}
-                      >
-                        {votedIds.has(duel.id) ? 'Voted Fair' : 'Fair Judgment'}
-                      </button>
-                      <button 
-                         onClick={() => { voteDuel(duel.id, duel.player2_id, false); setVotedIds(prev => new Set(prev).add(duel.id)); }}
-                         disabled={votedIds.has(duel.id)}
-                         className={cn(
-                          "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          votedIds.has(duel.id) ? "bg-red-100 text-red-600" : "bg-red-500 text-white hover:bg-red-600"
-                        )}
-                      >
-                        Unfair
-                      </button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="system-panel p-10 border-white/60 text-center opacity-40">
-                    <Users size={32} className="mx-auto mb-2" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">No active cases for review</p>
-                  </div>
-                )}
+             <div className="system-panel p-5 border-white/60 text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3 text-blue-300 shadow-inner">
+                  <Search size={20} />
+                </div>
+                <h4 className="text-[11px] font-black text-blue-900 uppercase">No Pending Reviews</h4>
+                <p className="text-[9px] font-bold text-blue-400 mt-1">Hunters are currently resting. Check back soon.</p>
              </div>
           </motion.div>
         )}

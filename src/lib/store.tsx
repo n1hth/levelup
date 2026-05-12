@@ -153,13 +153,9 @@ interface AppContextType {
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
-  sendDuelInvite: (friendId: string, duelId: string) => Promise<void>;
+  sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<void>;
   getNotifications: () => Promise<any[]>;
-  createDuel: (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => Promise<string>;
-  updateDuel: (duelId: string, updates: any) => Promise<void>;
-  getDuel: (duelId: string) => Promise<any>;
-  voteDuel: (duelId: string, targetId: string, isFair: boolean) => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
@@ -168,6 +164,9 @@ interface AppContextType {
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
   getMatch: () => Promise<any>;
+  createDuel: (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => Promise<string>;
+  updateDuel: (duelId: string, updates: any) => Promise<void>;
+  getDuel: (id: string) => Promise<any>;
   // Auth
   session: Session | null;
   signOut: () => Promise<void>;
@@ -1011,13 +1010,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
-  const sendDuelInvite = useCallback(async (friendId: string, duelId: string) => {
+  const sendDuelInvite = useCallback(async (friendId: string, deckId?: string) => {
     if (!state.user) return;
     try {
       const { error } = await supabase.from('duel_requests').insert({
         sender_id: state.user.id,
         receiver_id: friendId,
-        duel_id: duelId,
+        deck_id: deckId || null,
         status: 'pending'
       });
       if (error) throw error;
@@ -1067,7 +1066,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           type: 'duel',
           sender: (r as any).sender.name,
           username: (r as any).sender.username,
-          duel_id: r.duel_id,
+          deck_id: r.deck_id,
           timestamp: r.created_at
         }))
       ];
@@ -1269,34 +1268,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const getDuel = useCallback(async (duelId: string) => {
-    try {
-      const { data, error } = await supabase.from('duels')
-        .select('*, p1:player1_id(name), p2:player2_id(name)')
-        .eq('id', duelId)
-        .single();
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error("Get duel failed:", err);
+  const getDuel = useCallback(async (id: string) => {
+    const { data, error } = await supabase
+      .from('duels')
+      .select(`
+        *,
+        p1:player1_id(name, total_xp),
+        p2:player2_id(name, total_xp)
+      `)
+      .eq('id', id)
+      .single();
+    if (error) {
+      console.error("Get duel failed:", error);
       return null;
     }
+    return data;
   }, []);
-
-  const voteDuel = useCallback(async (duelId: string, targetId: string, isFair: boolean) => {
-    if (!state.user) return;
-    try {
-      const { error } = await supabase.from('duel_votes').insert({
-        duel_id: duelId,
-        voter_id: state.user.id,
-        target_player_id: targetId,
-        is_fair: isFair
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error("Vote failed:", err);
-    }
-  }, [state.user]);
 
   return (
     <AppContext.Provider value={{
@@ -1313,7 +1300,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       sendDuelInvite, acceptDuelInvite, getNotifications,
-      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, voteDuel
+      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel
     }}>
       {children}
     </AppContext.Provider>
