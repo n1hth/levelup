@@ -208,23 +208,23 @@ export function Social() {
             <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Incoming Requests</h3>
             {friends.filter(f => f.isIncoming && f.status === 'pending').length > 0 ? (
               <div className="space-y-2">
-                {/* Deduplicate incoming requests */}
-                {Array.from(new Map(
-                  friends.filter(f => f.isIncoming && f.status === 'pending').map(f => [f.id, f])
-                ).values()).map(friend => (
-                  <div key={friend.id} className="system-panel p-4 border-emerald-100 bg-emerald-50/20 flex items-center justify-between">
+                {friends.filter(f => f.isIncoming && f.status === 'pending').map(friend => (
+                  <div key={friend.friendshipId} className="system-panel p-4 border-emerald-100 bg-emerald-50/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs">
                         {friend.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">New Invitation Received</div>
+                        <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Wants to join your syndicate</div>
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleAcceptFriend(friend.friendshipId)} 
-                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
+                      onClick={() => {
+                        alert("Accepting " + friend.name + " (ID: " + friend.friendshipId + ")");
+                        handleAcceptFriend(friend.friendshipId);
+                      }} 
+                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95"
                     >
                       Accept
                     </button>
