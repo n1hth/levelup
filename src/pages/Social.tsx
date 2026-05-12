@@ -50,8 +50,7 @@ export function Social() {
         .on('postgres_changes', { 
           event: 'INSERT', 
           schema: 'public', 
-          table: 'messages',
-          filter: `or(sender_id.eq.${state.user?.id},receiver_id.eq.${state.user?.id})` 
+          table: 'messages'
         }, (payload) => {
           const newMsg = payload.new as any;
           if ((newMsg.sender_id === selectedDm && newMsg.receiver_id === state.user?.id) || 
@@ -82,6 +81,7 @@ export function Social() {
   const handleAddFriend = async (id: string) => {
     await sendFriendRequest(id);
     setSearchResults(prev => prev.filter(r => r.id !== id));
+    getFriends().then(setFriends);
     alert("Friend request sent!");
   };
 
