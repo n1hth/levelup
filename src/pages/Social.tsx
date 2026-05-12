@@ -6,7 +6,7 @@ import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
-type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community';
+type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community' | 'requests';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: 'friends', label: 'Friends', icon: Users },
@@ -25,7 +25,7 @@ export function Social() {
   const [dmInput, setDmInput] = useState('');
   const [selectedDm, setSelectedDm] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; total_xp: number }[]>([]);
-  const [friends, setFriends] = useState<{ id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
+  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);

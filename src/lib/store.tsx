@@ -150,7 +150,8 @@ interface AppContextType {
   // Social Extended
   searchUsers: (query: string) => Promise<{ id: string; name: string; total_xp: number }[]>;
   sendFriendRequest: (friendId: string) => Promise<void>;
-  getFriends: () => Promise<{ id: string; name: string; status: string; total_xp: number }[]>;
+  acceptFriendRequest: (friendshipId: string) => Promise<void>;
+  getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
   getMessages: (otherId: string) => Promise<{ id: string; sender_id: string; content: string; created_at: string }[]>;
@@ -1151,7 +1152,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
       addArenaSession, getArenaStats, getDeckArenaHistory,
       getWeeklyInsights, getMilestones,
-      searchUsers, sendFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages,
+      searchUsers, sendFriendRequest, acceptFriendRequest, getFriends, getLeaderboard, sendMessage, getMessages,
       joinMatchmaking, leaveMatchmaking, getMatch
     }}>
       {children}
