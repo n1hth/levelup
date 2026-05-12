@@ -15,7 +15,7 @@ import { ArenaPlay } from './pages/ArenaPlay.tsx';
 import { Social } from './pages/Social.tsx';
 
 function AppContent() {
-  const { state, isLoading } = useApp();
+  const { state, isLoading, session } = useApp();
 
   if (isLoading) {
     return (
@@ -33,7 +33,8 @@ function AppContent() {
   }
 
   if (!state.user || !state.user.onboardingCompleted) {
-    const initialPhase = (state.user && !state.user.onboardingCompleted) ? 2.5 : 0;
+    // If we have a session, we are authenticated. Skip to Name/School (Phase 2.5/3)
+    const initialPhase = (session || state.user) ? 2.5 : 0;
     return <QuickStart initialPhase={initialPhase} />;
   }
 

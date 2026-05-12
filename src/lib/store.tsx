@@ -158,6 +158,8 @@ interface AppContextType {
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
   getMatch: () => Promise<{ id: string; opponent: { id: string; name: string }; topic: string } | null>;
+  // Auth
+  session: Session | null;
 }
 
 // ═══════════════════════════════════════════════
@@ -217,16 +219,19 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // 1. Initial Auth Check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       handleAuthChange(session);
     });
 
     // 2. Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
       handleAuthChange(session);
     });
 
@@ -1033,7 +1038,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      state, isLoading,
+      state, isLoading, session,
       setUser, resetUser,
       addXp, getLevel, getRank, getXpProgress: getXpProgressData,
       addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
