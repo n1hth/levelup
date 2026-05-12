@@ -32,7 +32,10 @@ function AppContent() {
     );
   }
 
-  if (!state.user || !state.user.onboardingCompleted) return <QuickStart />;
+  if (!state.user || !state.user.onboardingCompleted) {
+    const initialPhase = (state.user && !state.user.onboardingCompleted) ? 2.5 : 0;
+    return <QuickStart initialPhase={initialPhase} />;
+  }
 
   return (
     <AnimatePresence mode="wait">

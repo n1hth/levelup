@@ -31,8 +31,8 @@ const MOCK_SCHOOLS = [
   "Celestial Sanctum",
 ];
 
-export function QuickStart() {
-  const [phase, setPhase] = useState(0);
+export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
+  const [phase, setPhase] = useState(initialPhase);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [schoolSearch, setSchoolSearch] = useState('');
   const [isAddingCustomSchool, setIsAddingCustomSchool] = useState(false);
@@ -44,19 +44,12 @@ export function QuickStart() {
   });
   const { state, setUser } = useApp();
 
-  // Phase 0: Auto-advance after 1.5 seconds or check if already auth but not onboarded
   useEffect(() => {
     if (phase === 0) {
-      const timer = setTimeout(() => {
-        if (state.user && !state.user.onboardingCompleted) {
-          setPhase(2.5); // Skip to name entry
-        } else {
-          setPhase(1);
-        }
-      }, 1500);
+      const timer = setTimeout(() => setPhase(1), 1500);
       return () => clearTimeout(timer);
     }
-  }, [phase, state.user]);
+  }, [phase]);
 
   // Phase 7: Auto-redirect after grand finale
   useEffect(() => {
