@@ -48,7 +48,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     return () => { channel.unsubscribe(); };
   }, [duelId, fetchDuel, searching]);
 
-  // Matchmaking Worker for Search Page
+  // Neural Handshake (Matchmaking Worker)
   useEffect(() => {
     if (!searching) return;
     
@@ -56,15 +56,22 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
       await joinMatchmaking('writing_mode');
       
       const interval = setInterval(async () => {
-        const match = await getMatch();
-        if (match) {
+        // 1. Check if WE were matched by another device
+        const { data: myEntry } = await supabase.from('matchmaking_queue').select('matched_duel_id').eq('user_id', state.user?.id).single();
+        if (myEntry?.matched_duel_id) {
           clearInterval(interval);
-          let newDuelId = (match as any).duelId;
-          
-          if (!newDuelId) {
-            newDuelId = await createDuel('writing', (match as any).opponentId);
-            await supabase.from('matchmaking_queue').update({ matched_duel_id: newDuelId }).eq('user_id', (match as any).opponentId);
-          }
+          await leaveMatchmaking();
+          navigate(`/duels/${myEntry.matched_duel_id}`, { replace: true });
+          return;
+        }
+
+        // 2. Look for another hunter to match with
+        const { data: opponentEntry } = await supabase.from('matchmaking_queue').select('*').is('matched_duel_id', null).neq('user_id', state.user?.id).limit(1).maybeSingle();
+        if (opponentEntry) {
+          clearInterval(interval);
+          const newDuelId = await createDuel('writing', opponentEntry.user_id);
+          // Mark the opponent as matched with this Duel ID
+          await supabase.from('matchmaking_queue').update({ matched_duel_id: newDuelId }).eq('user_id', opponentEntry.user_id);
           
           await leaveMatchmaking();
           navigate(`/duels/${newDuelId}`, { replace: true });
@@ -78,7 +85,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     };
 
     startSearch();
-  }, [searching, joinMatchmaking, leaveMatchmaking, getMatch, createDuel, navigate]);
+  }, [searching, state.user?.id, joinMatchmaking, leaveMatchmaking, createDuel, navigate]);
 
   // Timer logic
   useEffect(() => {
@@ -128,25 +135,24 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center text-center p-8 relative overflow-hidden">
         <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-slate-950 to-slate-950 pointer-events-none" />
-        <div className="relative w-64 h-64 mb-12 z-10">
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-4 border-dashed border-blue-500/20 rounded-full" />
-          <motion.div animate={{ rotate: -360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} className="absolute inset-4 border-2 border-dashed border-cyan-500/10 rounded-full" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Search size={48} className="text-blue-500 animate-pulse" />
-          </div>
+        <div className="relative w-72 h-72 mb-12 z-10 flex items-center justify-center">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-4 border-dashed border-blue-500/30 rounded-full" />
+          <motion.div animate={{ rotate: -360 }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }} className="absolute inset-8 border-2 border-dashed border-cyan-500/20 rounded-full" />
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-40 h-40 rounded-full bg-blue-600/10 border border-blue-500/40 flex items-center justify-center backdrop-blur-3xl shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+             <Search size={48} className="text-blue-500" />
+          </motion.div>
         </div>
-        <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-4 z-10">Scanning Neural Network</h2>
-        <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse z-10">Establishing Combat Link...</p>
-        <button onClick={() => navigate('/battle')} className="mt-12 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-400 z-10">Abort Protocol</button>
+        <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-4 z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Neural Network Scan</h2>
+        <p className="text-blue-400 text-[11px] font-black uppercase tracking-[0.5em] animate-pulse z-10">Establishing Combat Link...</p>
+        <button onClick={() => navigate('/battle')} className="mt-16 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-400 z-10 transition-colors">Abort Protocol</button>
       </div>
     );
   }
 
-  if (!duel) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900"><Loader2 className="text-blue-500 animate-spin" size={48} /></div>;
+  if (!duel) return <div className="h-screen w-screen flex items-center justify-center bg-slate-950"><Loader2 className="text-blue-500 animate-spin" size={48} /></div>;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col relative overflow-hidden font-sans">
-      {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-slate-950 to-slate-950" />
       </div>
