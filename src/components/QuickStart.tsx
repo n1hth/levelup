@@ -57,7 +57,6 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
       const timer = setTimeout(() => {
         // We just need to make sure the onboarding_completed is set in the database
         supabase.auth.getUser().then(({ data: { user } }) => {
-        supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
             const finalName = formData.name || user.user_metadata.full_name || user.email?.split('@')[0] || 'Operator';
             supabase.from('profiles').update({ 
