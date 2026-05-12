@@ -29,12 +29,8 @@ export function Battle() {
 
   const handleStartMatchmaking = async () => {
     setIsMatching(true);
-    const mode = duelMode;
-    const deckId = mode === 'deck' ? eligibleDecks[0]?.id : 'writing_mode';
-    
-    // Create a "pending" duel record to host the search
-    const duelId = await createDuel(mode as any, 'searching'); 
-    navigate(`/duels/${duelId}`);
+    // Navigate to searching page immediately for smooth transition
+    navigate('/duels/searching');
   };
 
   const handleInviteFriend = async (friendId: string) => {

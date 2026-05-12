@@ -52,6 +52,7 @@ function AppContent() {
           <Route path="battle" element={<Battle />} />
           <Route path="arenas" element={<Navigate to="/battle" replace />} />
           <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
+          <Route path="duels/searching" element={<ArenaDuel searching />} />
           <Route path="duels/:duelId" element={<ArenaDuel />} />
           <Route path="social" element={<Social />} />
           <Route path="profile" element={<Profile />} />
