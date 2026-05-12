@@ -965,10 +965,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .ilike('name', `%${query}%`)
         .limit(10);
       if (error) {
-        alert("Search error: " + error.message);
         throw error;
       }
-      alert("Found " + (data?.length || 0) + " users.");
       return data || [];
     } catch (err) {
       console.error("Search failed:", err);
@@ -979,7 +977,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sendFriendRequest = useCallback(async (friendId: string) => {
     if (!state.user) return;
     try {
-      alert("Sending friend request to: " + friendId);
       const { error } = await supabase.from('friends').insert({
         user_id: state.user.id,
         friend_id: friendId,
@@ -988,7 +985,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (err) {
       console.error("Friend request failed:", err);
-      alert("Failed to send request. Database link error.");
     }
   }, [state.user]);
 
@@ -1050,17 +1046,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const acceptFriendRequest = useCallback(async (friendshipId: string) => {
     if (!state.user) return;
     try {
-      console.log("Attempting to accept friendship:", friendshipId);
       const { error } = await supabase
         .from('friends')
         .update({ status: 'accepted' })
         .eq('id', friendshipId);
       
-      if (error) {
-        alert("Database Error: " + error.message);
-        throw error;
-      }
-      alert("Friendship Accepted in Database!");
+      if (error) throw error;
     } catch (err) {
       console.error("Accept friend failed:", err);
     }

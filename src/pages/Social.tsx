@@ -89,7 +89,6 @@ export function Social() {
   const handleAcceptFriend = async (id: string) => {
     await acceptFriendRequest(id);
     getFriends().then(setFriends);
-    alert("Friend request accepted!");
   };
 
   return (
@@ -220,10 +219,7 @@ export function Social() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => {
-                        alert("Accepting " + friend.name + " (ID: " + friend.friendshipId + ")");
-                        handleAcceptFriend(friend.friendshipId);
-                      }} 
+                      onClick={() => handleAcceptFriend(friend.friendshipId)} 
                       className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md transition-all active:scale-95"
                     >
                       Accept
@@ -374,15 +370,23 @@ export function Social() {
                   <input type="text" placeholder="SEARCH COMMS..." className="w-full bg-white border border-blue-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-400 focus:bg-white transition-all text-blue-900 placeholder:text-blue-300 font-black text-[10px] tracking-widest shadow-sm" />
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-2">
-                  {friends.length > 0 ? friends.map(friend => (
-                    <button key={friend.id} onClick={() => setSelectedDm(friend.id)} className="w-full system-panel p-4 border-white/60 flex items-center gap-4 hover:bg-blue-50 transition-colors">
+                  {friends.filter(f => f.status === 'accepted').length > 0 ? (
+                  Array.from(new Map(friends.filter(f => f.status === 'accepted').map(f => [f.id, f])).values()).map(friend => (
+                    <motion.button 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={friend.id} 
+                      onClick={() => setSelectedDm(friend.id)} 
+                      className="w-full system-panel p-4 border-white/60 flex items-center gap-4 hover:bg-blue-50 transition-colors"
+                    >
                       <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-black">{friend.name.charAt(0).toUpperCase()}</div>
                       <div className="text-left">
                         <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
                         <div className="text-[9px] font-bold text-blue-400 uppercase">Secure Link Active</div>
                       </div>
-                    </button>
-                  )) : (
+                    </motion.button>
+                  ))
+                ) : (
                     <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60 h-full">
                       <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><MessageCircle size={28} className="text-blue-200" /></div>
                       <h4 className="text-sm font-black text-blue-900 mb-1">No Encrypted Comms</h4>
