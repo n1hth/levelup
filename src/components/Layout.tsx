@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Home, BookOpen, Timer, User, Users, Swords, Zap, Triangle } from 'lucide-react';
+import { Home, BookOpen, Timer, User, Users, Swords, Zap } from 'lucide-react';
 import { cn } from '@/src/lib/utils.ts';
 import { useApp } from '@/src/lib/store.tsx';
 import { type ReactNode } from 'react';
@@ -14,11 +14,6 @@ export function Layout() {
 
   return (
     <div className="relative min-h-screen min-h-[100dvh] flex flex-col items-center overflow-x-hidden bg-slate-50">
-      {/* V4 VERIFICATION BANNER */}
-      <div className="w-full bg-red-600 text-white py-2 text-center text-[10px] font-black uppercase tracking-[0.5em] z-[10000] shadow-xl">
-        System Update V4: Sync Active
-      </div>
-
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[120px] opacity-40 animate-pulse" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyan-50 rounded-full blur-[100px] opacity-50 animate-pulse" />
