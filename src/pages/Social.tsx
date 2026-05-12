@@ -37,7 +37,7 @@ export function Social() {
   const [guildSearch, setGuildSearch] = useState('');
   const [dmInput, setDmInput] = useState('');
   const [selectedDm, setSelectedDm] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<{ id: string; name: string; total_xp: number }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number }[]>([]);
   const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
@@ -175,7 +175,9 @@ export function Social() {
                       </div>
                       <div>
                         <div className="text-xs font-black text-blue-900 uppercase">{user.name}</div>
-                        <div className="text-[8px] font-bold text-blue-400 uppercase tracking-tighter">{user.total_xp.toLocaleString()} XP</div>
+                        <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                          <AtSign size={8} /> {user.username || user.name.toLowerCase().replace(/\s/g, '_')}
+                        </div>
                       </div>
                     </div>
                     <button onClick={() => handleAddFriend(user.id)} className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors">

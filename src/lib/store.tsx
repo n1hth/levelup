@@ -148,7 +148,8 @@ interface AppContextType {
   };
   getMilestones: () => { id: string; title: string; date: string; description: string; icon: string }[];
   // Social Extended
-  searchUsers: (query: string) => Promise<{ id: string; name: string; total_xp: number }[]>;
+  searchUsers: (query: string) => Promise<{ id: string; name: string; username?: string; total_xp: number }[]>;
+  isUsernameAvailable: (username: string) => Promise<boolean>;
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
@@ -959,19 +960,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Social & Competitive ─────────────────────
 
   const searchUsers = useCallback(async (query: string) => {
+    if (!state.user || query.length < 2) return [];
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, total_xp')
-        .ilike('name', `%${query}%`)
+        .select('id, name, username, total_xp')
+        .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
         .limit(10);
-      if (error) {
-        throw error;
-      }
+      
+      if (error) throw error;
       return data || [];
     } catch (err) {
       console.error("Search failed:", err);
       return [];
+    }
+  }, [state.user]);
+
+  const isUsernameAvailable = useCallback(async (username: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+      if (error) return true;
+      return !data;
+    } catch {
+      return true;
     }
   }, []);
 
@@ -1157,7 +1172,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
       addArenaSession, getArenaStats, getDeckArenaHistory,
       getWeeklyInsights, getMilestones,
-      searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+      searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       joinMatchmaking, leaveMatchmaking, getMatch
     }}>
       {children}

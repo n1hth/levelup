@@ -45,7 +45,22 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
     username: '',
     school: '' 
   });
-  const { state, setUser } = useApp();
+  const { state, setUser, isUsernameAvailable } = useApp();
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (formData.username.length < 3) {
+        setUsernameStatus('idle');
+        return;
+      }
+      setUsernameStatus('checking');
+      const available = await isUsernameAvailable(formData.username);
+      setUsernameStatus(available ? 'available' : 'taken');
+    };
+    const timer = setTimeout(checkUser, 500);
+    return () => clearTimeout(timer);
+  }, [formData.username, isUsernameAvailable]);
 
   useEffect(() => {
     if (phase === 0) {
@@ -363,14 +378,23 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 <input
                   type="text"
                   placeholder="USERNAME"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
+                  className={cn(
+                    "w-full bg-white/5 border rounded-2xl py-5 pl-12 pr-4 outline-none transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase",
+                    usernameStatus === 'available' ? "border-emerald-500/50 focus:border-emerald-500" : 
+                    usernameStatus === 'taken' ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-blue-500"
+                  )}
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})}
                 />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  {usernameStatus === 'checking' && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+                  {usernameStatus === 'available' && <CheckCircle2 size={16} className="text-emerald-500" />}
+                  {usernameStatus === 'taken' && <Zap size={16} className="text-red-500" />}
+                </div>
               </div>
 
               <button
-                disabled={!formData.name || !formData.username || formData.username.length < 3}
+                disabled={!formData.name || !formData.username || usernameStatus !== 'available'}
                 onClick={() => setPhase(3)}
                 className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
               >
