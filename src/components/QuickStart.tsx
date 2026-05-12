@@ -42,7 +42,7 @@ export function QuickStart() {
     password: '',
     school: ''
   });
-  const { setUser } = useApp();
+  const { state, setUser } = useApp();
 
   // Phase 0: Auto-advance after 1.5 seconds or check if already auth but not onboarded
   useEffect(() => {
