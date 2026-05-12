@@ -160,6 +160,7 @@ interface AppContextType {
   getMatch: () => Promise<{ id: string; opponent: { id: string; name: string }; topic: string } | null>;
   // Auth
   session: Session | null;
+  signOut: () => Promise<void>;
 }
 
 // ═══════════════════════════════════════════════
@@ -253,6 +254,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('id', session.user.id)
         .single();
 
+      // Setup Real-time listener for messages
+      const messageChannel = supabase
+        .channel('messages-realtime')
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'messages',
+          filter: `receiver_id=eq.${session.user.id}`
+        }, (payload) => {
+          console.log("New message received:", payload);
+          // Auto-refresh messages if we are in a chat
+        })
+        .subscribe();
+
       if (profileError && profileError.code !== 'PGRST116') {
         throw profileError;
       }
@@ -330,6 +345,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const resetUser = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setState(defaultState);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setState(defaultState);
+    setSession(null);
   }, []);
 
   // ── XP ───────────────────────────────────────
@@ -1039,7 +1060,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       state, isLoading, session,
-      setUser, resetUser,
+      setUser, resetUser, signOut,
       addXp, getLevel, getRank, getXpProgress: getXpProgressData,
       addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
       addDeck, updateDeck, deleteDeck,

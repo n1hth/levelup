@@ -72,6 +72,9 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 onboardingCompleted: true,
                 createdAt: user.created_at
               });
+            }).catch(err => {
+              console.error("Critical: Onboarding update failed", err);
+              alert("System Error: Failed to finalize dossier. Check network connection.");
             });
           }
         });

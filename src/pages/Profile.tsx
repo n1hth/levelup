@@ -25,7 +25,7 @@ const RANKS = [
 
 export function Profile() {
   const {
-    state, getLevel, getRank, getXpProgress, resetUser,
+    state, getLevel, getRank, getXpProgress, resetUser, signOut,
     getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered,
     getStudyHeatmap, getAchievements,
   } = useApp();
@@ -326,12 +326,21 @@ export function Profile() {
         <p className="text-[10px] font-bold text-blue-400 mb-4 leading-relaxed">
           Reset your entire account. All progress, decks, cards, and XP will be permanently deleted.
         </p>
-        <button
-          onClick={() => setShowResetConfirm(true)}
-          className="w-full py-3 rounded-2xl border-2 border-red-100 bg-red-50/50 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-100 hover:border-red-200 transition-all"
-        >
-          Reset Account
-        </button>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex-1 py-3 rounded-2xl border-2 border-red-100 bg-red-50/50 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-100 hover:border-red-200 transition-all"
+          >
+            Reset Account
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="flex-1 py-3 rounded-2xl border-2 border-blue-100 bg-blue-50/50 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-100 hover:border-blue-200 transition-all"
+          >
+            Sign Out
+          </button>
+        </div>
       </motion.div>
 
       {/* ═══ Reset Confirmation Modal ═══ */}
