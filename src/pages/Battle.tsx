@@ -61,7 +61,7 @@ export function Battle() {
         event: 'INSERT', 
         schema: 'public', 
         table: 'duels', 
-        filter: `player2_id=eq.${state.user.id}` 
+        filter: `p2_id=eq.${state.user.id}` 
       }, (payload) => {
         if (payload.new.status === 'setup') {
           // Auto-redirect to the duel

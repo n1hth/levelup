@@ -21,7 +21,7 @@ export function ArenaDuel() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [searchingStatus, setSearchingStatus] = useState('Initializing Search...');
 
-  const isPlayer1 = duel?.player1_id === state.user?.id;
+  const isPlayer1 = duel?.p1_id === state.user?.id;
   const opponent = isPlayer1 ? duel?.p2 : duel?.p1;
 
   const fetchDuel = useCallback(async (id: string) => {
@@ -63,7 +63,7 @@ export function ArenaDuel() {
       const { data: invite } = await supabase
         .from('duels')
         .select('id')
-        .eq('player2_id', state.user?.id)
+        .eq('p2_id', state.user?.id)
         .eq('status', 'setup')
         .order('created_at', { ascending: false })
         .limit(1)

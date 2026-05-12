@@ -1245,8 +1245,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!state.user) return '';
     try {
       const { data, error } = await supabase.from('duels').insert({
-        player1_id: state.user.id,
-        player2_id: opponentId,
+        p1_id: state.user.id,
+        p2_id: opponentId,
         mode,
         p1_deck_id: deckId || null,
         status: 'setup'
@@ -1273,8 +1273,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .from('duels')
       .select(`
         *,
-        p1:player1_id(name, total_xp),
-        p2:player2_id(name, total_xp)
+        p1:p1_id(name, total_xp),
+        p2:p2_id(name, total_xp)
       `)
       .eq('id', id)
       .single();
