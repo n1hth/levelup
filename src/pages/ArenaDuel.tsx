@@ -27,10 +27,7 @@ export function ArenaDuel() {
   const fetchDuel = useCallback(async (id: string) => {
     if (id === 'searching') return;
     const d = await getDuel(id);
-    if (!d) {
-      console.error("Duel not found:", id);
-      return;
-    }
+    if (!d) return;
     setDuel(d);
     
     if (d.status === 'setup') setPhase('EXCHANGE');
@@ -53,13 +50,31 @@ export function ArenaDuel() {
     return () => { channel.unsubscribe(); };
   }, [duelId, fetchDuel]);
 
-  // Presence-Based Matchmaking Handshake (Only if in searching mode)
+  // Redundant Presence + Polling Matchmaking
   useEffect(() => {
     if (duelId !== 'searching' || !state.user) return;
     
     const lobbyChannel = supabase.channel('arena-lobby', {
       config: { presence: { key: state.user.id } }
     });
+
+    const checkInterval = setInterval(async () => {
+      // BACKUP PATH: Check duels table for any invitation where we are Player 2
+      const { data: invite } = await supabase
+        .from('duels')
+        .select('id')
+        .eq('player2_id', state.user?.id)
+        .eq('status', 'setup')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (invite) {
+        clearInterval(checkInterval);
+        setSearchingStatus('Combat Link Detected! Initializing...');
+        setTimeout(() => navigate(`/duels/${invite.id}`, { replace: true }), 500);
+      }
+    }, 2000);
 
     lobbyChannel
       .on('presence', { event: 'sync' }, () => {
@@ -69,7 +84,7 @@ export function ArenaDuel() {
         const opponent = users.find(u => u.user_id !== state.user?.id);
         if (opponent && state.user) {
           if (state.user.id < opponent.user_id) {
-            setSearchingStatus(`Matched with ${opponent.name || 'Hunter'}! Creating Arena...`);
+            setSearchingStatus(`Target Locked: ${opponent.name || 'Hunter'}. Creating Arena...`);
             createDuel('writing', opponent.user_id).then(newId => {
               if (newId) {
                 lobbyChannel.send({
@@ -77,8 +92,10 @@ export function ArenaDuel() {
                   event: 'match_found',
                   payload: { duelId: newId, targetId: opponent.user_id }
                 });
-                // Switch internal state instead of immediate navigate to prevent router blinks
+                clearInterval(checkInterval);
                 setTimeout(() => navigate(`/duels/${newId}`, { replace: true }), 500);
+              } else {
+                setSearchingStatus('System Error: Combat Link Failed.');
               }
             });
           }
@@ -86,6 +103,7 @@ export function ArenaDuel() {
       })
       .on('broadcast', { event: 'match_found' }, ({ payload }) => {
         if (payload.targetId === state.user?.id) {
+          clearInterval(checkInterval);
           setSearchingStatus('Combat Link Received! Initializing...');
           setTimeout(() => navigate(`/duels/${payload.duelId}`, { replace: true }), 500);
         }
@@ -97,7 +115,10 @@ export function ArenaDuel() {
         }
       });
 
-    return () => { lobbyChannel.unsubscribe(); };
+    return () => { 
+      clearInterval(checkInterval);
+      lobbyChannel.unsubscribe(); 
+    };
   }, [duelId, state.user, createDuel, navigate]);
 
   // Timer logic
