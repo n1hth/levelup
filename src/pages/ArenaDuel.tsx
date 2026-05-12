@@ -8,13 +8,13 @@ import { supabase } from '@/src/lib/supabase';
 
 type DuelPhase = 'SEARCHING' | 'EXCHANGE' | 'TRIAL' | 'REVIEW' | 'FINISHED';
 
-export function ArenaDuel({ searching = false }: { searching?: boolean }) {
+export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, addXp, getDuel, updateDuel, joinMatchmaking, leaveMatchmaking, getMatch, createDuel, getFriends } = useApp();
+  const { state, addXp, getDuel, updateDuel, joinMatchmaking, leaveMatchmaking, getMatch, createDuel } = useApp();
   
   const [duel, setDuel] = useState<any>(null);
-  const [phase, setPhase] = useState<DuelPhase>(searching ? 'SEARCHING' : 'EXCHANGE');
+  const [phase, setPhase] = useState<DuelPhase>(duelId === 'searching' ? 'SEARCHING' : 'EXCHANGE');
   const [timeLeft, setTimeLeft] = useState(90);
   const [localTopic, setLocalTopic] = useState('');
   const [answer, setAnswer] = useState('');
@@ -25,10 +25,14 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
   const opponent = isPlayer1 ? duel?.p2 : duel?.p1;
 
   const fetchDuel = useCallback(async (id: string) => {
+    if (id === 'searching') return;
     const d = await getDuel(id);
+    if (!d) {
+      console.error("Duel not found:", id);
+      return;
+    }
     setDuel(d);
     
-    if (!d) return;
     if (d.status === 'setup') setPhase('EXCHANGE');
     else if (d.status === 'active') setPhase('TRIAL');
     else if (d.status === 'review') setPhase('REVIEW');
@@ -37,7 +41,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
 
   // Real-time listener for active duels
   useEffect(() => {
-    if (!duelId || searching) return;
+    if (!duelId || duelId === 'searching') return;
     const channel = supabase
       .channel(`arena-duel-${duelId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'duels', filter: `id=eq.${duelId}` }, () => {
@@ -47,11 +51,11 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     
     fetchDuel(duelId);
     return () => { channel.unsubscribe(); };
-  }, [duelId, fetchDuel, searching]);
+  }, [duelId, fetchDuel]);
 
-  // Presence-Based Matchmaking Handshake
+  // Presence-Based Matchmaking Handshake (Only if in searching mode)
   useEffect(() => {
-    if (!searching || !state.user) return;
+    if (duelId !== 'searching' || !state.user) return;
     
     const lobbyChannel = supabase.channel('arena-lobby', {
       config: { presence: { key: state.user.id } }
@@ -62,19 +66,20 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
         const presenceState = lobbyChannel.presenceState();
         const users = Object.values(presenceState).flat() as any[];
         
-        // Find someone else in the lobby
         const opponent = users.find(u => u.user_id !== state.user?.id);
         if (opponent && state.user) {
-          // Rule: The player with the "smaller" ID is the Master who creates the duel
           if (state.user.id < opponent.user_id) {
             setSearchingStatus(`Matched with ${opponent.name || 'Hunter'}! Creating Arena...`);
             createDuel('writing', opponent.user_id).then(newId => {
-              lobbyChannel.send({
-                type: 'broadcast',
-                event: 'match_found',
-                payload: { duelId: newId, targetId: opponent.user_id }
-              });
-              setTimeout(() => navigate(`/duels/${newId}`, { replace: true }), 1000);
+              if (newId) {
+                lobbyChannel.send({
+                  type: 'broadcast',
+                  event: 'match_found',
+                  payload: { duelId: newId, targetId: opponent.user_id }
+                });
+                // Switch internal state instead of immediate navigate to prevent router blinks
+                setTimeout(() => navigate(`/duels/${newId}`, { replace: true }), 500);
+              }
             });
           }
         }
@@ -82,7 +87,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
       .on('broadcast', { event: 'match_found' }, ({ payload }) => {
         if (payload.targetId === state.user?.id) {
           setSearchingStatus('Combat Link Received! Initializing...');
-          setTimeout(() => navigate(`/duels/${payload.duelId}`, { replace: true }), 1000);
+          setTimeout(() => navigate(`/duels/${payload.duelId}`, { replace: true }), 500);
         }
       })
       .subscribe(async (status) => {
@@ -93,7 +98,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
       });
 
     return () => { lobbyChannel.unsubscribe(); };
-  }, [searching, state.user, createDuel, navigate]);
+  }, [duelId, state.user, createDuel, navigate]);
 
   // Timer logic
   useEffect(() => {
@@ -139,7 +144,7 @@ export function ArenaDuel({ searching = false }: { searching?: boolean }) {
     addXp(250);
   };
 
-  if (searching) {
+  if (duelId === 'searching') {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center text-center p-8 relative overflow-hidden">
         <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-slate-950 to-slate-950 pointer-events-none" />

@@ -55,8 +55,7 @@ function AppContent() {
           <Route path="profile" element={<Profile />} />
         </Route>
         
-        {/* Full Screen Duel Routes */}
-        <Route path="duels/searching" element={<ArenaDuel searching />} />
+        {/* Unified Duel Route - Handles Searching & Combat */}
         <Route path="duels/:duelId" element={<ArenaDuel />} />
         
         <Route path="*" element={<Navigate to="/home" replace />} />
