@@ -49,7 +49,7 @@ export function QuickStart() {
     if (phase === 0) {
       const timer = setTimeout(() => {
         if (state.user && !state.user.onboardingCompleted) {
-          setPhase(3); // Skip to school selection
+          setPhase(2.5); // Skip to name entry
         } else {
           setPhase(1);
         }
@@ -62,11 +62,14 @@ export function QuickStart() {
   useEffect(() => {
     if (phase === 7) {
       const timer = setTimeout(() => {
-        // The user state is handled by the store's auth listener
-        // We just need to make sure the onboardingCompleted is set in the database if it was a new signup
+        // We just need to make sure the onboarding_completed is set in the database
         supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
-            supabase.from('profiles').update({ onboarding_completed: true, school: formData.school }).eq('id', user.id);
+            supabase.from('profiles').update({ 
+              onboarding_completed: true, 
+              school: formData.school,
+              name: formData.name || user.user_metadata.full_name || user.email?.split('@')[0]
+            }).eq('id', user.id);
           }
         });
       }, 4500);
@@ -87,7 +90,7 @@ export function QuickStart() {
           }
         });
         if (error) throw error;
-        setPhase(3);
+        setPhase(2.5); // Go to Name Entry
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
@@ -246,21 +249,7 @@ export function QuickStart() {
               </div>
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">
-                {authMode === 'signup' && (
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
-                      <UserIcon size={18} />
-                    </div>
-                    <input
-                      required
-                      type="text"
-                      placeholder="OPERATOR DESIGNATION"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-[10px] tracking-widest uppercase"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-                )}
+
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
                     <Mail size={18} />
@@ -319,6 +308,50 @@ export function QuickStart() {
                   <p>New candidate? <button onClick={() => setAuthMode('signup')} className="text-blue-400 hover:text-white underline">Initiate training</button></p>
                 )}
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Phase 2.5: Operator Designation (Name Entry) */}
+        {phase === 2.5 && (
+          <motion.div
+            key="phase2.5"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="flex flex-col items-center justify-center h-full w-full px-8"
+          >
+            <div className="w-full max-w-sm text-center">
+              <div className="mb-10">
+                <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                  <UserIcon size={32} className="text-blue-400" />
+                </div>
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Operator Designation</h2>
+                <p className="text-[10px] font-black tracking-widest text-blue-400/60 uppercase">How should the system address you?</p>
+              </div>
+
+              <div className="relative mb-6">
+                <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
+                  <Zap size={18} />
+                </div>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="CHOOSE YOUR DESIGNATION"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
+                  value={formData.name || (state.user?.name !== 'Operator' ? state.user?.name : '')}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onKeyDown={(e) => e.key === 'Enter' && formData.name.length > 2 && setPhase(3)}
+                />
+              </div>
+
+              <button
+                disabled={!formData.name || formData.name.length < 2}
+                onClick={() => setPhase(3)}
+                className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
+              >
+                CONFIRM DESIGNATION
+              </button>
             </div>
           </motion.div>
         )}
