@@ -1286,6 +1286,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return data;
   }, []);
 
+  const getPublicDuels = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('duels')
+      .select(`
+        *,
+        p1:profiles!player1_id(name),
+        p2:profiles!player2_id(name)
+      `)
+      .in('status', ['review', 'finished'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) {
+      console.error("Get public duels failed:", error);
+      return [];
+    }
+    return data;
+  }, []);
+
   return (
     <AppContext.Provider value={{
       state, isLoading, session,
@@ -1301,7 +1319,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       sendDuelInvite, acceptDuelInvite, getNotifications,
-      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel
+      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels
     }}>
       {children}
     </AppContext.Provider>

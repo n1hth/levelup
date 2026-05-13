@@ -249,6 +249,11 @@ export function ArenaDuel() {
     setHasReviewed(true);
     addXp(100);
     setIsSyncing(false);
+
+    // Auto-navigate back to battlefront after review
+    setTimeout(() => {
+      navigate('/battle');
+    }, 2500);
   };
 
   // Load cards if in deck mode and trial phase

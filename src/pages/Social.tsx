@@ -30,7 +30,7 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 ];
 
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, getPublicDuels } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [guildSearch, setGuildSearch] = useState('');
@@ -41,6 +41,7 @@ export function Social() {
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
+  const [publicDuels, setPublicDuels] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const level = getLevel();
   const rank = getRank();
@@ -52,8 +53,10 @@ export function Social() {
       getFriends().then(setFriends);
     } else if (activeTab === 'ranks') {
       getLeaderboard().then(setLeaderboard);
+    } else if (activeTab === 'community') {
+      getPublicDuels().then(setPublicDuels);
     }
-  }, [activeTab, getFriends, getLeaderboard]);
+  }, [activeTab, getFriends, getLeaderboard, getPublicDuels]);
 
   useEffect(() => {
     if (selectedDm) {
@@ -259,18 +262,66 @@ export function Social() {
                 <div className="absolute inset-0 aero-gloss opacity-20" />
                 <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Community Hall</h3>
                 <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em] mb-6">Review duels and ensure fairness</p>
-                <button className="w-full btn-system bg-white text-blue-600 border-white shadow-xl">
-                  Browse Active Duels
+                <button className="w-full btn-system bg-white text-blue-600 border-white shadow-xl" onClick={() => getPublicDuels().then(setPublicDuels)}>
+                  Refresh Arena Feed
                 </button>
              </div>
 
-             <div className="system-panel p-5 border-white/60 text-center">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3 text-blue-300 shadow-inner">
-                  <Search size={20} />
-                </div>
-                <h4 className="text-[11px] font-black text-blue-900 uppercase">No Pending Reviews</h4>
-                <p className="text-[9px] font-bold text-blue-400 mt-1">Hunters are currently resting. Check back soon.</p>
-             </div>
+             {publicDuels.length > 0 ? (
+               <div className="space-y-3">
+                 {publicDuels.map(duel => (
+                   <div key={duel.id} className="system-panel p-4 border-white/60 bg-white/40 backdrop-blur-sm">
+                     <div className="flex items-center justify-between mb-3">
+                       <div className="flex items-center gap-2">
+                         <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">
+                           {duel.mode === 'deck' ? 'D' : 'W'}
+                         </div>
+                         <span className="text-[10px] font-black uppercase text-blue-900 tracking-tight">
+                           {duel.mode === 'deck' ? 'Deck Duel' : 'Writing Duel'}
+                         </span>
+                       </div>
+                       <span className={cn(
+                         "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                         duel.status === 'finished' ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-blue-50 border-blue-200 text-blue-600"
+                       )}>
+                         {duel.status}
+                       </span>
+                     </div>
+
+                     <div className="flex items-center justify-between gap-4">
+                       <div className="flex-1 text-center">
+                         <div className="text-[9px] font-black text-blue-400 uppercase mb-1">{duel.p1?.name}</div>
+                         <div className="text-xl font-black italic text-blue-900">
+                           {duel.mode === 'deck' ? `${duel.p1_score} pts` : duel.p1_review_rating ? `${duel.p1_review_rating}★` : '—'}
+                         </div>
+                       </div>
+                       <div className="text-blue-200 font-black italic text-sm">VS</div>
+                       <div className="flex-1 text-center">
+                         <div className="text-[9px] font-black text-blue-400 uppercase mb-1">{duel.p2?.name}</div>
+                         <div className="text-xl font-black italic text-blue-900">
+                           {duel.mode === 'deck' ? `${duel.p2_score} pts` : duel.p2_review_rating ? `${duel.p2_review_rating}★` : '—'}
+                         </div>
+                       </div>
+                     </div>
+
+                     {duel.mode === 'writing' && (duel.p1_topic || duel.p2_topic) && (
+                       <div className="mt-3 pt-3 border-t border-white/40">
+                         <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Subject Matter</div>
+                         <p className="text-[10px] font-bold text-blue-900 text-center italic">"{duel.p1_topic || duel.p2_topic}"</p>
+                       </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+             ) : (
+               <div className="system-panel p-10 border-white/60 text-center">
+                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3 text-blue-300 shadow-inner">
+                    <Search size={20} />
+                  </div>
+                  <h4 className="text-[11px] font-black text-blue-900 uppercase">No Data Synchronized</h4>
+                  <p className="text-[9px] font-bold text-blue-400 mt-1 uppercase">Synchronizing with the neural network...</p>
+               </div>
+             )}
           </motion.div>
         )}
 
