@@ -228,7 +228,7 @@ function isYesterday(dateStr: string): boolean {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(defaultState);
+  const [state, setState] = useState<AppState>(loadState());
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -314,7 +314,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('arena_sessions').select('*').eq('user_id', session.user.id),
         ]);
 
-        setState({
+        setState(prev => ({
+          ...prev,
           user: {
             id: profile.id,
             name: profile.name,
@@ -326,12 +327,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           streak: profile.streak,
           momentum: profile.momentum,
           focusSessions: focusRes.data || [],
-          decks: decksRes.data || [],
-          cards: cardsRes.data || [],
+          // Merge local decks with Supabase decks to prevent loss
+          decks: [...(decksRes.data || []), ...prev.decks.filter(ld => !(decksRes.data || []).find(sd => sd.id === ld.id))],
+          cards: [...(cardsRes.data || []), ...prev.cards.filter(lc => !(cardsRes.data || []).find(sc => sc.id === lc.id))],
           deckStudySessions: studyRes.data || [],
           arenaSessions: arenaRes.data || [],
           lastActiveDate: profile.last_active_date,
-        });
+        }));
       }
     } catch (err) {
       console.error('Error syncing with Supabase:', err);
@@ -341,8 +343,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // We no longer use localStorage for the main state, but we could keep it as a fallback
-    // if (!isLoading) saveState(state);
+    if (!isLoading) saveState(state);
   }, [state, isLoading]);
 
   // ── User ──────────────────────────────────────

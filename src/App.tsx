@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider, useApp } from './lib/store.tsx';
+import { AppProvider, useApp } from '@/src/lib/store.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { Layout } from './components/Layout.tsx';
 import { Focus } from './pages/Focus.tsx';
