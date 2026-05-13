@@ -28,8 +28,7 @@ export function Battle() {
   const eligibleDecks = state.decks.filter(d => getDeckCards(d.id).length >= MIN_CARDS);
 
   const handleStartMatchmaking = async () => {
-    setIsMatching(true);
-    // Navigate to searching page immediately for smooth transition
+    // Go straight to searching screen — matchmaking happens there
     navigate('/duels/searching');
   };
 
@@ -61,7 +60,7 @@ export function Battle() {
         event: 'INSERT', 
         schema: 'public', 
         table: 'duels', 
-        filter: `p2_id=eq.${state.user.id}` 
+        filter: `player2_id=eq.${state.user.id}` 
       }, (payload) => {
         if (payload.new.status === 'setup') {
           // Auto-redirect to the duel
@@ -317,30 +316,16 @@ export function Battle() {
                 <AnimatePresence>
                   {duelMode && duelOpponent && (
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-2">
-                      {isMatching ? (
-                        <div className="w-full py-4 rounded-2xl bg-blue-50 border border-blue-200 flex flex-col items-center gap-3">
-                          <div className="w-6 h-6 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Searching for Opponent...</span>
-                          <button onClick={() => { setIsMatching(false); leaveMatchmaking(); }} className="text-[8px] font-bold text-red-400 hover:text-red-500 uppercase">Cancel Search</button>
-                        </div>
-                      ) : matchFound ? (
-                        <motion.div 
-                          initial={{ scale: 0.9, opacity: 0 }} 
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="w-full py-6 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex flex-col items-center gap-2 shadow-xl"
-                        >
-                          <Zap className="animate-bounce" size={24} />
-                          <span className="text-sm font-black uppercase italic tracking-tighter">Match Established!</span>
-                          <span className="text-[9px] font-bold text-green-100 uppercase">{matchFound.opponent.name} has accepted</span>
-                        </motion.div>
-                      ) : (
+                      {duelOpponent === 'random' ? (
                         <button 
                           onClick={handleStartMatchmaking}
-                          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:brightness-110 transition-all"
+                          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/30 hover:brightness-110 transition-all active:scale-[0.97]"
                         >
-                          Initiate Duel
+                          Find Opponent
                         </button>
-                      )}
+                      ) : duelOpponent === 'friend' && selectedFriendId ? (
+                        <div />
+                      ) : null}
                     </motion.div>
                   )}
                 </AnimatePresence>

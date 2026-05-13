@@ -1193,10 +1193,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const joinMatchmaking = useCallback(async (deckId: string) => {
     if (!state.user) return;
+    // matchmaking_queue only has: user_id, deck_id, matched_duel_id
     await supabase.from('matchmaking_queue').upsert({
       user_id: state.user.id,
-      deck_id: deckId,
-      joined_at: new Date().toISOString()
+      deck_id: deckId
     });
   }, [state.user]);
 
@@ -1244,9 +1244,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const createDuel = useCallback(async (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => {
     if (!state.user) return '';
     try {
+      // Verified columns: player1_id, player2_id, mode, status, p1_deck_id, p2_deck_id
       const { data, error } = await supabase.from('duels').insert({
-        p1_id: state.user.id,
-        p2_id: opponentId,
+        player1_id: state.user.id,
+        player2_id: opponentId,
         mode,
         p1_deck_id: deckId || null,
         status: 'setup'
@@ -1273,8 +1274,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .from('duels')
       .select(`
         *,
-        p1:p1_id(name, total_xp),
-        p2:p2_id(name, total_xp)
+        p1:profiles!player1_id(name, total_xp),
+        p2:profiles!player2_id(name, total_xp)
       `)
       .eq('id', id)
       .single();
