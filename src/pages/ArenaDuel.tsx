@@ -95,13 +95,20 @@ export function ArenaDuel() {
       config: { presence: { key: state.user.id } }
     });
 
+    const startTime = new Date().toISOString();
+
     // Also poll duels table as backup
     const pollInterval = setInterval(async () => {
+      const params = new URLSearchParams(window.location.search);
+      const myMode = params.get('mode') || 'writing';
+
       const { data } = await supabase
         .from('duels')
         .select('id')
         .eq('player2_id', state.user!.id)
         .eq('status', 'setup')
+        .eq('mode', myMode)
+        .gt('created_at', startTime)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
