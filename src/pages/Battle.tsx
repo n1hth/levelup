@@ -83,7 +83,16 @@ export function Battle() {
 
     lobby
       .on('presence', { event: 'sync' }, onSync)
-      .subscribe();
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && state.user) {
+          await lobby.track({
+            user_id: state.user.id,
+            name: state.user.name,
+            status: 'online',
+            ts: Date.now()
+          });
+        }
+      });
     
     return () => { 
       channel.unsubscribe();

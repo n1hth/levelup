@@ -120,14 +120,20 @@ export function ArenaDuel() {
         if (hasCreated) return;
         const ps = lobby.presenceState();
         const all = Object.values(ps).flat() as any[];
-        const opp = all.find(u => u.user_id !== state.user?.id);
+        const params = new URLSearchParams(window.location.search);
+        const myMode = params.get('mode') || 'writing';
+        
+        const opp = all.find(u => 
+          u.user_id !== state.user?.id && 
+          u.status === 'searching' && 
+          u.mode === myMode
+        );
+
         if (opp && state.user && state.user.id < opp.user_id) {
           hasCreated = true;
           setSearchStatus(`Target Locked: ${opp.name || 'Hunter'}...`);
-          const params = new URLSearchParams(window.location.search);
-          const duelMode = (params.get('mode') as 'writing' | 'deck') || 'writing';
           
-          createDuel(duelMode, opp.user_id).then(newId => {
+          createDuel(myMode as any, opp.user_id).then(newId => {
             if (!newId) {
               setSearchStatus('Error creating arena. Retrying...');
               hasCreated = false;
@@ -135,7 +141,7 @@ export function ArenaDuel() {
             }
             lobby.send({
               type: 'broadcast', event: 'match_found',
-              payload: { duelId: newId, targetId: opp.user_id }
+              payload: { duelId: newId, targetId: opp.user_id, mode: myMode }
             });
             clearInterval(pollInterval);
             setTimeout(() => navigate(`/duels/${newId}`, { replace: true }), 600);
@@ -151,9 +157,14 @@ export function ArenaDuel() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
+          const params = new URLSearchParams(window.location.search);
+          const myMode = params.get('mode') || 'writing';
+
           await lobby.track({
             user_id: state.user?.id,
             name: state.user?.name,
+            status: 'searching',
+            mode: myMode,
             ts: Date.now()
           });
           setSearchStatus('Scanning Neural Network...');
