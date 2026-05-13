@@ -30,6 +30,7 @@ export function ArenaDuel() {
   const [score, setScore] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasFinishedDeck, setHasFinishedDeck] = useState(false);
+  const [localDecks, setLocalDecks] = useState<any[]>([]);
 
   // Review state
   const [rating, setRating] = useState(0);
@@ -66,7 +67,18 @@ export function ArenaDuel() {
     }
     else if (d.status === 'active') setPhase('TRIAL');
     else if (d.status === 'review' || d.status === 'finished') setPhase('REVIEW');
-  }, [getDuel, myTopicField, myDeckField]);
+
+    // Force fetch decks if local state is empty
+    if (d.mode === 'deck' && state.user) {
+      const { data } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
+      if (data) setLocalDecks(data);
+    }
+  }, [getDuel, myTopicField, myDeckField, state.user]);
+
+  // Also sync localDecks with global state
+  useEffect(() => {
+    if (state.decks.length > 0) setLocalDecks(state.decks);
+  }, [state.decks]);
 
   // ── Realtime listener for active duel ──
   useEffect(() => {
@@ -415,7 +427,7 @@ export function ArenaDuel() {
 
               {duel.mode === 'deck' ? (
                 <div className="grid gap-3 overflow-y-auto max-h-[400px] pr-2 pb-4">
-                  {state.decks.length > 0 ? state.decks.map(deck => (
+                  {(localDecks.length > 0) ? localDecks.map(deck => (
                     <button
                       key={deck.id}
                       onClick={() => handleSelectDeck(deck.id)}
@@ -439,7 +451,8 @@ export function ArenaDuel() {
                   )) : (
                     <div className="text-center py-10 opacity-50">
                       <div className="text-3xl mb-2">📭</div>
-                      <p className="text-[10px] font-black uppercase">No Armaments Found</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest">No Armaments Found</p>
+                      <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Create decks in the armory to duel</p>
                     </div>
                   )}
                 </div>
