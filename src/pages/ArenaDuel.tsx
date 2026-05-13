@@ -124,7 +124,10 @@ export function ArenaDuel() {
         if (opp && state.user && state.user.id < opp.user_id) {
           hasCreated = true;
           setSearchStatus(`Target Locked: ${opp.name || 'Hunter'}...`);
-          createDuel('writing', opp.user_id).then(newId => {
+          const params = new URLSearchParams(window.location.search);
+          const duelMode = (params.get('mode') as 'writing' | 'deck') || 'writing';
+          
+          createDuel(duelMode, opp.user_id).then(newId => {
             if (!newId) {
               setSearchStatus('Error creating arena. Retrying...');
               hasCreated = false;
@@ -167,6 +170,16 @@ export function ArenaDuel() {
       lobby.unsubscribe();
     };
   }, [isSearching, state.user, createDuel, navigate]);
+
+  // Handle mode from query params for searching
+  useEffect(() => {
+    if (isSearching) {
+      const params = new URLSearchParams(window.location.search);
+      const m = params.get('mode') || 'writing';
+      // We need to pass this 'm' into the matchmaking logic
+      // But the matchmaking logic is in a separate useEffect
+    }
+  }, [isSearching]);
 
   // ── Timer (only in TRIAL) ──
   useEffect(() => {
@@ -322,7 +335,12 @@ export function ArenaDuel() {
   return (
     <div className="fixed inset-0 bg-slate-950 text-white flex flex-col overflow-hidden z-50">
       {/* Subtle bg */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.06),transparent_60%)] pointer-events-none" />
+      <div className={cn(
+        "absolute inset-0 pointer-events-none transition-colors duration-1000",
+        duel.mode === 'deck' 
+          ? "bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.08),transparent_60%)]" 
+          : "bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.06),transparent_60%)]"
+      )} />
 
       {/* Header HUD */}
       <header className="relative z-10 px-5 py-4 flex items-center justify-between border-b border-white/5 bg-slate-900/40 backdrop-blur-md">
@@ -331,7 +349,10 @@ export function ArenaDuel() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <div className="text-[9px] font-black text-blue-400 uppercase tracking-[0.3em]">{phase}</div>
+            <div className={cn(
+              "text-[9px] font-black uppercase tracking-[0.3em]",
+              duel.mode === 'deck' ? "text-purple-400" : "text-blue-400"
+            )}>{phase}</div>
             <h1 className="text-sm font-black uppercase italic tracking-tight">Arena #{duelId?.slice(0, 6)}</h1>
           </div>
         </div>
@@ -340,7 +361,7 @@ export function ArenaDuel() {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
             className={cn(
               "w-14 h-14 rounded-full border-[3px] flex items-center justify-center",
-              timeLeft < 20 ? "border-red-500" : "border-blue-500"
+              timeLeft < 20 ? "border-red-500" : (duel.mode === 'deck' ? "border-purple-500" : "border-blue-500")
             )}>
             <span className={cn("text-lg font-black tabular-nums", timeLeft < 20 ? "text-red-500" : "text-white")}>{timeLeft}</span>
           </motion.div>
@@ -435,7 +456,7 @@ export function ArenaDuel() {
               <Loader2 size={32} className="text-blue-500 animate-spin" />
               <h2 className="text-xl font-black uppercase italic tracking-tighter">Waiting for Opponent</h2>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                Your subject has been committed.<br/>Battle begins when both players are ready.
+                {duel.mode === 'deck' ? 'Your armament has been locked.' : 'Your subject has been committed.'}<br/>Battle begins when both players are ready.
               </p>
             </motion.div>
           )}

@@ -28,8 +28,8 @@ export function Battle() {
   const eligibleDecks = state.decks.filter(d => getDeckCards(d.id).length >= MIN_CARDS);
 
   const handleStartMatchmaking = async () => {
-    // Go straight to searching screen — matchmaking happens there
-    navigate('/duels/searching');
+    if (!duelMode) return;
+    navigate(`/duels/searching?mode=${duelMode}`);
   };
 
   const handleInviteFriend = async (friendId: string) => {
@@ -72,8 +72,23 @@ export function Battle() {
     if (activeTab === 'duels') {
       getFriends().then(setFriends);
     }
+
+    // Presence tracking for online friends
+    const lobby = supabase.channel('arena-lobby');
+    const onSync = () => {
+      const state = lobby.presenceState();
+      const onlineIds = new Set(Object.values(state).flat().map((p: any) => p.user_id));
+      setFriends(prev => prev.map(f => ({ ...f, isOnline: onlineIds.has(f.id) })));
+    };
+
+    lobby
+      .on('presence', { event: 'sync' }, onSync)
+      .subscribe();
     
-    return () => { channel.unsubscribe(); };
+    return () => { 
+      channel.unsubscribe();
+      lobby.unsubscribe();
+    };
   }, [activeTab, getFriends, state.user, navigate]);
 
   const DIFFICULTIES = [
@@ -280,8 +295,13 @@ export function Battle() {
                                           {friend.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="text-left">
-                                          <div className={cn("text-xs font-black uppercase", selectedFriendId === friend.id ? "text-white" : "text-blue-900")}>{friend.name}</div>
-                                          <div className={cn("text-[8px] font-bold uppercase opacity-60")}>Rank E</div>
+                                          <div className="flex items-center gap-2">
+                                            <div className={cn("text-xs font-black uppercase", selectedFriendId === friend.id ? "text-white" : "text-blue-900")}>{friend.name}</div>
+                                            {friend.isOnline && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />}
+                                          </div>
+                                          <div className={cn("text-[8px] font-bold uppercase opacity-60")}>
+                                            {friend.isOnline ? 'Online' : 'Offline'}
+                                          </div>
                                         </div>
                                       </div>
                                       <Zap size={14} className={selectedFriendId === friend.id ? "text-white" : "text-yellow-500"} />
@@ -300,10 +320,14 @@ export function Battle() {
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   onClick={() => handleInviteFriend(selectedFriendId)}
-                                  disabled={isInviting}
-                                  className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-[0.3em] text-[11px] shadow-xl shadow-blue-500/20 active:scale-95 transition-all mt-4"
+                                  className={cn(
+                                    "w-full py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] shadow-xl transition-all mt-4",
+                                    friends.find(f => f.id === selectedFriendId)?.isOnline 
+                                      ? "bg-blue-600 text-white shadow-blue-500/20 active:scale-95" 
+                                      : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                                  )}
                                 >
-                                  {isInviting ? "Establishing Link..." : "Initiate Duel"}
+                                  {isInviting ? "Establishing Link..." : friends.find(f => f.id === selectedFriendId)?.isOnline ? "Initiate Duel" : "Friend Offline"}
                                 </motion.button>
                               )}
                             </div>
