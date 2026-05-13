@@ -91,7 +91,7 @@ export function ArenaDuel() {
 
     setSearchStatus('Broadcasting Hunter Signature...');
 
-    const lobby = supabase.channel('arena-lobby', {
+    const lobby = supabase.channel('arena-searching', {
       config: { presence: { key: state.user.id } }
     });
 
@@ -414,8 +414,8 @@ export function ArenaDuel() {
               </div>
 
               {duel.mode === 'deck' ? (
-                <div className="grid gap-3 overflow-y-auto max-h-[300px] pr-2">
-                  {state.decks.map(deck => (
+                <div className="grid gap-3 overflow-y-auto max-h-[400px] pr-2 pb-4">
+                  {state.decks.length > 0 ? state.decks.map(deck => (
                     <button
                       key={deck.id}
                       onClick={() => handleSelectDeck(deck.id)}
@@ -423,19 +423,25 @@ export function ArenaDuel() {
                       className={cn(
                         "w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left",
                         duel[myDeckField] === deck.id 
-                          ? "bg-blue-600 border-blue-400 text-white shadow-lg" 
-                          : "bg-slate-900 border-white/5 hover:border-blue-500/30"
+                          ? "bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-500/20" 
+                          : "bg-slate-900 border-white/5 hover:border-purple-500/30"
                       )}
                     >
-                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-black", deck.color)}>
+                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shrink-0", deck.color)}>
                         {deck.title.charAt(0).toUpperCase()}
                       </div>
-                      <div className="flex-1">
-                        <div className="text-xs font-black uppercase tracking-tight">{deck.title}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-black uppercase tracking-tight truncate">{deck.title}</div>
                         <div className="text-[8px] font-bold text-slate-500 uppercase">{deck.subject}</div>
                       </div>
+                      {duel[myDeckField] === deck.id && <Zap size={14} className="text-yellow-400" />}
                     </button>
-                  ))}
+                  )) : (
+                    <div className="text-center py-10 opacity-50">
+                      <div className="text-3xl mb-2">📭</div>
+                      <p className="text-[10px] font-black uppercase">No Armaments Found</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <textarea
