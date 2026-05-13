@@ -11,7 +11,7 @@ type DuelPhase = 'SEARCHING' | 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW';
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, addXp, getDuel, updateDuel, createDuel } = useApp();
+  const { state, isLoading, addXp, getDuel, updateDuel, createDuel } = useApp();
   
   const isSearching = duelId === 'searching';
   
@@ -30,7 +30,6 @@ export function ArenaDuel() {
   const [score, setScore] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasFinishedDeck, setHasFinishedDeck] = useState(false);
-  const [localDecks, setLocalDecks] = useState<any[]>([]);
 
   // Review state
   const [rating, setRating] = useState(0);
@@ -67,18 +66,7 @@ export function ArenaDuel() {
     }
     else if (d.status === 'active') setPhase('TRIAL');
     else if (d.status === 'review' || d.status === 'finished') setPhase('REVIEW');
-
-    // Force fetch decks if local state is empty
-    if (d.mode === 'deck' && state.user) {
-      const { data } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
-      if (data) setLocalDecks(data);
-    }
-  }, [getDuel, myTopicField, myDeckField, state.user]);
-
-  // Also sync localDecks with global state
-  useEffect(() => {
-    if (state.decks.length > 0) setLocalDecks(state.decks);
-  }, [state.decks]);
+  }, [getDuel, myTopicField, myDeckField]);
 
   // ── Realtime listener for active duel ──
   useEffect(() => {
@@ -206,10 +194,19 @@ export function ArenaDuel() {
     if (isSearching) {
       const params = new URLSearchParams(window.location.search);
       const m = params.get('mode') || 'writing';
-      // We need to pass this 'm' into the matchmaking logic
-      // But the matchmaking logic is in a separate useEffect
     }
   }, [isSearching]);
+
+  const refreshDecks = async () => {
+    if (!state.user) return;
+    setIsSyncing(true);
+    // This will trigger a re-fetch in the global store if we had a refresh function,
+    // but for now we'll just do a direct fetch to verify
+    console.log("Refreshing decks for user:", state.user.id);
+    const { data } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
+    console.log("Decks found in DB:", data?.length);
+    setIsSyncing(false);
+  };
 
   // ── Timer (only in TRIAL) ──
   useEffect(() => {
@@ -427,7 +424,12 @@ export function ArenaDuel() {
 
               {duel.mode === 'deck' ? (
                 <div className="grid gap-3 overflow-y-auto max-h-[400px] pr-2 pb-4">
-                  {(localDecks.length > 0) ? localDecks.map(deck => (
+                  {isLoading ? (
+                    <div className="text-center py-20">
+                      <Loader2 size={24} className="text-purple-500 animate-spin mx-auto mb-3" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Syncing Armory...</p>
+                    </div>
+                  ) : state.decks.length > 0 ? state.decks.map(deck => (
                     <button
                       key={deck.id}
                       onClick={() => handleSelectDeck(deck.id)}
@@ -452,7 +454,13 @@ export function ArenaDuel() {
                     <div className="text-center py-10 opacity-50">
                       <div className="text-3xl mb-2">📭</div>
                       <p className="text-[10px] font-black uppercase tracking-widest">No Armaments Found</p>
-                      <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Create decks in the armory to duel</p>
+                      <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase mb-4">Create decks in the armory to duel</p>
+                      <button 
+                        onClick={refreshDecks}
+                        className="text-[9px] font-black text-blue-400 uppercase tracking-widest hover:text-blue-300 underline"
+                      >
+                        Force Sync Neural Link
+                      </button>
                     </div>
                   )}
                 </div>
