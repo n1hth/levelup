@@ -167,6 +167,8 @@ interface AppContextType {
   createDuel: (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => Promise<string>;
   updateDuel: (duelId: string, updates: any) => Promise<void>;
   getDuel: (id: string) => Promise<any>;
+  getPublicDuels: () => Promise<any[]>;
+  submitCommunityHonourVote: (duel: any, targetPlayer: 'p1' | 'p2', isReasonable: boolean) => Promise<void>;
   // Auth
   session: Session | null;
   signOut: () => Promise<void>;
@@ -1451,9 +1453,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .select(`
         *,
         p1:profiles!player1_id(name),
-        p2:profiles!player2_id(name)
+        p2:profiles!player2_id(name),
+        community_duel_votes(*)
       `)
-      .in('status', ['review', 'finished'])
+      .in('status', ['community_review', 'finished'])
       .order('created_at', { ascending: false })
       .limit(20);
     if (error) {
@@ -1462,6 +1465,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     return data;
   }, []);
+
+  const submitCommunityHonourVote = useCallback(async (duel: any, targetPlayer: 'p1' | 'p2', isReasonable: boolean) => {
+    if (!state.user) return;
+
+    const targetUserId = targetPlayer === 'p1' ? duel.player1_id : duel.player2_id;
+    const reviewerId = targetPlayer === 'p1' ? duel.player2_id : duel.player1_id;
+    if (state.user.id === targetUserId || state.user.id === reviewerId) {
+      throw new Error('Duel participants cannot vote on their own honour review.');
+    }
+
+    const rating = Number(duel[`${targetPlayer}_review_rating`] || 0);
+    if (rating <= 0) throw new Error('This honour has not been submitted yet.');
+    if (duel[`${targetPlayer}_honour_finalized`]) throw new Error('This honour has already been finalized.');
+
+    const { error } = await supabase.rpc('submit_community_honour_vote', {
+      p_duel_id: duel.id,
+      p_target_player: targetPlayer,
+      p_is_reasonable: isReasonable,
+    });
+    if (error) throw error;
+  }, [state.user]);
 
   return (
     <AppContext.Provider value={{
@@ -1478,7 +1502,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       sendDuelInvite, acceptDuelInvite, getNotifications,
-      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels
+      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
     }}>
       {children}
     </AppContext.Provider>

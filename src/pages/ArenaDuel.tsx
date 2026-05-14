@@ -39,7 +39,7 @@ function mapCardFromDb(row: any) {
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, isLoading, addXp, getDuel, updateDuel, createDuel, getDeckCards } = useApp();
+  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards } = useApp();
   
   useEffect(() => {
     console.log("ArenaDuel State Check:", {
@@ -304,7 +304,6 @@ export function ArenaDuel() {
     const fresh = await getDuel(duel.id);
     if (fresh?.[theirAnswerField]) updates.status = 'review';
     await updateDuel(duel.id, updates);
-    addXp(250);
     setIsSyncing(false);
   };
 
@@ -345,7 +344,6 @@ export function ArenaDuel() {
         updates.status = 'review';
       }
       await updateDuel(duel.id, updates);
-      addXp(250);
       setIsSyncing(false);
     } else {
       setCurrentCardIndex(prev => prev + 1);
@@ -359,11 +357,10 @@ export function ArenaDuel() {
     if (comment.trim()) updates[`${isPlayer1 ? 'p2' : 'p1'}_review_comment`] = comment.trim();
     
     const fresh = await getDuel(duel.id);
-    if (fresh?.[theirRatingField]) updates.status = 'finished';
+    if (fresh?.[theirRatingField]) updates.status = 'community_review';
     
     await updateDuel(duel.id, updates);
     setHasReviewed(true);
-    addXp(100);
     setIsSyncing(false);
 
     // Auto-navigate back to battlefront after review
@@ -751,14 +748,14 @@ export function ArenaDuel() {
                       disabled={isSyncing || rating === 0}
                       className="w-full py-4 rounded-2xl bg-yellow-500 text-white font-black uppercase tracking-[0.3em] text-[10px] shadow-xl shadow-yellow-500/20 transition-all active:scale-95"
                     >
-                      {isSyncing ? 'Submitting...' : 'Submit Honors (+100 XP)'}
+                      {isSyncing ? 'Submitting...' : 'Submit Provisional Honors'}
                     </button>
                   </div>
                 ) : (
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
                     <Shield size={24} className="text-emerald-500 mx-auto mb-2" />
-                    <div className="text-xs font-black uppercase tracking-widest text-emerald-500">Review Synchronized</div>
-                    <p className="text-[9px] text-emerald-500/60 mt-1 font-bold uppercase">Honors have been awarded.</p>
+                    <div className="text-xs font-black uppercase tracking-widest text-emerald-500">Honors Submitted</div>
+                    <p className="text-[9px] text-emerald-500/60 mt-1 font-bold uppercase">XP releases after community review.</p>
                   </div>
                 )}
               </div>

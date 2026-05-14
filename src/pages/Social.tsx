@@ -30,7 +30,7 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 ];
 
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, getPublicDuels } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, getPublicDuels, submitCommunityHonourVote } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [guildSearch, setGuildSearch] = useState('');
@@ -42,6 +42,7 @@ export function Social() {
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
   const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
+  const [votingKey, setVotingKey] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const level = getLevel();
   const rank = getRank();
@@ -119,6 +120,35 @@ export function Social() {
     if (confirm("Sever this syndicate link?")) {
       await removeFriend(id);
       getFriends().then(setFriends);
+    }
+  };
+
+  const getHonourVotes = (duel: any, targetPlayer: 'p1' | 'p2') => {
+    const votes = (duel.community_duel_votes || []).filter((vote: any) => vote.target_player === targetPlayer);
+    return {
+      fair: votes.filter((vote: any) => vote.is_reasonable).length,
+      unfair: votes.filter((vote: any) => !vote.is_reasonable).length,
+      total: votes.length,
+      hasVoted: votes.some((vote: any) => vote.voter_id === state.user?.id),
+    };
+  };
+
+  const canVoteOnHonour = (duel: any, targetPlayer: 'p1' | 'p2') => {
+    const targetUserId = targetPlayer === 'p1' ? duel.player1_id : duel.player2_id;
+    const reviewerId = targetPlayer === 'p1' ? duel.player2_id : duel.player1_id;
+    return state.user?.id && state.user.id !== targetUserId && state.user.id !== reviewerId && !duel[`${targetPlayer}_honour_finalized`];
+  };
+
+  const handleHonourVote = async (duel: any, targetPlayer: 'p1' | 'p2', isReasonable: boolean) => {
+    const key = `${duel.id}:${targetPlayer}`;
+    setVotingKey(key);
+    try {
+      await submitCommunityHonourVote(duel, targetPlayer, isReasonable);
+      setPublicDuels(await getPublicDuels());
+    } catch (err: any) {
+      alert(err.message || 'Unable to register community vote.');
+    } finally {
+      setVotingKey(null);
     }
   };
 
@@ -269,7 +299,11 @@ export function Social() {
 
              {publicDuels.length > 0 ? (
                <div className="space-y-3">
-                 {publicDuels.map(duel => (
+                 {publicDuels.map(duel => {
+                  const p1Votes = getHonourVotes(duel, 'p1');
+                  const p2Votes = getHonourVotes(duel, 'p2');
+
+                  return (
                    <div key={duel.id} className="system-panel p-4 border-white/60 bg-white/40 backdrop-blur-sm">
                      <div className="flex items-center justify-between mb-3">
                        <div className="flex items-center gap-2">
@@ -282,9 +316,9 @@ export function Social() {
                        </div>
                        <span className={cn(
                          "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                         duel.status === 'finished' ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-blue-50 border-blue-200 text-blue-600"
+                         duel.status === 'finished' ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-yellow-50 border-yellow-200 text-yellow-600"
                        )}>
-                         {duel.status}
+                         {duel.status === 'community_review' ? 'reviewing honours' : duel.status}
                        </span>
                      </div>
 
@@ -310,8 +344,74 @@ export function Social() {
                          <p className="text-[10px] font-bold text-blue-900 text-center italic">"{duel.p1_topic || duel.p2_topic}"</p>
                        </div>
                      )}
+
+                     <div className="mt-4 pt-3 border-t border-white/40 grid gap-3">
+                       {(['p1', 'p2'] as const).map(targetPlayer => {
+                         const targetName = targetPlayer === 'p1' ? duel.p1?.name : duel.p2?.name;
+                         const reviewerName = targetPlayer === 'p1' ? duel.p2?.name : duel.p1?.name;
+                         const votes = targetPlayer === 'p1' ? p1Votes : p2Votes;
+                         const rating = duel[`${targetPlayer}_review_rating`];
+                         const finalized = duel[`${targetPlayer}_honour_finalized`];
+                         const approved = duel[`${targetPlayer}_honour_approved`];
+                         const voteKey = `${duel.id}:${targetPlayer}`;
+
+                         if (!rating) return null;
+
+                         return (
+                           <div key={targetPlayer} className="rounded-2xl bg-white/50 border border-white/70 p-3">
+                             <div className="flex items-start justify-between gap-3">
+                               <div>
+                                 <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Honour Check</div>
+                                 <div className="text-[11px] font-black text-blue-900 uppercase mt-0.5">
+                                   {reviewerName} gave {targetName} {rating}★
+                                 </div>
+                               </div>
+                               <div className={cn(
+                                 "text-[8px] font-black uppercase px-2 py-1 rounded-full border shrink-0",
+                                 finalized
+                                   ? approved ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-red-50 border-red-200 text-red-600"
+                                   : "bg-blue-50 border-blue-200 text-blue-600"
+                               )}>
+                                 {finalized ? (approved ? `+${duel[`${targetPlayer}_honour_xp_awarded`] || 0} XP` : 'penalty') : `${votes.total}/3 votes`}
+                               </div>
+                             </div>
+                             {duel[`${targetPlayer}_review_comment`] && (
+                               <p className="text-[10px] font-bold text-blue-700 mt-2 leading-relaxed italic">
+                                 "{duel[`${targetPlayer}_review_comment`]}"
+                               </p>
+                             )}
+                             <div className="flex items-center justify-between gap-2 mt-3">
+                               <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+                                 Fair {votes.fair} · Unfair {votes.unfair}
+                               </div>
+                               {!finalized && canVoteOnHonour(duel, targetPlayer) && !votes.hasVoted && (
+                                 <div className="flex gap-2">
+                                   <button
+                                     onClick={() => handleHonourVote(duel, targetPlayer, true)}
+                                     disabled={votingKey === voteKey}
+                                     className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[8px] font-black uppercase tracking-widest"
+                                   >
+                                     Fair
+                                   </button>
+                                   <button
+                                     onClick={() => handleHonourVote(duel, targetPlayer, false)}
+                                     disabled={votingKey === voteKey}
+                                     className="px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[8px] font-black uppercase tracking-widest"
+                                   >
+                                     Unfair
+                                   </button>
+                                 </div>
+                               )}
+                               {!finalized && votes.hasVoted && (
+                                 <div className="text-[8px] font-black uppercase tracking-widest text-blue-400">Vote logged</div>
+                               )}
+                             </div>
+                           </div>
+                         );
+                       })}
+                     </div>
                    </div>
-                 ))}
+                 );})}
                </div>
              ) : (
                <div className="system-panel p-10 border-white/60 text-center">
