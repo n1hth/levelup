@@ -191,11 +191,49 @@ const defaultState: AppState = {
   lastActiveDate: null,
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function ensureUuid(id: string | undefined, remap: Map<string, string>): string {
+  if (id && UUID_RE.test(id)) return id;
+  if (id && remap.has(id)) return remap.get(id)!;
+  const next = generateId();
+  if (id) remap.set(id, next);
+  return next;
+}
+
+function normalizePersistedState(state: AppState): AppState {
+  const deckIdMap = new Map<string, string>();
+  const cardIdMap = new Map<string, string>();
+
+  const decks = state.decks.map(deck => ({
+    ...deck,
+    id: ensureUuid(deck.id, deckIdMap),
+  }));
+
+  const cards = state.cards.map(card => ({
+    ...card,
+    id: ensureUuid(card.id, cardIdMap),
+    deckId: deckIdMap.get(card.deckId) || card.deckId,
+  }));
+
+  const deckStudySessions = state.deckStudySessions.map(session => ({
+    ...session,
+    deckId: deckIdMap.get(session.deckId) || session.deckId,
+  }));
+
+  const arenaSessions = state.arenaSessions.map(session => ({
+    ...session,
+    deckId: deckIdMap.get(session.deckId) || session.deckId,
+  }));
+
+  return { ...state, decks, cards, deckStudySessions, arenaSessions };
+}
+
 function loadState(): AppState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return { ...defaultState, ...JSON.parse(saved) };
+      return normalizePersistedState({ ...defaultState, ...JSON.parse(saved) });
     }
   } catch (e) {
     console.error('Failed to load state:', e);
