@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { generateId } from './utils';
 import { getLevelFromXp, getRankFromLevel, getXpProgress } from './xp';
 import { applyReview, defaultSM2, isDue, RATING_XP, type Rating, type CardSM2, type MasteryState } from './sm2';
@@ -112,7 +112,7 @@ interface AppContextType {
   deleteDeck: (id: string) => Promise<void>;
   // Cards
   addCard: (card: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>) => Promise<Card>;
-  addCards: (cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => Card[];
+  addCards: (cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => Promise<Card[]>;
   updateCard: (id: string, patch: Partial<Card>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
   getDeckCards: (deckId: string) => Card[];
@@ -211,6 +211,71 @@ function saveState(state: AppState) {
   }
 }
 
+function mapDeckFromDb(row: any): Deck {
+  return {
+    id: row.id,
+    title: row.title,
+    subject: row.subject,
+    description: row.description || '',
+    tags: row.tags || [],
+    color: row.color,
+    createdAt: row.created_at || row.createdAt,
+    lastStudiedAt: row.last_studied_at || row.lastStudiedAt || null,
+  };
+}
+
+function mapCardFromDb(row: any): Card {
+  return {
+    id: row.id,
+    deckId: row.deck_id || row.deckId,
+    front: row.front,
+    back: row.back,
+    createdAt: row.created_at || row.createdAt,
+    interval: row.interval,
+    repetitions: row.repetitions,
+    easeFactor: row.ease_factor || row.easeFactor,
+    dueDate: row.due_date || row.dueDate,
+    masteryState: row.mastery_state || row.masteryState,
+  };
+}
+
+function mapDeckPatchToDb(patch: Partial<Omit<Deck, 'id' | 'createdAt'>>) {
+  const dbPatch: any = { ...patch };
+  if (patch.lastStudiedAt !== undefined) dbPatch.last_studied_at = patch.lastStudiedAt;
+  delete dbPatch.lastStudiedAt;
+  return dbPatch;
+}
+
+function mapDeckToDb(deck: Deck, userId: string) {
+  return {
+    id: deck.id,
+    user_id: userId,
+    title: deck.title,
+    subject: deck.subject,
+    description: deck.description,
+    color: deck.color,
+    tags: deck.tags,
+    created_at: deck.createdAt,
+    last_studied_at: deck.lastStudiedAt,
+  };
+}
+
+function mapCardToDb(card: Card, userId: string) {
+  return {
+    id: card.id,
+    user_id: userId,
+    deck_id: card.deckId,
+    front: card.front,
+    back: card.back,
+    interval: card.interval,
+    repetitions: card.repetitions,
+    ease_factor: card.easeFactor,
+    due_date: card.dueDate,
+    mastery_state: card.masteryState,
+    created_at: card.createdAt,
+  };
+}
+
 function isToday(dateStr: string): boolean {
   return new Date(dateStr).toDateString() === new Date().toDateString();
 }
@@ -231,6 +296,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(loadState());
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const backfilledUserId = useRef<string | null>(null);
 
   useEffect(() => {
     // 1. Initial Auth Check
@@ -250,7 +316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthChange = async (session: Session | null) => {
     if (!session) {
-      setState(defaultState);
+      setState(prev => ({ ...prev, user: null }));
       setIsLoading(false);
       return;
     }
@@ -314,6 +380,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('arena_sessions').select('*').eq('user_id', session.user.id),
         ]);
 
+        const remoteDecks = (decksRes.data || []).map(mapDeckFromDb);
+        const remoteCards = (cardsRes.data || []).map(mapCardFromDb);
+
         setState(prev => ({
           ...prev,
           user: {
@@ -328,8 +397,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           momentum: profile.momentum,
           focusSessions: focusRes.data || [],
           // Merge local decks with Supabase decks to prevent loss
-          decks: [...(decksRes.data || []), ...prev.decks.filter(ld => !(decksRes.data || []).find(sd => sd.id === ld.id))],
-          cards: [...(cardsRes.data || []), ...prev.cards.filter(lc => !(cardsRes.data || []).find(sc => sc.id === lc.id))],
+          decks: [...remoteDecks, ...prev.decks.filter(ld => !remoteDecks.find(sd => sd.id === ld.id))],
+          cards: [...remoteCards, ...prev.cards.filter(lc => !remoteCards.find(sc => sc.id === lc.id))],
           deckStudySessions: studyRes.data || [],
           arenaSessions: arenaRes.data || [],
           lastActiveDate: profile.last_active_date,
@@ -345,6 +414,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoading) saveState(state);
   }, [state, isLoading]);
+
+  useEffect(() => {
+    if (isLoading || !state.user || backfilledUserId.current === state.user.id) return;
+    if (state.decks.length === 0 && state.cards.length === 0) return;
+
+    const userId = state.user.id;
+    backfilledUserId.current = userId;
+
+    Promise.all([
+      state.decks.length > 0
+        ? supabase.from('decks').upsert(state.decks.map(deck => mapDeckToDb(deck, userId)))
+        : Promise.resolve({ error: null }),
+      state.cards.length > 0
+        ? supabase.from('cards').upsert(state.cards.map(card => mapCardToDb(card, userId)))
+        : Promise.resolve({ error: null }),
+    ]).then(([decksRes, cardsRes]) => {
+      if (decksRes.error) console.error("Failed to backfill local decks into Supabase:", decksRes.error);
+      if (cardsRes.error) console.error("Failed to backfill local cards into Supabase:", cardsRes.error);
+    });
+  }, [isLoading, state.user, state.decks, state.cards]);
 
   // ── User ──────────────────────────────────────
 
@@ -497,7 +586,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       decks: prev.decks.map(d => d.id === id ? { ...d, ...patch } : d),
     }));
 
-    await supabase.from('decks').update(patch).eq('id', id);
+    const { error } = await supabase.from('decks').update(mapDeckPatchToDb(patch)).eq('id', id);
+    if (error) {
+      console.error("Failed to update deck in Supabase:", error);
+    }
   }, []);
 
   const deleteDeck = useCallback(async (id: string) => {
@@ -525,7 +617,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     setState(prev => ({ ...prev, cards: [...prev.cards, newCard] }));
 
-    await supabase.from('cards').insert({
+    const { error } = await supabase.from('cards').insert({
       id: newCard.id,
       user_id: state.user.id,
       deck_id: newCard.deckId,
@@ -539,10 +631,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       created_at: newCard.createdAt
     });
 
+    if (error) {
+      console.error("Failed to insert card into Supabase:", error);
+    }
+
     return newCard;
   }, [state.user]);
 
-  const addCards = useCallback((cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => {
+  const addCards = useCallback(async (cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => {
     const newCards: Card[] = cards.map(c => ({
       ...c,
       id: generateId(),
@@ -550,8 +646,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...defaultSM2(),
     }));
     setState(prev => ({ ...prev, cards: [...prev.cards, ...newCards] }));
+    if (state.user && newCards.length > 0) {
+      const { error } = await supabase.from('cards').insert(newCards.map(card => ({
+        id: card.id,
+        user_id: state.user!.id,
+        deck_id: card.deckId,
+        front: card.front,
+        back: card.back,
+        interval: card.interval,
+        repetitions: card.repetitions,
+        ease_factor: card.easeFactor,
+        due_date: card.dueDate,
+        mastery_state: card.masteryState,
+        created_at: card.createdAt
+      })));
+      if (error) {
+        console.error("Failed to bulk insert cards into Supabase:", error);
+      }
+    }
     return newCards;
-  }, []);
+  }, [state.user]);
 
   const updateCard = useCallback(async (id: string, patch: Partial<Card>) => {
     setState(prev => ({

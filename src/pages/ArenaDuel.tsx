@@ -8,6 +8,34 @@ import { supabase } from '@/src/lib/supabase';
 
 type DuelPhase = 'SEARCHING' | 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW';
 
+function mapDeckFromDb(row: any) {
+  return {
+    id: row.id,
+    title: row.title,
+    subject: row.subject,
+    description: row.description || '',
+    tags: row.tags || [],
+    color: row.color,
+    createdAt: row.created_at || row.createdAt,
+    lastStudiedAt: row.last_studied_at || row.lastStudiedAt || null,
+  };
+}
+
+function mapCardFromDb(row: any) {
+  return {
+    id: row.id,
+    deckId: row.deck_id || row.deckId,
+    front: row.front,
+    back: row.back,
+    createdAt: row.created_at || row.createdAt,
+    interval: row.interval,
+    repetitions: row.repetitions,
+    easeFactor: row.ease_factor || row.easeFactor,
+    dueDate: row.due_date || row.dueDate,
+    masteryState: row.mastery_state || row.masteryState,
+  };
+}
+
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
@@ -39,8 +67,9 @@ export function ArenaDuel() {
     try {
       const { data, error } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
       if (!error && data) {
+        const remoteDecks = data.map(mapDeckFromDb);
         // Merge with global state to catch any unsynced local decks just in case
-        const merged = [...data, ...(state.decks || []).filter(ld => !data.find(sd => sd.id === ld.id))];
+        const merged = [...remoteDecks, ...(state.decks || []).filter(ld => !remoteDecks.find(sd => sd.id === ld.id))];
         setArenaDecks(merged);
       } else {
         setArenaDecks(state.decks || []);
@@ -92,17 +121,27 @@ export function ArenaDuel() {
     const d = await getDuel(id);
     if (!d) return;
     setDuel(d);
+
+    const fetchedIsPlayer1 = d.player1_id === state.user?.id;
+    const fetchedIsPlayer2 = d.player2_id === state.user?.id;
+    if (!fetchedIsPlayer1 && !fetchedIsPlayer2) {
+      console.error("Current user is not a participant in this duel", { duelId: id, userId: state.user?.id });
+      return;
+    }
+
+    const fetchedMyTopicField = fetchedIsPlayer1 ? 'p1_topic' : 'p2_topic';
+    const fetchedMyDeckField = fetchedIsPlayer1 ? 'p1_deck_id' : 'p2_deck_id';
     
     if (d.status === 'setup') {
       if (d.mode === 'deck') {
-        setPhase(d[myDeckField] ? 'LOBBY' : 'EXCHANGE');
+        setPhase(d[fetchedMyDeckField] ? 'LOBBY' : 'EXCHANGE');
       } else {
-        setPhase(d[myTopicField] ? 'LOBBY' : 'EXCHANGE');
+        setPhase(d[fetchedMyTopicField] ? 'LOBBY' : 'EXCHANGE');
       }
     }
     else if (d.status === 'active') setPhase('TRIAL');
     else if (d.status === 'review' || d.status === 'finished') setPhase('REVIEW');
-  }, [getDuel, myTopicField, myDeckField]);
+  }, [getDuel, state.user?.id]);
 
   // ── Realtime listener for active duel ──
   useEffect(() => {
@@ -327,7 +366,7 @@ export function ArenaDuel() {
     if (duel?.mode === 'deck' && phase === 'TRIAL' && duel[myDeckField]) {
       supabase.from('cards').select('*').eq('deck_id', duel[myDeckField]).limit(10)
         .then(({ data }) => {
-          if (data) setCards(data);
+          if (data) setCards(data.map(mapCardFromDb));
         });
     }
   }, [duel?.mode, phase, duel?.[myDeckField]]);
