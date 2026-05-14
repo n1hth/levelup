@@ -311,11 +311,22 @@ export function ArenaDuel() {
   const handleSelectDeck = async (deckId: string) => {
     if (!duel) return;
     setIsSyncing(true);
-    const updates: any = { [myDeckField]: deckId };
-    const fresh = await getDuel(duel.id);
-    if (fresh?.[theirDeckField]) updates.status = 'active';
-    await updateDuel(duel.id, updates);
-    setIsSyncing(false);
+    try {
+      const updates: any = { [myDeckField]: deckId };
+      const fresh = await getDuel(duel.id);
+      if (fresh?.[theirDeckField]) updates.status = 'active';
+      
+      // Optimistic update to UI so it feels instant
+      setDuel(prev => prev ? { ...prev, ...updates } : null);
+      if (updates.status === 'active') setPhase('TRIAL');
+      else setPhase('LOBBY');
+      
+      await updateDuel(duel.id, updates);
+    } catch (err: any) {
+      alert("Failed to lock in armament: " + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleAnswerDeck = async (correct: boolean) => {

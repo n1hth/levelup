@@ -1383,8 +1383,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.from('duels').update(updates).eq('id', duelId);
       if (error) throw error;
+      return true;
     } catch (err) {
       console.error("Update duel failed:", err);
+      throw err;
     }
   }, []);
 
