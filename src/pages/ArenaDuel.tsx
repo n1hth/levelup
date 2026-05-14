@@ -11,7 +11,16 @@ type DuelPhase = 'SEARCHING' | 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW';
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, isLoading, addXp, getDuel, updateDuel, createDuel } = useApp();
+  const { state, isLoading, addXp, getDuel, updateDuel, createDuel, getDeckCards } = useApp();
+  
+  useEffect(() => {
+    console.log("ArenaDuel State Check:", {
+      decksCount: state.decks.length,
+      userId: state.user?.id,
+      isLoading,
+      duelId
+    });
+  }, [state.decks, state.user, isLoading, duelId]);
   
   const isSearching = duelId === 'searching';
   
@@ -21,6 +30,33 @@ export function ArenaDuel() {
   const [localTopic, setLocalTopic] = useState('');
   const [answer, setAnswer] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [arenaDecks, setArenaDecks] = useState<any[]>([]);
+
+  // Deeply sync decks for the arena independently
+  const loadArenaDecks = useCallback(async () => {
+    if (!state.user?.id) return;
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
+      if (!error && data) {
+        // Merge with global state to catch any unsynced local decks just in case
+        const merged = [...data, ...(state.decks || []).filter(ld => !data.find(sd => sd.id === ld.id))];
+        setArenaDecks(merged);
+      } else {
+        setArenaDecks(state.decks || []);
+      }
+    } catch (e) {
+      setArenaDecks(state.decks || []);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [state.user?.id, state.decks]);
+
+  useEffect(() => {
+    if (state.user?.id) {
+      loadArenaDecks();
+    }
+  }, [state.user?.id, loadArenaDecks]);
   const [searchStatus, setSearchStatus] = useState('Initializing...');
   const cleanupRef = useRef<(() => void) | null>(null);
 
@@ -197,16 +233,6 @@ export function ArenaDuel() {
     }
   }, [isSearching]);
 
-  const refreshDecks = async () => {
-    if (!state.user) return;
-    setIsSyncing(true);
-    // This will trigger a re-fetch in the global store if we had a refresh function,
-    // but for now we'll just do a direct fetch to verify
-    console.log("Refreshing decks for user:", state.user.id);
-    const { data } = await supabase.from('decks').select('*').eq('user_id', state.user.id);
-    console.log("Decks found in DB:", data?.length);
-    setIsSyncing(false);
-  };
 
   // ── Timer (only in TRIAL) ──
   useEffect(() => {
@@ -429,7 +455,7 @@ export function ArenaDuel() {
                       <Loader2 size={24} className="text-purple-500 animate-spin mx-auto mb-3" />
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Syncing Armory...</p>
                     </div>
-                  ) : state.decks.length > 0 ? state.decks.map(deck => (
+                  ) : arenaDecks && arenaDecks.length > 0 ? arenaDecks.map(deck => (
                     <button
                       key={deck.id}
                       onClick={() => handleSelectDeck(deck.id)}
@@ -447,6 +473,7 @@ export function ArenaDuel() {
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-black uppercase tracking-tight truncate">{deck.title}</div>
                         <div className="text-[8px] font-bold text-slate-500 uppercase">{deck.subject}</div>
+                        <div className="text-[8px] font-bold text-purple-400 uppercase mt-0.5">{getDeckCards?.(deck.id)?.length || 0} Cards</div>
                       </div>
                       {duel[myDeckField] === deck.id && <Zap size={14} className="text-yellow-400" />}
                     </button>
@@ -454,9 +481,11 @@ export function ArenaDuel() {
                     <div className="text-center py-10 opacity-50">
                       <div className="text-3xl mb-2">📭</div>
                       <p className="text-[10px] font-black uppercase tracking-widest">No Armaments Found</p>
-                      <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase mb-4">Create decks in the armory to duel</p>
+                      <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase mb-4">
+                        User: {state.user?.id?.slice(0,8)} | Decks in state: {state.decks?.length || 0} | DB: {arenaDecks.length}
+                      </p>
                       <button 
-                        onClick={refreshDecks}
+                        onClick={loadArenaDecks}
                         className="text-[9px] font-black text-blue-400 uppercase tracking-widest hover:text-blue-300 underline"
                       >
                         Force Sync Neural Link

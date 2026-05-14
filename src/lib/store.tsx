@@ -473,7 +473,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     
     setState(prev => ({ ...prev, decks: [newDeck, ...prev.decks] }));
     
-    await supabase.from('decks').insert({
+    const { error } = await supabase.from('decks').insert({
       id: newDeck.id,
       user_id: state.user.id,
       title: newDeck.title,
@@ -483,6 +483,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       tags: newDeck.tags,
       created_at: newDeck.createdAt
     });
+
+    if (error) {
+      console.error("Failed to insert deck into Supabase:", error);
+    }
 
     return newDeck;
   }, [state.user]);
