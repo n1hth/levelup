@@ -602,27 +602,27 @@ export function ArenaDuel() {
                   </div>
 
                   {cards[currentCardIndex] ? (
-                    <div className="flex-1 perspective-1000">
+                    <div className="flex-1 relative cursor-pointer select-none" style={{ perspective: '1200px' }} onClick={() => setIsFlipped(!isFlipped)}>
                       <motion.div
                         animate={{ rotateY: isFlipped ? 180 : 0 }}
-                        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                        onClick={() => setIsFlipped(!isFlipped)}
-                        className="relative w-full h-full preserve-3d cursor-pointer"
+                        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                        className="relative w-full h-full"
+                        style={{ transformStyle: 'preserve-3d' }}
                       >
                         {/* Front */}
-                        <div className={cn(
-                          "absolute inset-0 backface-hidden bg-slate-900 border-2 border-blue-500/30 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center",
-                          isFlipped ? "opacity-0" : "opacity-100"
-                        )}>
+                        <div 
+                          className="absolute inset-0 bg-slate-900 border-2 border-blue-500/30 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center shadow-xl"
+                          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                        >
                           <div className="text-2xl font-black uppercase tracking-tight">{cards[currentCardIndex].front}</div>
-                          <div className="mt-8 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Tap to reveal</div>
+                          <div className="absolute bottom-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] animate-pulse">Tap to reveal</div>
                         </div>
                         {/* Back */}
-                        <div className={cn(
-                          "absolute inset-0 backface-hidden bg-slate-900 border-2 border-purple-500/30 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center [transform:rotateY(180deg)]",
-                          isFlipped ? "opacity-100" : "opacity-0"
-                        )}>
-                          <div className="text-xl font-medium text-slate-300">{cards[currentCardIndex].back}</div>
+                        <div 
+                          className="absolute inset-0 bg-slate-900 border-2 border-purple-500/30 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center shadow-xl"
+                          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                        >
+                          <div className="text-xl font-medium text-slate-300">{cards[currentCardIndex].back || 'No data found'}</div>
                         </div>
                       </motion.div>
                     </div>
