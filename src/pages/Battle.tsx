@@ -185,7 +185,7 @@ export function Battle() {
                   <button onClick={() => navigate('/decks')} className="px-8 md:px-10 py-4 md:py-5 bg-cyan-600 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] italic rounded-xl md:rounded-2xl hover:bg-cyan-500 transition-all shadow-2xl shadow-cyan-900/20 active:scale-95">REPLENISH ARSENAL</button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                <div className="grid grid-cols-1 gap-3 md:gap-4">
                   {eligibleDecks.map((deck, i) => {
                     const cards = getDeckCards(deck.id);
                     const history = getDeckArenaHistory(deck.id);
@@ -259,7 +259,7 @@ export function Battle() {
                       <h3 className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Engagement Protocol</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 gap-3 md:gap-4">
                       {[
                         { id: 'writing', label: 'Semantic Sprint', icon: '✍️', desc: '90s linguistic overload', color: 'red' },
                         { id: 'deck', label: 'Fragment Clash', icon: '🃏', desc: 'Neural deck combat', color: 'purple' },
@@ -304,7 +304,7 @@ export function Battle() {
                           <h3 className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Designate Target</h3>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                        <div className="grid grid-cols-1 gap-3 md:gap-4">
                           {[
                             { id: 'random', label: 'Neural Queue', icon: '🎲', desc: 'Scan for global peers' },
                             { id: 'friend', label: 'Direct Strike', icon: '⚔️', desc: 'Target synced contact' },
@@ -364,7 +364,7 @@ export function Battle() {
                               animate={{ opacity: 1, scale: 1 }}
                               className="space-y-6 mt-6"
                             >
-                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                               <div className="grid grid-cols-1 gap-3">
                                   {friends.filter(f => f.status === 'accepted').map(friend => (
                                     <button 
                                       key={friend.id}
@@ -414,7 +414,7 @@ export function Battle() {
             </div>
 
             {/* Combat Logs / Guidelines */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 gap-4 md:gap-6">
               <div className="system-panel p-5 md:p-8 border-white/5 bg-white/[0.01] rounded-[1.5rem] md:rounded-[2.5rem]">
                 <h3 className="text-[8px] md:text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mb-6 md:mb-8 flex items-center gap-3">
                    <Target size={12} className="text-cyan-500/50" /> Combat Protocols
