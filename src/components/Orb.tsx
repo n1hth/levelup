@@ -337,8 +337,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
               {/* Scrollable notification list */}
               <div className="px-4 pb-4 space-y-2.5 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(45vh - 80px)' }}>
                 <AnimatePresence mode="popLayout">
-                  {notifications.length > 0 ? (
-                    notifications.map(notif => (
+                  {notifications.filter(n => n.type !== 'duel_cancelled').length > 0 ? (
+                    notifications.filter(n => n.type !== 'duel_cancelled').map(notif => (
                       <motion.div 
                         key={notif.id}
                         layout
@@ -708,11 +708,11 @@ export function Orb({ onInteractionChange }: OrbProps) {
                </div>
                <div className="flex flex-col">
                   <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">
-                    {latestDuelNotif.type === 'duel_cancelled' ? 'Challenge Withdrawn' : 'Incoming Challenge'}
+                    {latestDuelNotif.type === 'duel_cancelled' ? 'Missed Challenge' : 'Incoming Challenge'}
                   </span>
                   <span className="text-[11px] font-black text-white uppercase italic tracking-tight">
                     {latestDuelNotif.type === 'duel_cancelled'
-                      ? `${latestDuelNotif.sender} backed out`
+                      ? `${latestDuelNotif.sender} tried to duel`
                       : `${latestDuelNotif.sender} issued a duel`}
                   </span>
                </div>
