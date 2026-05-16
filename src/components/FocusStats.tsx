@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Clock, Trophy, Flame, Zap, Activity } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
-import { formatDuration, getRelativeTime } from '@/src/lib/utils.ts';
+import { formatDuration, getRelativeTime, cn } from '@/src/lib/utils.ts';
 
 export function FocusStats() {
   const { 
@@ -23,56 +23,58 @@ export function FocusStats() {
   const recentSessions = state.focusSessions.slice(0, 5);
 
   return (
-    <div className="space-y-6">
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-10">
+      {/* Quick Stats Grid - More elegant, less boxed */}
+      <div className="grid grid-cols-4 gap-4 px-1">
         <StatCard 
-          icon={<Clock size={16} className="text-blue-400" />} 
-          label="Today" 
-          value={todayTime > 0 ? formatDuration(todayTime) : '0m'} 
-          sub={`${todaySessions} session${todaySessions !== 1 ? 's' : ''}`}
+          icon={<Clock size={12} className="text-cyan-400" />} 
+          label="TODAY" 
+          value={todayTime > 0 ? formatDuration(todayTime) : '0M'} 
         />
         <StatCard 
-          icon={<Trophy size={16} className="text-yellow-400" />} 
-          label="Record" 
+          icon={<Trophy size={12} className="text-cyan-400" />} 
+          label="RECORD" 
           value={longestSession > 0 ? formatDuration(longestSession) : '—'} 
-          sub="Longest session"
         />
         <StatCard 
-          icon={<Flame size={16} className="text-orange-400" />} 
-          label="Streak" 
+          icon={<Flame size={12} className="text-cyan-400" />} 
+          label="STREAK" 
           value={`${focusStreak}`} 
-          sub="Consecutive days"
         />
         <StatCard 
-          icon={<Zap size={16} className="text-purple-400" />} 
-          label="Total" 
+          icon={<Zap size={12} className="text-cyan-400" />} 
+          label="TOTAL" 
           value={state.focusSessions.length.toString()} 
-          sub="All sessions"
         />
       </div>
 
       {/* Weekly Activity Chart */}
-      <div className="system-panel p-5 border-white/60">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity size={14} className="text-blue-400" />
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">This Week</h3>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <Activity size={14} className="text-cyan-400" />
+            <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-white/40 italic">Activity Protocol</h3>
+          </div>
+          <span className="text-[10px] font-black text-white/20 tabular-nums italic">{todayTime > 0 ? formatDuration(todayTime) : '0M'}</span>
         </div>
-        <div className="flex items-end gap-2 h-20">
+        
+        <div className="flex items-end gap-2.5 h-16 group/chart px-2">
           {weeklyData.map((d, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: d.minutes > 0 ? `${Math.max((d.minutes / maxMinutes) * 100, 8)}%` : '4px' }}
-                transition={{ delay: i * 0.05, duration: 0.5 }}
-                className={`w-full rounded-lg ${
-                  d.minutes > 0 
-                    ? 'bg-gradient-to-t from-blue-500 to-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.3)]' 
-                    : 'bg-blue-100'
-                }`}
-                style={{ minHeight: d.minutes > 0 ? '8px' : '4px' }}
-              />
-              <span className="text-[8px] font-black text-blue-400">{d.day}</span>
+            <div key={i} className="flex-1 flex flex-col items-center gap-2">
+               <div className="w-full relative flex flex-col items-center justify-end h-full">
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: d.minutes > 0 ? `${Math.max((d.minutes / maxMinutes) * 100, 10)}%` : '2px' }}
+                    transition={{ delay: i * 0.05, duration: 0.5 }}
+                    className={cn(
+                      "w-full rounded-sm transition-all duration-500",
+                      d.minutes > 0 
+                        ? 'bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
+                        : 'bg-white/5 opacity-50 group-hover/chart:opacity-100'
+                    )}
+                  />
+               </div>
+               <span className="text-[7px] font-black text-white/10 uppercase tracking-tighter italic">{d.day}</span>
             </div>
           ))}
         </div>
@@ -80,56 +82,55 @@ export function FocusStats() {
 
       {/* Recent Sessions */}
       {recentSessions.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 px-1 flex items-center gap-2">
-            <Clock size={12} /> Recent Sessions
-          </h3>
-          {recentSessions.map((session, i) => (
-            <motion.div
-              key={session.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="flex items-center justify-between p-3 bg-white/40 border border-white/60 rounded-2xl"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[9px] font-black ${
-                  session.isCompleted ? 'bg-emerald-500' : 'bg-blue-400'
-                }`}>
-                  {session.isCompleted ? '✓' : '—'}
-                </div>
-                <div>
-                  <div className="text-xs font-black text-blue-900">
-                    {formatDuration(session.actualDuration)}
-                    {session.noPauseChallenge && session.pauseCount === 0 && (
-                      <span className="ml-2 text-[8px] bg-purple-100 text-purple-500 px-1.5 py-0.5 rounded-full font-black">NO-PAUSE</span>
-                    )}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <Clock size={12} className="text-white/20" />
+            <h3 className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20 italic">Transaction Logs</h3>
+          </div>
+          <div className="space-y-2">
+            {recentSessions.map((session, i) => (
+              <motion.div
+                key={session.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-center justify-between p-4 bg-white/[0.01] border border-white/5 rounded-2xl group hover:border-cyan-400/20 transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center border text-[9px] font-black shadow-inner",
+                    session.isCompleted ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' : 'bg-white/5 border-white/10 text-white/40'
+                  )}>
+                    {session.isCompleted ? '✓' : '—'}
                   </div>
-                  <div className="text-[9px] font-bold text-blue-400">{getRelativeTime(session.completedAt)}</div>
+                  <div>
+                    <div className="text-xs font-black text-white italic flex items-center gap-2">
+                      {formatDuration(session.actualDuration)}
+                      {session.noPauseChallenge && session.pauseCount === 0 && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_rgba(34,211,238,1)]" />
+                      )}
+                    </div>
+                    <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-0.5">{getRelativeTime(session.completedAt)}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs font-black text-blue-600">+{session.xpEarned} XP</div>
-              </div>
-            </motion.div>
-          ))}
+                <div className="text-right">
+                  <div className="text-[10px] font-black text-cyan-400 italic">+{session.xpEarned} XP</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="system-panel p-4 border-white/50 relative overflow-hidden">
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-[9px] font-black tracking-widest text-blue-400 uppercase">{label}</span>
-        <div className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center border border-blue-50">
-          {icon}
-        </div>
-      </div>
-      <div className="text-2xl font-black text-blue-900 mb-0.5">{value}</div>
-      <div className="text-[9px] font-bold text-blue-300 uppercase truncate">{sub}</div>
+    <div className="flex flex-col items-center justify-center text-center group">
+      <div className="mb-2 opacity-20 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">{icon}</div>
+      <div className="text-sm md:text-base font-black text-white italic tabular-nums leading-none mb-1.5">{value}</div>
+      <div className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] italic leading-none">{label}</div>
     </div>
   );
 }

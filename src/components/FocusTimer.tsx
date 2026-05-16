@@ -25,7 +25,7 @@ export function FocusTimer({ timeLeft, totalTime, isActive, isCompleted }: Focus
       <div className={cn(
         "absolute inset-0 rounded-full transition-all duration-1000",
         isActive 
-          ? "bg-blue-500/15 blur-[60px] scale-125 opacity-100" 
+          ? "bg-cyan-500/20 blur-[80px] scale-125 opacity-100" 
           : "bg-blue-500/5 blur-[40px] scale-100 opacity-40"
       )} />
 
@@ -34,7 +34,7 @@ export function FocusTimer({ timeLeft, totalTime, isActive, isCompleted }: Focus
         <svg width="100%" height="100%" viewBox="0 0 100 100">
           <defs>
             <pattern id="hex-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M5 0 L10 2.5 L10 7.5 L5 10 L0 7.5 L0 2.5 Z" fill="none" stroke="#2563eb" strokeWidth="0.15" />
+              <path d="M5 0 L10 2.5 L10 7.5 L5 10 L0 7.5 L0 2.5 Z" fill="none" stroke="#22d3ee" strokeWidth="0.15" />
             </pattern>
           </defs>
           <rect width="100" height="100" fill="url(#hex-grid)" />
@@ -43,59 +43,85 @@ export function FocusTimer({ timeLeft, totalTime, isActive, isCompleted }: Focus
 
       {/* SVG Ring */}
       <svg 
-        className={cn("absolute inset-0 -rotate-90", isActive && "timer-ring-active")}
+        className={cn("absolute inset-0 -rotate-90 transition-transform duration-1000", isActive && "scale-105")}
         width={size} 
         height={size} 
         viewBox={`0 0 ${size} ${size}`}
       >
         <defs>
           <linearGradient id="timer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00d2ff" />
-            <stop offset="100%" stopColor="#3b82f6" />
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#0891b2" />
           </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
         {/* Track */}
         <circle 
           cx={center} cy={center} r={radius}
-          className="timer-ring-track"
+          stroke="rgba(255,255,255,0.03)"
+          strokeWidth={strokeWidth}
+          fill="none"
         />
 
         {/* Progress */}
         <motion.circle 
           cx={center} cy={center} r={radius}
-          className="timer-ring-progress"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           initial={false}
+          stroke="url(#timer-gradient)"
+          filter={isActive ? "url(#glow)" : "none"}
         />
+
+        {/* Data points */}
+        {isActive && [...Array(8)].map((_, i) => (
+          <motion.circle
+            key={i}
+            cx={center + radius * Math.cos((i * 45) * Math.PI / 180)}
+            cy={center + radius * Math.sin((i * 45) * Math.PI / 180)}
+            r="1"
+            fill="#22d3ee"
+            animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity, delay: i * 0.25 }}
+          />
+        ))}
 
         {/* Decorative inner ring */}
         <circle 
-          cx={center} cy={center} r={radius - 16}
+          cx={center} cy={center} r={radius - 12}
           fill="none"
-          stroke="rgba(59, 130, 246, 0.06)"
-          strokeWidth="1"
-          strokeDasharray="4 8"
+          stroke="rgba(255,255,255,0.05)"
+          strokeWidth="0.5"
+          strokeDasharray="2 6"
         />
       </svg>
 
       {/* Center Panel */}
-      <div className="system-panel aero-gloss rounded-full flex flex-col items-center justify-center relative z-10 overflow-hidden"
+      <div className="rounded-full flex flex-col items-center justify-center relative z-10 overflow-hidden bg-white/[0.02] border border-white/5 backdrop-blur-md"
         style={{ width: size - 56, height: size - 56 }}
       >
         {/* Subtle pulse when active */}
         {isActive && (
-          <div className="absolute inset-0 opacity-5">
-            <div className="w-full h-full animate-ping bg-blue-400 rounded-full" style={{ animationDuration: '4s' }} />
+          <div className="absolute inset-0 opacity-10">
+            <div className="w-full h-full animate-ping bg-cyan-400 rounded-full" style={{ animationDuration: '4s' }} />
           </div>
         )}
 
-        <div className="text-[10px] font-black text-blue-300 uppercase tracking-[0.3em] mb-3">
-          {isCompleted ? 'Complete' : isActive ? 'Core Density' : 'Duration'}
+        <div className="text-[10px] font-black text-cyan-400/40 uppercase tracking-[0.3em] mb-4">
+          {isCompleted ? 'SYNC COMPLETE' : isActive ? 'NEURAL COMPILATION' : 'CYCLE LENGTH'}
         </div>
         
-        <span className="text-6xl font-black tracking-tighter tabular-nums text-blue-900 drop-shadow-sm leading-none">
+        <span className="text-6xl font-black tracking-tighter tabular-nums text-white italic drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] leading-none">
           {formatTime(timeLeft)}
         </span>
         
@@ -103,23 +129,23 @@ export function FocusTimer({ timeLeft, totalTime, isActive, isCompleted }: Focus
           animate={isActive ? { scale: [1, 1.05, 1] } : {}}
           transition={{ duration: 2, repeat: Infinity }}
           className={cn(
-            "mt-5 flex items-center gap-2 px-4 py-1.5 rounded-full border-2 transition-all duration-500",
+            "mt-6 flex items-center gap-2 px-5 py-2 rounded-xl border transition-all duration-500",
             isActive 
-              ? "bg-blue-900 border-blue-800 shadow-xl" 
+              ? "bg-white/5 border-cyan-400/20 shadow-[0_0_15px_rgba(34,211,238,0.2)]" 
               : isCompleted 
-                ? "bg-emerald-500 border-emerald-400 shadow-xl"
-                : "bg-blue-100 border-blue-200"
+                ? "bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                : "bg-white/[0.02] border-white/5"
           )}
         >
           <Zap className={cn(
             "h-3 w-3 transition-all",
-            isActive ? "text-cyan-400 animate-pulse" : isCompleted ? "text-white" : "text-blue-400 opacity-40"
+            isActive ? "text-cyan-400 animate-pulse drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" : isCompleted ? "text-emerald-400" : "text-white/20"
           )} />
           <span className={cn(
-            "text-[9px] uppercase font-black tracking-[0.3em]",
-            isActive ? "text-white" : isCompleted ? "text-white" : "text-blue-500"
+            "text-[9px] uppercase font-black tracking-[0.4em] italic",
+            isActive ? "text-white" : isCompleted ? "text-emerald-400" : "text-white/30"
           )}>
-            {isCompleted ? 'Synchronized' : isActive ? 'Synchronizing' : 'Stable'}
+            {isCompleted ? 'TRANSFERRED' : isActive ? 'SYNCING' : 'IDLE'}
           </span>
         </motion.div>
       </div>

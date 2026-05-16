@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from '@/src/lib/store.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { Layout } from './components/Layout.tsx';
@@ -14,44 +14,20 @@ import { Battle } from './pages/Battle.tsx';
 import { ArenaPlay } from './pages/ArenaPlay.tsx';
 import { ArenaDuel } from './pages/ArenaDuel.tsx';
 import { Social } from './pages/Social.tsx';
-import { Chat } from './pages/Chat.tsx';
 
 function AppContent() {
   const { state, isLoading, session } = useApp();
-  const location = useLocation();
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-black overflow-hidden relative">
-        {/* Background Gradients */}
-        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '700ms' }} />
-        
+      <div className="h-screen w-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
         <motion.div
-          animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-8 relative z-10"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex flex-col items-center gap-4"
         >
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border border-white/5 bg-white/[0.02] flex items-center justify-center p-2">
-               <div className="w-full h-full rounded-full border-2 border-cyan-500 border-t-transparent animate-spin shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
-            </div>
-            <div className="absolute inset-0 blur-xl bg-cyan-500/20 rounded-full animate-pulse" />
-          </div>
-          
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[11px] font-black tracking-[0.6em] text-cyan-400 uppercase italic">Initializing Neural Core</span>
-            <div className="flex gap-1">
-               {Array.from({ length: 3 }).map((_, i) => (
-                 <motion.div
-                   key={i}
-                   animate={{ opacity: [0.2, 1, 0.2] }}
-                   transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                   className="w-1.5 h-px bg-cyan-400"
-                 />
-               ))}
-            </div>
-          </div>
+          <div className="w-16 h-16 rounded-full border-4 border-blue-400 border-t-transparent animate-spin" />
+          <span className="text-[10px] font-black tracking-[0.4em] text-blue-400 uppercase">Initializing System</span>
         </motion.div>
       </div>
     );
@@ -64,7 +40,7 @@ function AppContent() {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/home" replace />} />
           <Route path="home" element={<Dashboard />} />
@@ -76,7 +52,6 @@ function AppContent() {
           <Route path="arenas" element={<Navigate to="/battle" replace />} />
           <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
           <Route path="social" element={<Social />} />
-          <Route path="social/chat/:userId" element={<Chat />} />
           <Route path="profile" element={<Profile />} />
         </Route>
         

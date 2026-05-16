@@ -20,58 +20,69 @@ export function FlashCard({ card, onFlip }: FlashCardProps) {
 
   return (
     <div
-      className="w-full cursor-pointer select-none"
-      style={{ perspective: '1200px', minHeight: '280px' }}
+      className="w-full cursor-pointer select-none group"
+      style={{ perspective: '2000px', minHeight: '380px' }}
       onClick={handleFlip}
     >
       <motion.div
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-        style={{ transformStyle: 'preserve-3d', position: 'relative', width: '100%', height: '100%', minHeight: '280px' }}
+        transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+        style={{ transformStyle: 'preserve-3d', position: 'relative', width: '100%', height: '100%', minHeight: '380px' }}
       >
         {/* Front */}
         <div
-          className="absolute inset-0 system-panel p-8 flex flex-col items-center justify-center border-white/80 shadow-xl"
+          className="absolute inset-0 system-panel p-12 flex flex-col items-center justify-center text-center modular-card !bg-white/[0.03]"
           style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
         >
-          <div className="absolute inset-0 aero-gloss opacity-30 rounded-[18px] pointer-events-none" />
-          <div className="absolute top-4 left-4">
+          {/* Card Accent lines */}
+          <div className="absolute top-10 left-12 right-12 flex justify-between items-center opacity-30">
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-cyan-400" />
+            <div className="w-2 h-2 rounded-full bg-cyan-400 mx-4 shadow-[0_0_10px_rgba(34,211,238,1)]" />
+            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-cyan-400" />
+          </div>
+
+          <div className="absolute top-10 left-12">
             <span
-              className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-full text-white"
-              style={{ background: getMasteryColor(card.masteryState) }}
+              className="text-[9px] font-black uppercase tracking-[0.4em] px-4 py-1.5 rounded-full text-white border border-white/10 italic"
+              style={{ background: `${getMasteryColor(card.masteryState)}30`, borderColor: `${getMasteryColor(card.masteryState)}40` }}
             >
               {getMasteryLabel(card.masteryState)}
             </span>
           </div>
-          <div className="absolute top-4 right-4 text-[9px] font-black text-blue-300 uppercase tracking-widest">Front</div>
 
-          <p className="text-center text-blue-900 font-black text-xl leading-relaxed relative z-10">
+          <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-8 italic">Neural Stimulus</span>
+          <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">
             {card.front}
           </p>
 
-          <div className="absolute bottom-4 flex items-center gap-2 text-[9px] font-black text-blue-300 uppercase tracking-widest">
-            <RotateCcw size={10} /> Tap to reveal
+          <div className="absolute bottom-10 flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic animate-pulse">
+            <RotateCcw size={14} className="text-cyan-400" /> Tap to Access
           </div>
         </div>
 
         {/* Back */}
         <div
-          className="absolute inset-0 system-panel p-8 flex flex-col items-center justify-center border-blue-200/50 shadow-xl bg-gradient-to-br from-blue-50/80 to-white/80"
+          className="absolute inset-0 system-panel p-12 flex flex-col items-center justify-center text-center modular-card !bg-white/[0.05] border-emerald-500/20"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
           }}
         >
-          <div className="absolute inset-0 aero-gloss opacity-20 rounded-[18px] pointer-events-none" />
-          <div className="absolute top-4 right-4 text-[9px] font-black text-blue-300 uppercase tracking-widest">Back</div>
+          {/* Card Accent lines */}
+          <div className="absolute top-10 left-12 right-12 flex justify-between items-center opacity-30">
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-emerald-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400 mx-4 shadow-[0_0_10px_rgba(16,185,129,1)]" />
+            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-emerald-400" />
+          </div>
 
-          <p className="text-center text-blue-800 font-bold text-lg leading-relaxed relative z-10">
+          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-8 italic text-shadow-glow">Response Decrypted</span>
+          <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase">
             {card.back}
           </p>
 
-          <div className="absolute bottom-4 text-[9px] font-black text-blue-300 uppercase tracking-widest">
-            Rate your memory below
+          <div className="absolute bottom-10 text-[9px] font-black text-emerald-400/40 uppercase tracking-[0.4em] italic leading-tight uppercase">
+            Verify Recognition Accuracy Range
           </div>
         </div>
       </motion.div>

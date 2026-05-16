@@ -47,7 +47,6 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   });
   const { state, setUser, isUsernameAvailable } = useApp();
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [canBypass, setCanBypass] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -73,75 +72,37 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   // Phase 7: Auto-redirect after grand finale
   useEffect(() => {
     if (phase === 7) {
-      // Faster bypass availability
-      const bypassTimer = setTimeout(() => setCanBypass(true), 2000);
-
-      const finalize = async () => {
-        try {
-          // If we are in AI Studio, supabase might not be fully configured or slow
-          // We set a race condition: finalize or bypass
-          const { data: { user } } = await supabase.auth.getUser();
-          
+      const timer = setTimeout(() => {
+        // We just need to make sure the onboarding_completed is set in the database
+        supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) {
             const finalName = formData.name || user.user_metadata.full_name || user.email?.split('@')[0] || 'Operator';
-            const finalUsername = formData.username || finalName.toLowerCase().replace(/\s/g, '_');
-
-            // Try to update profile, but don't block if it fails
-            await supabase.from('profiles').update({ 
+            supabase.from('profiles').update({ 
               onboarding_completed: true, 
               school: formData.school,
               name: finalName,
-              username: finalUsername
-            }).eq('id', user.id).select().single();
-
-            setUser({
-              id: user.id,
-              name: finalName,
-              school: formData.school,
-              onboardingCompleted: true,
-              createdAt: user.created_at
-            });
-          } else {
-            // No auth user, proceed with local
-            setUser({
-              id: 'local-operator',
-              name: formData.name || 'Hunter',
-              school: formData.school,
-              onboardingCompleted: true,
-              createdAt: new Date().toISOString()
+              username: formData.username || finalName.toLowerCase().replace(/\s/g, '_')
+            }).eq('id', user.id).then(() => {
+              // Update local state to trigger transition
+              setUser({
+                id: user.id,
+                name: finalName,
+                school: formData.school,
+                onboardingCompleted: true,
+                createdAt: user.created_at
+              });
+            }).then(() => {
+              // Onboarding success
+            }, (updateError: any) => {
+              console.error("Critical: Onboarding update failed", updateError);
+              alert("System Error: Failed to finalize dossier.");
             });
           }
-        } catch (err) {
-          console.error("Onboarding finalization failed, falling back to local:", err);
-          setUser({
-            id: 'local-operator',
-            name: formData.name || 'Hunter',
-            school: formData.school,
-            onboardingCompleted: true,
-            createdAt: new Date().toISOString()
-          });
-        }
-      };
-
-      // Faster auto-finalize
-      const timer = setTimeout(finalize, 2000);
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(bypassTimer);
-      };
+        });
+      }, 4500);
+      return () => clearTimeout(timer);
     }
-  }, [phase, formData, setUser]);
-
-  const forceBypass = () => {
-    setUser({
-      id: 'debug-user',
-      name: formData.name || 'Hunter',
-      school: formData.school,
-      onboardingCompleted: true,
-      createdAt: new Date().toISOString()
-    });
-  };
-
+  }, [phase, formData.school, authMode]);
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
@@ -194,24 +155,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
 
   return (
     <div className="h-screen w-screen bg-black text-white overflow-hidden relative font-sans">
-      {/* Background Ambience - MOVED TO TOP */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 -left-1/4 w-full h-full bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 -right-1/4 w-full h-full bg-cyan-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
-      </div>
-
       <AnimatePresence mode="wait">
-        
-        {/* Global Skip Button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.2 }}
-          whileHover={{ opacity: 1, scale: 1.05 }}
-          onClick={forceBypass}
-          className="absolute top-8 right-8 z-50 text-[10px] font-black tracking-[0.4em] text-white uppercase italic px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md transition-all hover:border-cyan-400/30 hover:text-cyan-400"
-        >
-          SKIP INTEGRATION {">>"}
-        </motion.button>
         
         {/* Phase 0: The Cold Open */}
         {phase === 0 && (
@@ -220,7 +164,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full"
+            className="flex flex-col items-center justify-center h-full w-full"
           >
             <motion.div 
               initial={{ width: 0 }}
@@ -241,16 +185,6 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 </motion.span>
               ))}
             </motion.div>
-
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
-              onClick={() => setPhase(2)}
-              className="mt-12 text-[8px] font-black tracking-widest text-white/20 hover:text-white transition-colors"
-            >
-              SKIP INTRO
-            </motion.button>
           </motion.div>
         )}
 
@@ -261,7 +195,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8 text-center"
+            className="flex flex-col items-center justify-center h-full w-full px-8 text-center"
           >
             {/* Pulsing Orb */}
             <div className="relative mb-20">
@@ -324,7 +258,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="flex flex-col items-center justify-center h-full w-full px-8"
           >
             <div className="w-full max-w-sm">
               <div className="text-center mb-12">
@@ -333,30 +267,31 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                   className="inline-block mb-6"
                 >
-                  <Hexagon size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
+                  <Hexagon size={48} className="text-blue-500" />
                 </motion.div>
-                <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                  {authMode === 'signup' ? 'Neural Core Registration' : 'Re-establish Link'}
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2">
+                  {authMode === 'signup' ? 'Neural Core Registration' : 'Re-establish Neural Link'}
                 </h2>
-                <div className="h-1 w-12 bg-cyan-400 mx-auto" />
+                <div className="h-1 w-12 bg-blue-500 mx-auto" />
               </div>
 
-              <div className="space-y-4">
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
+                  <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
                     <Mail size={18} />
                   </div>
                   <input
                     required
                     type="email"
                     placeholder="NEURAL ID (EMAIL)"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest uppercase"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-[10px] tracking-widest uppercase"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
+                  <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
                     <Lock size={18} />
                   </div>
                   <input
@@ -364,24 +299,18 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                     minLength={6}
                     type="password"
                     placeholder="ACCESS CIPHER"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-[10px] tracking-widest"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={(e) => {
-                    if (formData.email && formData.password.length >= 6) {
-                      handleAuthSubmit(e as any);
-                    }
-                  }}
-                  className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                <button
+                  type="submit"
+                  className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4"
                 >
                   {authMode === 'signup' ? 'FORGE NEURAL LINK' : 'RE-ESTABLISH LINK'}
-                </motion.button>
+                </button>
 
                 <div className="flex items-center gap-4 my-6">
                   <div className="h-px flex-1 bg-white/10" />
@@ -397,7 +326,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   <GoogleIcon />
                   <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">AUTHENTICATE WITH GOOGLE</span>
                 </button>
-              </div>
+              </form>
 
               <div className="mt-8 text-center text-[9px] font-black tracking-widest text-blue-400/60 transition-all">
                 {authMode === 'signup' ? (
@@ -405,11 +334,6 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 ) : (
                   <p>New candidate? <button onClick={() => setAuthMode('signup')} className="text-blue-400 hover:text-white underline">Initiate training</button></p>
                 )}
-                <div className="mt-4 pt-4 border-t border-white/5">
-                  <button onClick={() => setPhase(2.5)} className="text-white/20 hover:text-white/40 uppercase tracking-widest">
-                    Continue as Guest (Offline Mode)
-                  </button>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -422,7 +346,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="flex flex-col items-center justify-center h-full w-full px-8"
           >
             <div className="w-full max-w-sm text-center">
               <div className="mb-10">
@@ -487,7 +411,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="flex flex-col items-center justify-center h-full w-full px-8"
           >
             <div className="w-full max-w-sm">
               <div className="text-center mb-10">
@@ -567,7 +491,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="flex flex-col items-center justify-center h-full w-full px-8"
           >
             <div className="w-full max-w-sm relative">
               <div className="text-center mb-12">
@@ -634,7 +558,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="flex flex-col items-center justify-center h-full w-full px-8"
           >
             <div className="w-full max-w-sm space-y-4">
               <div className="text-center mb-8">
@@ -688,7 +612,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-12 text-center"
+            className="flex flex-col items-center justify-center h-full w-full px-12 text-center"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
@@ -729,7 +653,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             key="phase7"
             initial={{ backgroundColor: '#000' }}
             animate={{ backgroundColor: '#000' }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full relative"
+            className="flex flex-col items-center justify-center h-full w-full relative"
           >
             {/* Particle Explosion Mockup (Radiating Rings) */}
             <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -745,56 +669,47 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             </div>
 
             <motion.h1
-              initial={{ scale: 0.5, opacity: 0, filter: 'blur(20px)' }}
+              initial={{ scale: 0.5, opacity: 0, filter: 'blur(10px)' }}
               animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="text-7xl font-black italic tracking-tighter text-white mb-6 text-center px-8"
+              className="text-6xl font-black italic tracking-tighter text-white mb-6 text-center px-8"
             >
               HUNTER <br />
-              <span className="text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.5)]">{formData.name || 'OPERATOR'}</span>
+              <span className="text-blue-500">{formData.name || 'OPERATOR'}</span>
             </motion.h1>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5 }}
-              className="flex items-center gap-4 text-xs font-black tracking-[0.4em] text-cyan-400/50 uppercase italic"
+              className="flex items-center gap-4 text-xs font-black tracking-[0.4em] text-blue-400/80 uppercase"
             >
               <span>RANK E</span>
-              <div className="w-1 h-1 rounded-full bg-cyan-400" />
+              <div className="w-1 h-1 rounded-full bg-blue-400" />
               <span>LEVEL 1</span>
-              <div className="w-1 h-1 rounded-full bg-cyan-400" />
+              <div className="w-1 h-1 rounded-full bg-blue-400" />
               <span>THE HUNT BEGINS</span>
             </motion.div>
             
             <motion.div 
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
-               transition={{ delay: 2.5 }}
-               className="mt-20 flex flex-col items-center gap-6"
+               transition={{ delay: 3 }}
+               className="mt-20 flex items-center gap-3"
             >
-               <div className="flex items-center gap-4">
-                 <div className="w-6 h-6 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
-                 <span className="text-[10px] font-black tracking-[0.5em] text-cyan-400/30 uppercase italic">Synchronizing Neural Interface...</span>
-               </div>
-
-               {canBypass && (
-                 <motion.button
-                   initial={{ opacity: 0, scale: 0.9 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   whileHover={{ scale: 1.05, color: '#fff' }}
-                   onClick={forceBypass}
-                   className="px-6 py-3 border border-white/5 bg-white/[0.02] rounded-xl text-[9px] font-black tracking-[0.3em] text-white/20 hover:border-cyan-400/30 transition-all uppercase italic"
-                 >
-                   System Override &gt;&gt;
-                 </motion.button>
-               )}
+               <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+               <span className="text-[10px] font-black tracking-widest text-blue-200/40 uppercase">Synchronizing Neural Interface...</span>
             </motion.div>
-
           </motion.div>
         )}
 
       </AnimatePresence>
+
+      {/* Background Ambience */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-1/4 -left-1/4 w-full h-full bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 -right-1/4 w-full h-full bg-cyan-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+      </div>
     </div>
   );
 }

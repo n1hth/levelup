@@ -1,46 +1,73 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Shield, Trophy,  MessageCircle, 
-  Send, 
-  Search, 
+import { useNavigate } from 'react-router-dom';
+import { Users, Trophy, 
   Plus, 
   Zap, 
   ChevronRight, 
   MessageSquare, 
   Trash2, 
-  Check,
   AtSign,
-  UserPlus,
   Crown,
-  Globe
+  Globe,
+  Flame,
+  Search
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
-type Tab = 'friends' | 'guilds' | 'ranks' | 'dms' | 'community';
+type Tab = 'friends' | 'leaderboard' | 'community';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
-  { id: 'friends', label: 'Friends', icon: Users },
-  { id: 'guilds', label: 'Guilds', icon: Shield },
-  { id: 'community', label: 'Community', icon: Globe },
-  { id: 'ranks', label: 'Ranks', icon: Trophy },
-  { id: 'dms', label: 'DMs', icon: MessageCircle },
+  { id: 'friends', label: 'FRIENDS', icon: Users },
+  { id: 'leaderboard', label: 'LEADERBOARD', icon: Trophy },
+  { id: 'community', label: 'COMMUNITY', icon: Globe },
 ];
 
+function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number }) {
+  const getGlowColor = () => {
+    switch(state) {
+      case 'active': return 'rgba(34,211,238,0.5)';
+      case 'battle': return 'rgba(239, 68, 68, 0.5)';
+      default: return 'rgba(34,211,238,0.2)';
+    }
+  };
+
+  const getOrbGradient = () => {
+    switch(state) {
+      case 'active': return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #a5f3fc 20%, #06b6d4 50%, #0891b2 100%)';
+      case 'battle': return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #fecaca 20%, #ef4444 50%, #b91c1c 100%)';
+      default: return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #e2e8f0 20%, #94a3b8 50%, #475569 100%)';
+    }
+  };
+
+  return (
+    <div 
+      className="rounded-full relative shrink-0 shadow-lg"
+      style={{ 
+        width: size, 
+        height: size, 
+        boxShadow: `0 0 15px ${getGlowColor()}`,
+        background: getOrbGradient()
+      }}
+    >
+      <div className="absolute inset-0 shadow-[inset_0_-4px_8px_rgba(0,0,0,0.3)] rounded-full pointer-events-none" />
+      <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/60 blur-[1px] -rotate-[35deg]" />
+    </div>
+  );
+}
+
 export function Social() {
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, getPublicDuels, submitCommunityHonourVote } = useApp();
+  const navigate = useNavigate();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
-  const [guildSearch, setGuildSearch] = useState('');
-  const [dmInput, setDmInput] = useState('');
-  const [selectedDm, setSelectedDm] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number }[]>([]);
-  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean }[]>([]);
+  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean; activity?: string; streak?: number }[]>([]);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
-  const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
   const [votingKey, setVotingKey] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -49,40 +76,49 @@ export function Social() {
   const rankColor = getRankColor(rank);
   const rankTitle = getRankTitle(rank);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0 }
+  };
+
   useEffect(() => {
     if (activeTab === 'friends') {
-      getFriends().then(setFriends);
-    } else if (activeTab === 'ranks') {
+      getFriends().then((data) => {
+        // Enforce mock activities for now as requested by user
+        let enriched = data.map((f: any) => ({
+          ...f,
+          activity: Math.random() > 0.7 ? 'In Battle' : Math.random() > 0.4 ? 'In Focus' : 'Idle',
+          streak: Math.floor(Math.random() * 12)
+        }));
+
+        // Add fake users if the list is small for demo
+        if (enriched.length < 5) {
+          const fakeUsers = [
+            { friendshipId: 'f1', id: 'u1', name: 'Nikku', activity: 'In Focus', streak: 5, status: 'accepted' },
+            { friendshipId: 'f2', id: 'u2', name: 'Kishore Varma', activity: 'Idle', streak: 3, status: 'accepted' },
+            { friendshipId: 'f3', id: 'u3', name: 'Gopi Krishna', activity: 'In Battle', streak: 8, status: 'accepted' },
+            { friendshipId: 'f4', id: 'u4', name: 'Ice Mel', activity: 'In Focus', streak: 1, status: 'accepted' },
+          ];
+          enriched = [...enriched, ...fakeUsers];
+        }
+        setFriends(enriched);
+      });
+    } else if (activeTab === 'leaderboard') {
       getLeaderboard().then(setLeaderboard);
     } else if (activeTab === 'community') {
       getPublicDuels().then(setPublicDuels);
     }
   }, [activeTab, getFriends, getLeaderboard, getPublicDuels]);
-
-  useEffect(() => {
-    if (selectedDm) {
-      getMessages(selectedDm).then(setMessages);
-      
-      const channel = supabase
-        .channel(`messages:${selectedDm}`)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'messages'
-        }, (payload) => {
-          const newMsg = payload.new as any;
-          if ((newMsg.sender_id === selectedDm && newMsg.receiver_id === state.user?.id) || 
-              (newMsg.sender_id === state.user?.id && newMsg.receiver_id === selectedDm)) {
-            setMessages(prev => [...prev, newMsg]);
-          }
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [selectedDm, getMessages, state.user?.id]);
 
   const handleFriendSearch = async (val: string) => {
     setFriendSearch(val);
@@ -153,199 +189,276 @@ export function Social() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 pb-8">
-      <div className="text-center space-y-1">
-         <span className="text-[10px] font-black tracking-[0.4em] text-blue-400 uppercase">Universal Network</span>
-         <h2 className="text-3xl font-black text-blue-900 tracking-tighter uppercase italic">The Hall of Kings</h2>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-white/60 border border-white/80 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl transition-all relative",
-                activeTab === tab.id ? "bg-blue-600 text-white shadow-lg" : "text-blue-900/40 hover:text-blue-600 hover:bg-blue-50"
-              )}
-            >
-              <Icon size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">{tab.label}</span>
-            </button>
-          );
-        })}
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full max-w-2xl space-y-4 pb-24 overflow-x-hidden"
+    >
+      <div className="pt-8 px-6 flex items-center justify-between">
+         <div className="text-left">
+           <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
+             Social
+           </h2>
+           <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mt-1.5 italic">Neural Network Active</p>
+         </div>
+         <div className="flex gap-2">
+           {TABS.map((tab) => {
+             const Icon = tab.icon;
+             const isActive = activeTab === tab.id;
+             return (
+               <button
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id as Tab)}
+                 className={cn(
+                   "p-2.5 rounded-xl transition-all border",
+                   isActive 
+                     ? "bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]" 
+                     : "bg-white/[0.03] text-white/20 hover:text-white/40 border-white/5"
+                 )}
+               >
+                 <Icon size={14} className="stroke-[2.5]" />
+               </button>
+             );
+           })}
+         </div>
       </div>
 
       <AnimatePresence mode="wait">
         {/* ═══ FRIENDS ═══ */}
         {activeTab === 'friends' && (
-          <motion.div key="friends" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-            <div className="relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300 pointer-events-none" />
-              <input type="text" value={friendSearch} onChange={e => handleFriendSearch(e.target.value)} placeholder="SEARCH OPERATORS..."
-                className="w-full bg-white border border-blue-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-400 focus:bg-white transition-all text-blue-900 placeholder:text-blue-300 font-black text-[10px] tracking-widest shadow-sm" />
+          <motion.div 
+            key="friends" 
+            variants={containerVariants}
+            initial="hidden" 
+            animate="show" 
+            exit={{ opacity: 0 }} 
+            className="space-y-6"
+          >
+            {/* Minimal Search */}
+            <div className="px-6">
+              <div className="relative group">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" />
+                <input 
+                  type="text" 
+                  value={friendSearch} 
+                  onChange={e => handleFriendSearch(e.target.value)} 
+                  placeholder="Search network..."
+                  className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-3 pl-10 pr-4 outline-none focus:border-cyan-400/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 font-black text-[11px] tracking-widest uppercase italic shadow-inner" 
+                />
+              </div>
             </div>
 
-            {searchResults.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest px-1">Global Search Results</h3>
-                {searchResults.map(user => (
-                  <div key={user.id} className="system-panel p-3 border-blue-100 flex items-center justify-between bg-blue-50/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-xs font-black text-blue-900 uppercase">{user.name}</div>
-                        <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                          <AtSign size={8} /> {user.username || user.name.toLowerCase().replace(/\s/g, '_')}
-                        </div>
-                      </div>
-                    </div>
-                    <button onClick={() => handleAddFriend(user.id)} className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                      <UserPlus size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Instagram style Orbs Row */}
+            <div className="px-4 overflow-hidden">
+               <div className="flex gap-4 overflow-x-auto pb-4 px-2 no-scrollbar scroll-smooth">
+                 {/* Your Story */}
+                 <div className="flex flex-col items-center gap-2 shrink-0">
+                   <div className="relative p-1 rounded-full border-2 border-white/5">
+                     <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
+                        <Plus size={20} className="text-white/20" />
+                     </div>
+                   </div>
+                   <span className="text-[9px] font-black text-white/20 uppercase italic pb-1">Your Link</span>
+                 </div>
+
+                 {friends.filter(f => f.status === 'accepted').slice(0, 10).map((friend) => (
+                   <button 
+                     key={friend.id} 
+                     onClick={() => navigate(`/social/chat/${friend.id}`)}
+                     className="flex flex-col items-center gap-2 shrink-0 group"
+                   >
+                     <div className={cn(
+                       "relative p-1 rounded-full border-2 transition-colors",
+                       friend.activity === 'In Focus' ? 'border-cyan-400' : 'border-white/5'
+                     )}>
+                       <SmallOrb state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={56} />
+                       {(friend.activity === 'In Focus' || friend.activity === 'In Battle') && (
+                         <div className={cn(
+                           "absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#030406]",
+                           friend.activity === 'In Battle' ? 'bg-red-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+                         )} />
+                       )}
+                     </div>
+                     <span className="text-[9px] font-black text-white/40 uppercase italic tracking-tighter max-w-[64px] truncate pb-1">
+                       {friend.name.split(' ')[0]}
+                     </span>
+                   </button>
+                 ))}
+               </div>
+            </div>
             
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-black text-blue-900 uppercase tracking-widest px-1">Active Friends</h3>
-              {friends.filter(f => f.status === 'accepted').length > 0 ? (
-                <div className="space-y-2">
-                  {/* Deduplicate by ID just in case */}
-                  {Array.from(new Map(friends.filter(f => f.status === 'accepted').map(f => [f.id, f])).values()).map(friend => (
-                    <div key={friend.id} className="system-panel p-3 border-white/60 flex items-center justify-between">
+            {/* Global Search Results */}
+            <AnimatePresence>
+              {searchResults.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="px-6 space-y-3"
+                >
+                  {searchResults.map(user => (
+                    <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 font-black">
-                          {friend.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                          <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1">
-                            <AtSign size={8} /> {friend.username || friend.name.toLowerCase().replace(/\s/g, '_')}
+                        <SmallOrb state="active" size={32} />
+                        <div>
+                          <div className="text-sm font-black text-white uppercase italic leading-none">{user.name}</div>
+                          <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 italic">
+                            @{user.username || user.name.toLowerCase().replace(/\s/g, '_')}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => { setSelectedDm(friend.id); setActiveTab('dms'); }}
-                            className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
-                          >
-                            <MessageSquare size={16} />
-                          </button>
-                          <button 
-                            onClick={() => handleRemoveFriend(friend.friendshipId)}
-                            className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                      </div>
+                      <button 
+                        onClick={() => handleAddFriend(user.id)} 
+                        className="w-10 h-10 rounded-xl bg-cyan-400 text-black flex items-center justify-center hover:scale-105 transition-transform"
+                      >
+                        <Plus size={16} className="stroke-[3]" />
+                      </button>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Direct Messaging / Friends List */}
+            <div className="px-6 space-y-4">
+              <h3 className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] italic">Direct Signals</h3>
+              {friends.filter(f => f.status === 'accepted').length > 0 ? (
+                <div className="space-y-1">
+                  {friends.filter(f => f.status === 'accepted').map((friend) => (
+                    <motion.button 
+                      key={friend.id}
+                      onClick={() => navigate(`/social/chat/${friend.id}`)}
+                      className="w-full group flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5"
+                    >
+                      <div className="relative shrink-0">
+                        <SmallOrb state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={44} />
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-black text-white uppercase italic tracking-tight group-hover:text-cyan-400 transition-colors">
+                            {friend.name}
+                          </span>
+                          <span className="text-[9px] font-black text-white/10 uppercase italic">2h ago</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black text-white/30 uppercase italic truncate pr-4">
+                            SIGNAL DETECTED: CONNECTION STABLE...
+                          </p>
+                          {friend.streak && friend.streak > 0 && (
+                            <div className="flex items-center gap-1 text-orange-500/50">
+                              <Flame size={10} fill="currentColor" />
+                              <span className="text-[9px] font-black">{friend.streak}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    </motion.button>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
-                  <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><Users size={28} className="text-blue-200" /></div>
-                  <h4 className="text-sm font-black text-blue-900 mb-1">No Contacts Found</h4>
-                  <p className="text-[10px] font-bold text-blue-400 max-w-[220px] leading-relaxed">Search for other hunters to build your syndicate.</p>
+                <div className="flex flex-col items-center justify-center py-20 text-center opacity-20">
+                  <MessageSquare size={32} className="mb-4 text-white/20" />
+                  <p className="text-[10px] font-black text-white uppercase tracking-widest italic">Signal void detected</p>
                 </div>
               )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ═══ GUILDS ═══ */}
-        {activeTab === 'guilds' && (
-          <motion.div key="guilds" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-            <div className="system-panel p-6 bg-gradient-to-br from-blue-900 to-blue-950 border-blue-900 text-white relative overflow-hidden">
-               <div className="absolute inset-0 aero-gloss opacity-20" />
-               <h3 className="text-lg font-black tracking-tighter uppercase mb-1 drop-shadow-lg">Heavenly Guild</h3>
-               <p className="text-[10px] font-bold text-blue-300 uppercase tracking-[0.2em] mb-6">Unify your strength</p>
-               <button className="btn-system bg-white text-blue-900 shadow-[0_10px_30px_rgba(255,255,255,0.2)]">
-                 Create Alliance
-               </button>
-            </div>
-            
-            <div className="relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300 pointer-events-none" />
-              <input type="text" value={guildSearch} onChange={e => setGuildSearch(e.target.value)} placeholder="LOCATE GUILDS..."
-                className="w-full bg-white border border-blue-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-400 focus:bg-white transition-all text-blue-900 placeholder:text-blue-300 font-black text-[10px] tracking-widest shadow-sm" />
-            </div>
-
-            <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60">
-              <div className="w-16 h-16 rounded-full bg-purple-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><Shield size={28} className="text-purple-200" /></div>
-              <h4 className="text-sm font-black text-blue-900 mb-1">Unaffiliated</h4>
-              <p className="text-[10px] font-bold text-blue-400 max-w-[220px] leading-relaxed">Join a guild to participate in guild-wide XP raids.</p>
             </div>
           </motion.div>
         )}
 
         {/* ═══ COMMUNITY ═══ */}
         {activeTab === 'community' && (
-          <motion.div key="community" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-             <div className="system-panel p-6 bg-gradient-to-br from-blue-600 to-indigo-700 border-blue-500 text-white relative overflow-hidden text-center">
-                <div className="absolute inset-0 aero-gloss opacity-20" />
-                <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Community Hall</h3>
-                <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em] mb-6">Review duels and ensure fairness</p>
-                <button className="w-full btn-system bg-white text-blue-600 border-white shadow-xl" onClick={() => getPublicDuels().then(setPublicDuels)}>
-                  Refresh Arena Feed
-                </button>
-             </div>
+          <motion.div 
+            key="community" 
+            variants={containerVariants}
+            initial="hidden" 
+            animate="show" 
+            exit={{ opacity: 0, scale: 0.98 }} 
+            className="space-y-8"
+          >
+             <motion.div 
+               variants={itemVariants}
+               className="relative rounded-[2.5rem] p-10 bg-[#0A0C10] border border-white/5 overflow-hidden group shadow-[0_30px_70px_rgba(0,0,0,0.7)] text-center"
+             >
+                <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/[0.02] to-transparent pointer-events-none" />
+                <div className="relative z-10">
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-24 h-24 bg-black border border-white/5 rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-2xl group-hover:border-cyan-400/30 transition-all duration-500"
+                  >
+                    <Globe size={44} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
+                  </motion.div>
+                  <h3 className="text-4xl font-black italic tracking-tighter uppercase text-white mb-3">Community Hall</h3>
+                  <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.5em] mb-10 italic">Review active conflicts & enforce link morality</p>
+                  <button 
+                    className="px-12 py-5 bg-white/[0.03] text-white border border-white/10 rounded-2xl hover:bg-white hover:text-black transition-all font-black italic tracking-widest text-xs shadow-2xl active:scale-95" 
+                    onClick={() => getPublicDuels().then(setPublicDuels)}
+                  >
+                    REFRESH ARENA FEED
+                  </button>
+                </div>
+             </motion.div>
 
              {publicDuels.length > 0 ? (
-               <div className="space-y-3">
-                 {publicDuels.map(duel => {
+               <div className="grid gap-4">
+                 {publicDuels.map((duel) => {
                   const p1Votes = getHonourVotes(duel, 'p1');
                   const p2Votes = getHonourVotes(duel, 'p2');
 
                   return (
-                   <div key={duel.id} className="system-panel p-4 border-white/60 bg-white/40 backdrop-blur-sm">
-                     <div className="flex items-center justify-between mb-3">
-                       <div className="flex items-center gap-2">
-                         <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">
-                           {duel.mode === 'deck' ? 'D' : 'W'}
+                   <motion.div 
+                     key={duel.id}
+                     variants={itemVariants}
+                     className="bg-[#0A0C10] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] group/duel"
+                   >
+                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+                     
+                     <div className="flex items-center justify-between mb-10">
+                       <div className="flex items-center gap-4">
+                         <div className="w-12 h-12 rounded-[1.25rem] bg-black border border-white/10 flex items-center justify-center text-cyan-400 font-black italic shadow-inner group-hover/duel:border-cyan-400/30 transition-colors">
+                           {duel.mode === 'deck' ? <Trophy size={18} /> : <AtSign size={18} />}
                          </div>
-                         <span className="text-[10px] font-black uppercase text-blue-900 tracking-tight">
-                           {duel.mode === 'deck' ? 'Deck Duel' : 'Writing Duel'}
-                         </span>
+                         <div>
+                           <span className="text-sm font-black uppercase text-white tracking-widest italic block leading-none mb-1.5">
+                             {duel.mode === 'deck' ? 'Fragment Duel' : 'Lexical Conflict'}
+                           </span>
+                           <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic opacity-50">Active Observation Required</span>
+                         </div>
                        </div>
-                       <span className={cn(
-                         "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                         duel.status === 'finished' ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-yellow-50 border-yellow-200 text-yellow-600"
+                       <div className={cn(
+                         "text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border italic shadow-inner",
+                         duel.status === 'finished' ? "bg-emerald-500/5 border-emerald-500/10 text-emerald-500" : "bg-cyan-500/5 border-cyan-400/20 text-cyan-400"
                        )}>
-                         {duel.status === 'community_review' ? 'reviewing honours' : duel.status}
-                       </span>
+                         {duel.status === 'community_review' ? 'Honour Review' : duel.status}
+                       </div>
                      </div>
 
-                     <div className="flex items-center justify-between gap-4">
+                     <div className="flex items-center justify-between gap-10 py-10 border-y border-white/[0.03]">
                        <div className="flex-1 text-center">
-                         <div className="text-[9px] font-black text-blue-400 uppercase mb-1">{duel.p1?.name}</div>
-                         <div className="text-xl font-black italic text-blue-900">
-                           {duel.mode === 'deck' ? `${duel.p1_score} pts` : duel.p1_review_rating ? `${duel.p1_review_rating}★` : '—'}
+                         <div className="text-[10px] font-black text-white/15 uppercase mb-3 italic tracking-[0.3em] truncate">{duel.p1?.name}</div>
+                         <div className="text-4xl font-black italic text-white tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                           {duel.mode === 'deck' ? duel.p1_score : duel.p1_review_rating ? `${duel.p1_review_rating}` : '—'}
+                           {duel.mode !== 'deck' && <span className="text-lg opacity-20 ml-1.5">★</span>}
                          </div>
                        </div>
-                       <div className="text-blue-200 font-black italic text-sm">VS</div>
+                       <div className="text-white/5 font-black italic text-2xl tracking-[0.6em] select-none scale-90">VS</div>
                        <div className="flex-1 text-center">
-                         <div className="text-[9px] font-black text-blue-400 uppercase mb-1">{duel.p2?.name}</div>
-                         <div className="text-xl font-black italic text-blue-900">
-                           {duel.mode === 'deck' ? `${duel.p2_score} pts` : duel.p2_review_rating ? `${duel.p2_review_rating}★` : '—'}
+                         <div className="text-[10px] font-black text-white/15 uppercase mb-3 italic tracking-[0.3em] truncate">{duel.p2?.name}</div>
+                         <div className="text-4xl font-black italic text-white tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                           {duel.mode === 'deck' ? duel.p2_score : duel.p2_review_rating ? `${duel.p2_review_rating}` : '—'}
+                           {duel.mode !== 'deck' && <span className="text-lg opacity-20 ml-1.5">★</span>}
                          </div>
                        </div>
                      </div>
 
                      {duel.mode === 'writing' && (duel.p1_topic || duel.p2_topic) && (
-                       <div className="mt-3 pt-3 border-t border-white/40">
-                         <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Subject Matter</div>
-                         <p className="text-[10px] font-bold text-blue-900 text-center italic">"{duel.p1_topic || duel.p2_topic}"</p>
+                       <div className="mt-8 p-6 bg-black rounded-[1.75rem] border border-white/5 shadow-inner">
+                         <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-3 text-center italic">Neural Prompt Objective</div>
+                         <p className="text-[12px] font-black text-cyan-400/70 text-center italic uppercase tracking-tighter leading-relaxed">"{duel.p1_topic || duel.p2_topic}"</p>
                        </div>
                      )}
 
-                     <div className="mt-4 pt-3 border-t border-white/40 grid gap-3">
+                     <div className="mt-10 space-y-4">
                        {(['p1', 'p2'] as const).map(targetPlayer => {
                          const targetName = targetPlayer === 'p1' ? duel.p1?.name : duel.p2?.name;
                          const reviewerName = targetPlayer === 'p1' ? duel.p2?.name : duel.p1?.name;
@@ -358,207 +471,181 @@ export function Social() {
                          if (!rating) return null;
 
                          return (
-                           <div key={targetPlayer} className="rounded-2xl bg-white/50 border border-white/70 p-3">
-                             <div className="flex items-start justify-between gap-3">
+                           <div key={targetPlayer} className="rounded-[1.75rem] bg-[#05070A] border border-white/5 p-6 hover:border-cyan-400/20 transition-all shadow-inner">
+                             <div className="flex items-start justify-between gap-6">
                                <div>
-                                 <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Honour Check</div>
-                                 <div className="text-[11px] font-black text-blue-900 uppercase mt-0.5">
-                                   {reviewerName} gave {targetName} {rating}★
+                                 <div className="text-[9px] font-black text-cyan-400/30 uppercase tracking-[0.4em] italic mb-2">Honour Verification Needed</div>
+                                 <div className="text-sm font-black text-white/80 uppercase italic tracking-tighter leading-tight">
+                                   {reviewerName} <span className="text-white/20 mx-1">rated</span> {targetName} <span className="text-cyan-400">{rating}★</span>
                                  </div>
                                </div>
                                <div className={cn(
-                                 "text-[8px] font-black uppercase px-2 py-1 rounded-full border shrink-0",
+                                 "text-[9px] font-black uppercase px-4 py-2 rounded-xl border shrink-0 italic tracking-widest leading-none",
                                  finalized
-                                   ? approved ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-red-50 border-red-200 text-red-600"
-                                   : "bg-blue-50 border-blue-200 text-blue-600"
+                                   ? approved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"
+                                   : "bg-white/[0.02] border-white/10 text-white/30"
                                )}>
-                                 {finalized ? (approved ? `+${duel[`${targetPlayer}_honour_xp_awarded`] || 0} XP` : 'penalty') : `${votes.total}/3 votes`}
+                                 {finalized ? (approved ? `+${duel[`${targetPlayer}_honour_xp_awarded`] || 0} XP` : 'PENALIZED') : `${votes.total} / 3 LOGS`}
                                </div>
                              </div>
+
                              {duel[`${targetPlayer}_review_comment`] && (
-                               <p className="text-[10px] font-bold text-blue-700 mt-2 leading-relaxed italic">
+                               <div className="mt-5 p-5 bg-black rounded-2xl border border-white/5 text-[10px] font-black text-white/40 italic leading-relaxed uppercase tracking-widest leading-none">
                                  "{duel[`${targetPlayer}_review_comment`]}"
-                               </p>
-                             )}
-                             <div className="flex items-center justify-between gap-2 mt-3">
-                               <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                 Fair {votes.fair} · Unfair {votes.unfair}
                                </div>
-                               {!finalized && canVoteOnHonour(duel, targetPlayer) && !votes.hasVoted && (
-                                 <div className="flex gap-2">
-                                   <button
-                                     onClick={() => handleHonourVote(duel, targetPlayer, true)}
-                                     disabled={votingKey === voteKey}
-                                     className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[8px] font-black uppercase tracking-widest"
-                                   >
-                                     Fair
-                                   </button>
-                                   <button
-                                     onClick={() => handleHonourVote(duel, targetPlayer, false)}
-                                     disabled={votingKey === voteKey}
-                                     className="px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[8px] font-black uppercase tracking-widest"
-                                   >
-                                     Unfair
-                                   </button>
-                                 </div>
-                               )}
-                               {!finalized && votes.hasVoted && (
-                                 <div className="text-[8px] font-black uppercase tracking-widest text-blue-400">Vote logged</div>
-                               )}
+                             )}
+                             
+                             {!finalized && canVoteOnHonour(duel, targetPlayer) && !votes.hasVoted && (
+                               <div className="flex gap-3 mt-6">
+                                 <button 
+                                   disabled={votingKey === voteKey}
+                                   onClick={() => handleHonourVote(duel, targetPlayer, true)}
+                                   className="flex-1 py-4 bg-white/[0.03] hover:bg-emerald-500 hover:text-black border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg"
+                                 >
+                                   VERIFY
+                                 </button>
+                                 <button 
+                                   disabled={votingKey === voteKey}
+                                   onClick={() => handleHonourVote(duel, targetPlayer, false)}
+                                   className="flex-1 py-4 bg-white/[0.03] hover:bg-red-500 hover:text-white border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg"
+                                 >
+                                   VOID
+                                 </button>
+                               </div>
+                             )}
+
+                             {!finalized && votes.hasVoted && (
+                               <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 italic animate-pulse">Signature Authenticated</div>
+                             )}
+                             
+                             <div className="mt-6 pt-6 border-t border-white/[0.03] flex items-center justify-between">
+                               <div className="flex -space-x-2">
+                                 {[...Array(3)].map((_, i) => (
+                                   <div key={i} className="w-6 h-6 rounded-lg bg-black border border-white/10 flex items-center justify-center text-[8px] font-black text-white/20 italic">
+                                     {i + 1}
+                                   </div>
+                                 ))}
+                               </div>
+                               <div className="text-[9px] font-black text-white/10 uppercase italic tracking-widest">
+                                 {votes.total} Community Consensus Signals detected
+                               </div>
                              </div>
                            </div>
                          );
                        })}
                      </div>
-                   </div>
-                 );})}
+                   </motion.div>
+                  );
+                 })}
                </div>
              ) : (
-               <div className="system-panel p-10 border-white/60 text-center">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-3 text-blue-300 shadow-inner">
-                    <Search size={20} />
-                  </div>
-                  <h4 className="text-[11px] font-black text-blue-900 uppercase">No Data Synchronized</h4>
-                  <p className="text-[9px] font-bold text-blue-400 mt-1 uppercase">Synchronizing with the neural network...</p>
+               <div className="flex flex-col items-center justify-center py-24 text-center bg-[#07090D] border border-white/5 rounded-[2.5rem] shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
+                 <div className="w-24 h-24 rounded-[3rem] bg-black border border-white/5 flex items-center justify-center mb-8 shadow-2xl relative overflow-hidden group">
+                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                   <Globe size={40} className="text-white/5 relative z-10" />
+                 </div>
+                 <h4 className="text-[14px] font-black text-white/30 uppercase italic tracking-[0.5em] mb-4">Arena Quiescent</h4>
+                 <p className="text-[11px] font-black text-white/10 px-24 leading-relaxed uppercase tracking-widest italic opacity-60">Neural transmissions are currently synchronized. Awaiting next conflict signal.</p>
                </div>
              )}
           </motion.div>
         )}
 
-        {/* ═══ RANKS ═══ */}
-        {activeTab === 'ranks' && (
-          <motion.div key="ranks" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
-            <div className="grid grid-cols-3 gap-3 mb-4 items-end">
-              {leaderboard.slice(0, 3).map((user, i) => {
-                const pos = i === 0 ? 1 : i === 1 ? 0 : 2; // Rank 1 center
-                const sortedLeaderboard = [leaderboard[1], leaderboard[0], leaderboard[2]];
-                const player = sortedLeaderboard[i];
-                if (!player) return null;
-                
-                const isMain = player.id === leaderboard[0].id;
-
-                return (
-                  <div key={player.id} className={cn(
-                    "flex flex-col items-center p-3 rounded-2xl bg-white border border-blue-50 shadow-sm transition-all",
-                    isMain ? "bg-blue-600 text-white border-blue-700 shadow-xl -translate-y-4 py-6" : "scale-90"
-                  )}>
-                    {isMain && <Crown size={18} className="text-yellow-400 mb-1" />}
-                    <span className={cn("text-[10px] font-black mb-2", isMain ? "text-blue-200" : "text-blue-300")}>#{leaderboard.indexOf(player) + 1}</span>
-                    <div className={cn("w-12 h-12 rounded-2xl mb-2 flex items-center justify-center font-black text-lg", isMain ? "bg-white/20" : "bg-blue-50 text-blue-400")}>
-                      {player.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-[9px] font-black uppercase truncate w-full text-center">{player.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="space-y-2">
-              {leaderboard.map((user, index) => (
-                <div key={user.id} className={cn(
-                  "system-panel p-4 border-blue-200/50 flex items-center gap-3 transition-all",
-                  user.id === state.user?.id ? "bg-blue-50 border-blue-400 scale-[1.02] shadow-md" : "bg-white/40"
-                )}>
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs shrink-0">{index + 1}</div>
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-black shadow-md shrink-0 bg-blue-600">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-black text-blue-900 uppercase">{user.name}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[8px] font-black uppercase text-blue-600">{user.rank}</span>
+        {/* ═══ LEADERBOARD ═══ */}
+        {activeTab === 'leaderboard' && (
+          <motion.div 
+            key="leaderboard" 
+            variants={containerVariants}
+            initial="hidden" 
+            animate="show" 
+            exit={{ opacity: 0, scale: 0.95 }} 
+            className="space-y-6 px-6"
+          >
+            {/* Podium Bento Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              {leaderboard.slice(0, 3).map((player, i) => (
+                <motion.div
+                  key={player.id}
+                  variants={itemVariants}
+                  className={cn(
+                    "relative overflow-hidden rounded-[1.5rem] bg-white/[0.02] border border-white/5 p-4 flex flex-col items-center gap-3 text-center transition-all",
+                    i === 0 && "bg-cyan-500/5 border-cyan-400/20 shadow-[0_0_20px_rgba(34,211,238,0.05)]"
+                  )}
+                >
+                  <div className="relative">
+                    <SmallOrb 
+                      state={i === 0 ? "active" : "idle"} 
+                      size={48} 
+                    />
+                    <div className={cn(
+                      "absolute -top-1 -right-1 w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-black",
+                      i === 0 ? "bg-cyan-400 text-black shadow-lg" : "bg-white/10 text-white/40"
+                    )}>
+                      {i + 1}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 justify-end"><Zap size={10} className="text-purple-500" /><span className="text-sm font-black text-blue-900">{user.total_xp.toLocaleString()}</span></div>
-                    <span className="text-[7px] font-bold text-blue-400 uppercase tracking-widest">Total XP</span>
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] font-black text-white uppercase italic tracking-tighter truncate w-full max-w-[60px]">
+                      {player.name.split(' ')[0]}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 text-[8px] font-black text-cyan-400/50 uppercase tracking-widest italic">
+                      <Zap size={8} className="fill-current" />
+                      {player.total_xp.toLocaleString()}
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </motion.div>
-        )}
 
-        {/* ═══ DMs ═══ */}
-        {activeTab === 'dms' && (
-          <motion.div key="dms" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4 h-[calc(100vh-280px)] flex flex-col">
-            {!selectedDm ? (
-              <>
-                <div className="relative">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300 pointer-events-none" />
-                  <input type="text" placeholder="SEARCH COMMS..." className="w-full bg-white border border-blue-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-400 focus:bg-white transition-all text-blue-900 placeholder:text-blue-300 font-black text-[10px] tracking-widest shadow-sm" />
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-2">
-                  {friends.filter(f => f.status === 'accepted').length > 0 ? (
-                  Array.from(new Map(friends.filter(f => f.status === 'accepted').map(f => [f.id, f])).values()).map(friend => (
-                    <motion.button 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      key={friend.id} 
-                      onClick={() => setSelectedDm(friend.id)} 
-                      className="w-full system-panel p-4 border-white/60 flex items-center gap-4 hover:bg-blue-50 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-black">{friend.name.charAt(0).toUpperCase()}</div>
-                      <div className="text-left">
-                        <div className="text-sm font-black text-blue-900 uppercase">{friend.name}</div>
-                        <div className="text-[9px] font-bold text-blue-400 uppercase">Secure Link Active</div>
-                      </div>
-                    </motion.button>
-                  ))
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-10 text-center system-panel border-white/60 h-full">
-                      <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-white shadow-lg flex items-center justify-center mb-4"><MessageCircle size={28} className="text-blue-200" /></div>
-                      <h4 className="text-sm font-black text-blue-900 mb-1">No Encrypted Comms</h4>
-                      <p className="text-[10px] font-bold text-blue-400 max-w-[220px] leading-relaxed">Establish friend links to start secure communications.</p>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col h-full space-y-4">
-                <div className="flex items-center gap-3 p-2 bg-blue-50/50 rounded-2xl border border-blue-100">
-                  <button onClick={() => setSelectedDm(null)} className="p-2 hover:bg-blue-100 rounded-xl text-blue-400 transition-colors">
-                    <ChevronRight className="rotate-180" size={20} />
-                  </button>
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs">
-                    {friends.find(f => f.id === selectedDm)?.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="text-sm font-black text-blue-900 uppercase">
-                    {friends.find(f => f.id === selectedDm)?.name}
-                  </div>
-                </div>
-                
-                <div className="flex-1 bg-white/40 border border-white/60 rounded-3xl p-4 overflow-y-auto space-y-3 shadow-inner">
-                  {messages.length > 0 ? messages.map(msg => (
-                    <div key={msg.id} className={cn(
-                      "max-w-[80%] p-3 rounded-2xl text-[11px] font-bold leading-relaxed",
-                      msg.sender_id === state.user?.id ? "bg-blue-600 text-white self-end ml-auto rounded-tr-none" : "bg-white border border-blue-50 text-blue-900 self-start rounded-tl-none"
-                    )}>
-                      {msg.content}
-                    </div>
-                  )) : (
-                    <div className="h-full flex items-center justify-center text-[10px] font-black text-blue-300 uppercase tracking-widest italic">Channel Initiated...</div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={dmInput} 
-                    onChange={e => setDmInput(e.target.value)} 
-                    onKeyDown={e => e.key === 'Enter' && selectedDm && (sendMessage(selectedDm, dmInput), setDmInput(''))}
-                    placeholder="ENTER DATA..." 
-                    className="flex-1 bg-white border border-blue-100 rounded-2xl px-5 py-4 outline-none focus:border-blue-400 transition-all text-blue-900 placeholder:text-blue-300 font-black text-[10px] tracking-widest" 
-                  />
-                  <button 
-                    onClick={() => selectedDm && (sendMessage(selectedDm, dmInput), setDmInput(''))}
-                    className="p-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-400/30 active:scale-95 transition-all"
+            {/* Horizontal Data Stream */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Neural Stream</h3>
+                <div className="w-1 h-1 rounded-full bg-cyan-400/30 animate-pulse" />
+              </div>
+              
+              <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-4">
+                {leaderboard.slice(3).map((user, index) => (
+                  <motion.div 
+                    key={user.id}
+                    variants={itemVariants}
+                    className="flex flex-col items-center gap-2 shrink-0 group active:scale-95 transition-transform"
                   >
-                    <Send size={18} />
-                  </button>
+                    <div className="relative bg-white/[0.02] border border-white/5 p-2 rounded-2xl group-hover:border-white/10 transition-colors">
+                      <SmallOrb size={40} />
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-black border border-white/10 flex items-center justify-center text-[8px] font-black text-white/20 italic">
+                        #{index + 4}
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-black text-white/40 uppercase italic tracking-tighter max-w-[56px] truncate">
+                      {user.name.split(' ')[0]}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Global Efficiency Module */}
+            <motion.div variants={itemVariants} className="p-5 rounded-[2rem] bg-black border border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center text-cyan-400">
+                  <Zap size={16} className="fill-current" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-black text-white uppercase italic tracking-tight leading-none mb-1.5">Efficiency Rating</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-1 bg-white/5 rounded-full overflow-hidden">
+                      <div className="w-3/4 h-full bg-cyan-400" />
+                    </div>
+                    <span className="text-[8px] font-black text-cyan-400/40 uppercase italic">98.4%</span>
+                  </div>
                 </div>
               </div>
-            )}
+              <div className="text-right">
+                <div className="text-[12px] font-black text-white italic tracking-tighter leading-none mb-1">NODE ARCHIVE</div>
+                <div className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">{leaderboard.length} UNITS</div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

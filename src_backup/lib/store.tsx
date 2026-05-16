@@ -138,11 +138,6 @@ interface AppContextType {
   addArenaSession: (session: Omit<ArenaSession, 'id'>) => Promise<void>;
   getArenaStats: () => { totalArenas: number; bestStreak: number; avgAccuracy: number; totalArenaXp: number };
   getDeckArenaHistory: (deckId: string) => ArenaSession[];
-  
-  // UI Control
-  isOrbHidden: boolean;
-  setOrbHidden: (hidden: boolean) => void;
-
   // Social & Insights
   getWeeklyInsights: () => {
     thisWeekXp: number;
@@ -169,8 +164,8 @@ interface AppContextType {
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
   getMatch: () => Promise<any>;
-  createDuel: (mode: 'deck' | 'writing', targetUserId: string, deckId?: string) => Promise<string>;
-  updateDuel: (duelId: string, updates: any) => Promise<boolean>;
+  createDuel: (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => Promise<string>;
+  updateDuel: (duelId: string, updates: any) => Promise<void>;
   getDuel: (id: string) => Promise<any>;
   getPublicDuels: () => Promise<any[]>;
   submitCommunityHonourVote: (duel: any, targetPlayer: 'p1' | 'p2', isReasonable: boolean) => Promise<void>;
@@ -281,7 +276,6 @@ function mapCardFromDb(row: any): Card {
     easeFactor: row.ease_factor || row.easeFactor,
     dueDate: row.due_date || row.dueDate,
     masteryState: row.mastery_state || row.masteryState,
-    lastReviewedAt: row.last_reviewed_at || row.lastReviewedAt || null,
   };
 }
 
@@ -318,7 +312,6 @@ function mapCardToDb(card: Card, userId: string) {
     ease_factor: card.easeFactor,
     due_date: card.dueDate,
     mastery_state: card.masteryState,
-    last_reviewed_at: card.lastReviewedAt,
     created_at: card.createdAt,
   };
 }
@@ -343,7 +336,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(loadState());
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isOrbHidden, setOrbHidden] = useState(false);
   const backfilledUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -1508,7 +1500,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
       addArenaSession, getArenaStats, getDeckArenaHistory,
       getWeeklyInsights, getMilestones,
-      isOrbHidden, setOrbHidden,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
       sendDuelInvite, acceptDuelInvite, getNotifications,
       joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote

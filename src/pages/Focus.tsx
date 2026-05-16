@@ -184,191 +184,202 @@ export function Focus() {
     }
   }, [customMinutes]);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    show: { opacity: 1, scale: 1, y: 0 }
+  };
+
   return (
     <>
+      {/* Scanline & HUD Overlay when active */}
+      <AnimatePresence>
+        {isActive && !isPaused && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 pointer-events-none z-[60] overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(34,211,238,0.02),rgba(34,211,238,0.01),rgba(34,211,238,0.02))] bg-[length:100%_4px,3px_100%] opacity-30" />
+            <motion.div 
+              animate={{ y: ["-10%", "110%"] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              className="absolute top-0 left-0 w-full h-[1px] bg-cyan-400/20 shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="space-y-8 flex flex-col items-center pb-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="space-y-12 flex flex-col items-center pb-20 relative max-w-lg mx-auto"
       >
-        {/* Header */}
-        <div className="text-center w-full space-y-2">
-          <div className="flex justify-center mb-1">
-            <div className="px-3 py-1 bg-blue-900 rounded-full flex items-center gap-2 border border-white/10 shadow-lg">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-[8px] font-black text-white uppercase tracking-[0.4em]">Focus Protocol</span>
-            </div>
-          </div>
-          <h2 className="text-3xl font-black text-blue-900 tracking-tighter uppercase italic leading-none">Mana Cultivation</h2>
-        </div>
+        {/* Header HUD - More Minimal */}
+        <motion.div variants={itemVariants} className="w-full pt-4">
+           <div className="flex flex-col items-center">
+              <span className="text-[7px] md:text-[8px] font-black text-cyan-400/30 uppercase tracking-[0.6em] md:tracking-[0.8em] italic mb-1">CORTEX PROTOCOL v4.2</span>
+              <h2 className="text-3xl md:text-5xl font-black text-white tracking-widest uppercase italic leading-none flex items-center gap-1">
+                DEEP<span className="text-cyan-400">PULSE</span>
+              </h2>
+           </div>
+        </motion.div>
 
-        {/* Timer */}
-        <FocusTimer 
-          timeLeft={timeLeft} 
-          totalTime={totalTime} 
-          isActive={isActive && !isPaused}
-          isCompleted={timeLeft === 0}
-        />
-
-        {/* Controls */}
-        <div className="grid grid-cols-4 gap-4 w-full max-w-[320px]">
-          <motion.button 
-            whileTap={{ scale: 0.9, rotate: -90 }}
-            onClick={handleReset}
-            disabled={!hasStarted && timeLeft === totalTime}
-            className={cn(
-              "w-full aspect-square system-panel flex items-center justify-center transition-colors border-white/60",
-              (!hasStarted && timeLeft === totalTime) ? "text-blue-200 opacity-50" : "text-blue-400 hover:text-blue-600"
-            )}
-          >
-            <RotateCcw size={24} />
-          </motion.button>
+        {/* Main Interface Area */}
+        <div className="flex flex-col items-center gap-12 w-full px-4">
           
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={isActive && !isPaused ? handlePause : handleStart}
-            disabled={noPauseChallenge && isPaused}
-            className={cn(
-              "col-span-2 btn-system text-base relative overflow-hidden transition-all duration-700",
-              isActive && !isPaused
-                ? "bg-gradient-to-r from-blue-950 to-blue-900 border-blue-900 shadow-[0_0_40px_rgba(30,58,138,0.5)]" 
-                : "shadow-[0_15px_40px_rgba(59,130,246,0.4)]"
-            )}
+          {/* Central focus zone - Removed outer panel for airier feel */}
+          <motion.div 
+            variants={itemVariants} 
+            className="relative flex items-center justify-center py-4"
           >
-            <div className="absolute inset-0 aero-gloss opacity-20" />
-            <AnimatePresence mode="wait">
-              {isActive && !isPaused ? (
-                <motion.div 
-                  key="pause" 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center justify-center gap-3"
-                >
-                  <Pause size={18} fill="white" />
-                  <span className="tracking-[0.2em] font-black uppercase text-sm">Suspend</span>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="start"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center justify-center gap-3"
-                >
-                  <Play size={18} fill="white" />
-                  <span className="tracking-[0.2em] font-black uppercase text-sm">
-                    {isPaused ? 'Resume' : 'Initiate'}
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            {/* Background Atmosphere */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,211,238,0.05),transparent_70%)] pointer-events-none" />
+            <FocusTimer 
+              timeLeft={timeLeft} 
+              totalTime={totalTime} 
+              isActive={isActive && !isPaused}
+              isCompleted={timeLeft === 0}
+            />
+          </motion.div>
 
-          <button 
-            onClick={() => !hasStarted && setNoPauseChallenge(!noPauseChallenge)}
-            disabled={hasStarted}
-            className={cn(
-              "w-full aspect-square system-panel flex items-center justify-center transition-all border-white/60",
-              noPauseChallenge ? "bg-blue-600 border-blue-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]" : "text-blue-400 opacity-50"
-            )}
-          >
-            <Shield size={24} className={noPauseChallenge ? "animate-pulse" : ""} />
-          </button>
-        </div>
+          {/* Unified Control Cluster */}
+          <div className="w-full space-y-6">
+            
+            {/* Selection HUD */}
+            <motion.div variants={itemVariants} className="flex flex-col gap-4">
+              <div className="flex items-center justify-between px-2">
+                 <div className="flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] italic">Configuration</span>
+                 </div>
+                 <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                    <span className="text-[8px] font-black text-cyan-400 tabular-nums uppercase tracking-widest">{selectedMinutes}:00 TARGET</span>
+                 </div>
+              </div>
 
-        {/* Presets */}
-        <div className="w-full max-w-[320px] space-y-4">
-          <div className="flex justify-between items-center px-1">
-            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-              <TimerIcon size={12} /> Time Presets
-            </span>
-            <button 
-              onClick={() => !hasStarted && setShowCustomInput(!showCustomInput)}
-              disabled={hasStarted}
-              className="text-[9px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-widest transition-colors disabled:opacity-30"
-            >
-              Custom
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-5 gap-2">
-            {PRESETS.map((mins) => (
-              <button
-                key={mins}
-                onClick={() => handleSelectPreset(mins)}
+              {/* Presets - More elegant pill shape */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
+                {PRESETS.map((mins) => (
+                  <button
+                    key={mins}
+                    onClick={() => handleSelectPreset(mins)}
+                    disabled={hasStarted}
+                    className={cn(
+                      "flex-1 min-w-[60px] py-2.5 rounded-full font-black text-[10px] transition-all border italic tracking-tighter uppercase shrink-0",
+                      selectedMinutes === mins
+                        ? "bg-cyan-500/20 border-cyan-400/40 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                        : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40 hover:bg-white/[0.05]"
+                    )}
+                  >
+                    {mins}M
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Primary Action Zone */}
+            <motion.div variants={itemVariants} className="flex items-center gap-3 w-full">
+              {/* Security Toggle - Integrated into action bar */}
+              <button 
+                onClick={() => !hasStarted && setNoPauseChallenge(!noPauseChallenge)}
                 disabled={hasStarted}
                 className={cn(
-                  "py-3 rounded-xl font-black text-[10px] transition-all border",
-                  selectedMinutes === mins
-                    ? "bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/20"
-                    : "bg-white/40 border-white/60 text-blue-900 hover:bg-white/60"
+                  "h-14 md:h-16 px-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center transition-all border gap-1 min-w-[70px] active:scale-95",
+                  noPauseChallenge 
+                    ? "bg-cyan-500/10 border-cyan-400/30 text-cyan-400" 
+                    : "bg-white/[0.01] border-white/5 text-white/10 hover:text-white/20"
                 )}
               >
-                {mins}m
+                <Shield size={16} className={noPauseChallenge ? "animate-pulse" : "opacity-30"} />
+                <span className="text-[6px] font-black uppercase tracking-widest">{noPauseChallenge ? "LOCKED" : "GUARD"}</span>
               </button>
-            ))}
-          </div>
 
-          <AnimatePresence>
-            {showCustomInput && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="pt-2"
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min="5"
-                    max="180"
-                    placeholder="Enter minutes..."
-                    className="flex-1 bg-white/40 border border-white/60 rounded-xl px-4 py-3 text-[10px] font-black text-blue-900 outline-none focus:border-blue-400"
-                    value={customMinutes}
-                    onChange={(e) => setCustomMinutes(e.target.value)}
-                  />
-                  <button
-                    onClick={handleCustomSubmit}
-                    className="px-6 py-3 bg-blue-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
-                  >
-                    Set
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <div className="flex-1 flex gap-2 h-14 md:h-16">
+                <button 
+                  onClick={isActive && !isPaused ? handlePause : handleStart}
+                  disabled={noPauseChallenge && isPaused}
+                  className={cn(
+                    "flex-1 rounded-2xl md:rounded-3xl border transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden active:scale-95 group",
+                    isActive && !isPaused
+                      ? "bg-cyan-500/10 border-cyan-400/40 text-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.15)]" 
+                      : "bg-white text-black border-transparent hover:bg-cyan-400 transition-colors"
+                  )}
+                >
+                  <AnimatePresence mode="wait">
+                    {isActive && !isPaused ? (
+                      <motion.div 
+                        key="pause" 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Pause size={18} fill="currentColor" />
+                        <span className="tracking-[0.4em] font-black uppercase text-[10px] italic">Abort Sync</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="start"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Play size={18} fill={isPaused ? "none" : "currentColor"} className="transition-transform group-hover:scale-110" />
+                        <span className="tracking-[0.4em] font-black uppercase text-[10px] italic">
+                          {isPaused ? 'Resume Link' : 'Engage'}
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+
+                <button 
+                  onClick={handleReset}
+                  disabled={!hasStarted && timeLeft === totalTime}
+                  className={cn(
+                    "w-14 md:w-16 rounded-2xl md:rounded-3xl flex items-center justify-center transition-all border bg-white/[0.02] active:scale-95",
+                    (!hasStarted && timeLeft === totalTime) ? "text-white/5 border-white/5" : "text-white/30 border-white/10 hover:text-cyan-400 hover:border-cyan-400/20"
+                  )}
+                >
+                  <RotateCcw size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </div>
         </div>
 
-        {/* Ambient Selector */}
-        <AmbientSelector 
-          selected={soundscape} 
-          onSelect={setSoundscape} 
-          disabled={isActive && !isPaused}
-        />
-
-        {/* Stats Toggle */}
-        <button
-          onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] hover:text-blue-600 transition-colors"
-        >
-          {showStats ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {showStats ? 'Hide Stats' : 'Show Stats'}
-        </button>
-
-        {/* Stats Panel */}
-        <AnimatePresence>
-          {showStats && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="w-full overflow-hidden"
-            >
-              <FocusStats />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Ambient & Stats Secondary Area */}
+        <div className="w-full flex flex-col gap-10 mt-4 px-4">
+          <motion.div variants={itemVariants} className="space-y-4">
+             <div className="flex items-center justify-center gap-4 px-4 opacity-30">
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/10" />
+                <span className="text-[8px] font-black uppercase tracking-[0.5em] italic">Peripheral Systems</span>
+                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/10" />
+             </div>
+             
+             <div className="grid grid-cols-1 gap-6">
+                <AmbientSelector 
+                  selected={soundscape} 
+                  onSelect={setSoundscape} 
+                  disabled={isActive && !isPaused}
+                />
+                <FocusStats />
+             </div>
+          </motion.div>
+        </div>
       </motion.div>
 
       {/* Session Summary Overlay */}

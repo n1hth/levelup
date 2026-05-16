@@ -1,0 +1,52 @@
+--- /Users/nihith/.gemini/antigravity/scratch/the-system/src/app/api/chat/src/lib/store.tsx	2026-05-14 15:44:28
++++ /Users/nihith/Downloads/levelup-study (2)/src/lib/store.tsx	2026-05-16 06:45:22
+@@ -138,6 +138,9 @@
+   addArenaSession: (session: Omit<ArenaSession, 'id'>) => Promise<void>;
+   getArenaStats: () => { totalArenas: number; bestStreak: number; avgAccuracy: number; totalArenaXp: number };
+   getDeckArenaHistory: (deckId: string) => ArenaSession[];
++  // UI Control
++  isOrbHidden: boolean;
++  setOrbHidden: (hidden: boolean) => void;
+   // Social & Insights
+   getWeeklyInsights: () => {
+     thisWeekXp: number;
+@@ -276,6 +279,7 @@
+     easeFactor: row.ease_factor || row.easeFactor,
+     dueDate: row.due_date || row.dueDate,
+     masteryState: row.mastery_state || row.masteryState,
++    lastReviewedAt: row.last_reviewed_at || row.lastReviewedAt || null,
+   };
+ }
+ 
+@@ -312,6 +316,7 @@
+     ease_factor: card.easeFactor,
+     due_date: card.dueDate,
+     mastery_state: card.masteryState,
++    last_reviewed_at: card.lastReviewedAt,
+     created_at: card.createdAt,
+   };
+ }
+@@ -336,6 +341,7 @@
+   const [state, setState] = useState<AppState>(loadState());
+   const [session, setSession] = useState<Session | null>(null);
+   const [isLoading, setIsLoading] = useState(true);
++  const [isOrbHidden, setOrbHidden] = useState(false);
+   const backfilledUserId = useRef<string | null>(null);
+ 
+   useEffect(() => {
+@@ -1423,7 +1429,6 @@
+     try {
+       const { error } = await supabase.from('duels').update(updates).eq('id', duelId);
+       if (error) throw error;
+-      return true;
+     } catch (err) {
+       console.error("Update duel failed:", err);
+       throw err;
+@@ -1500,6 +1505,7 @@
+       getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
+       addArenaSession, getArenaStats, getDeckArenaHistory,
+       getWeeklyInsights, getMilestones,
++      isOrbHidden, setOrbHidden,
+       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+       sendDuelInvite, acceptDuelInvite, getNotifications,
+       joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote

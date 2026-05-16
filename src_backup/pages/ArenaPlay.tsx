@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Zap, X, Flame, ChevronRight } from 'lucide-react';
+import { Zap, X, Flame } from 'lucide-react';
 import { useApp, type ArenaDifficulty } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
 import { ArenaResults } from '@/src/components/ArenaResults.tsx';
@@ -238,11 +238,7 @@ export function ArenaPlay() {
   }
 
   return (
-    <div className="fixed inset-0 z-[140] flex flex-col bg-[#020617] overflow-hidden font-sans">
-      {/* Background Neural Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,211,238,0.08),transparent_70%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
-      
+    <div className="fixed inset-0 z-[90] flex flex-col" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
       {/* ═══ Countdown ═══ */}
       <AnimatePresence mode="wait">
         {phase === 'countdown' ? (
@@ -250,22 +246,19 @@ export function ArenaPlay() {
             key="countdown"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.2, filter: 'blur(20px)' }}
-            className="flex-1 flex flex-col items-center justify-center relative z-10"
+            exit={{ opacity: 0, scale: 1.2 }}
+            className="flex-1 flex items-center justify-center"
           >
-            <div className="px-6 py-2 bg-white/5 rounded-full border border-white/10 mb-8 backdrop-blur-xl">
-               <span className="text-[9px] font-black tracking-[0.5em] text-cyan-400 uppercase italic">Neural Sync Initialization</span>
-            </div>
             <motion.span
               key={countdownValue}
-              initial={{ scale: 3, opacity: 0, rotate: -10 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
+              initial={{ scale: 3, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              className="text-[12rem] font-black text-white italic leading-none"
-              style={{ textShadow: '0 0 100px rgba(34,211,238,0.5)' }}
+              className="text-8xl font-black text-white"
+              style={{ textShadow: '0 0 60px rgba(0,210,255,0.6)' }}
             >
-              {countdownValue > 0 ? countdownValue : 'ENGAGE'}
+              {countdownValue > 0 ? countdownValue : 'GO!'}
             </motion.span>
           </motion.div>
         ) : (phase === 'question' || phase === 'reveal') && currentCard ? (
@@ -273,70 +266,60 @@ export function ArenaPlay() {
             key="game"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col relative z-10"
+            className="flex-1 flex flex-col"
           >
             {/* Top bar */}
-            <div className="flex items-center justify-between px-10 pt-10 pb-6">
-              <button 
-                onClick={() => navigate('/battle')} 
-                className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-cyan-500/10 hover:border-cyan-400/30 transition-all group shadow-2xl backdrop-blur-xl"
-              >
-                <X size={24} className="group-hover:rotate-90 transition-transform" />
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <button onClick={() => navigate('/battle')} className="text-white/40 hover:text-white/80 transition-colors">
+                <X size={24} />
               </button>
 
-              <div className="flex flex-col items-center">
-                <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/5 mb-3">
-                   <span className="text-[9px] font-black text-cyan-400/60 uppercase tracking-[0.4em] italic text-shadow-glow">
-                     FRAGMENT {currentCardIndex + 1} <span className="text-white/20">/</span> {shuffledCards.length}
-                   </span>
-                </div>
-                <div className="flex items-center gap-6">
-                  {currentStreak >= 2 && (
-                    <motion.div
-                      initial={{ scale: 0, x: -20 }} animate={{ scale: 1, x: 0 }}
-                      className="flex items-center gap-3 px-4 py-1.5 bg-orange-500/10 rounded-xl border border-orange-500/20 shadow-lg shadow-orange-500/5"
-                    >
-                      <Flame size={14} className="text-orange-400 animate-pulse" />
-                      <span className="text-[11px] font-black text-orange-400 italic tracking-widest">{currentStreak} STREAK</span>
-                    </motion.div>
-                  )}
-                  <div className="h-6 w-[1px] bg-white/10" />
-                  <div className="flex items-center gap-3">
-                    <Zap size={20} className="text-cyan-400 fill-cyan-400/20 shadow-[0_0_15px_rgba(34,211,238,0.6)]" />
-                    <span className="text-2xl font-black text-white italic tabular-nums tracking-widest">+{totalXpEarned} <span className="text-white/20">XP</span></span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-black text-blue-300 uppercase tracking-widest">
+                  {currentCardIndex + 1}/{shuffledCards.length}
+                </span>
+                {currentStreak >= 2 && (
+                  <motion.div
+                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                    className="flex items-center gap-1 px-2 py-1 bg-orange-500/10 rounded-full border border-orange-500/20"
+                  >
+                    <Flame size={12} className="text-orange-400" />
+                    <span className="text-[9px] font-black text-orange-400">{currentStreak}×</span>
+                  </motion.div>
+                )}
               </div>
 
-              <div className="w-16 h-16" /> {/* Spacer */}
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                <Zap size={14} className="text-cyan-400 fill-cyan-400/20" />
+                <span className="text-sm font-black text-white tabular-nums tracking-tight">{totalXpEarned}</span>
+              </div>
             </div>
 
             {/* Progress bar */}
-            <div className="px-10 mb-10">
-              <div className="w-full h-1.5 rounded-full bg-white/[0.02] overflow-hidden border border-white/5 p-0.5">
+            <div className="px-5 mb-6">
+              <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
                 <motion.div
-                  initial={{ width: 0 }}
                   animate={{ width: `${((currentCardIndex + 1) / shuffledCards.length) * 100}%` }}
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-white shadow-[0_0_20px_rgba(34,211,238,0.4)]"
-                  transition={{ duration: 0.5, ease: "circOut" }}
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                  transition={{ duration: 0.3 }}
                 />
               </div>
             </div>
 
             {/* Card area */}
-            <div className="flex-1 flex flex-col items-center justify-center px-10 relative pb-16">
+            <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
               {/* Combo flash */}
               <AnimatePresence>
                 {showCombo && (
                   <motion.div
-                    initial={{ scale: 0, opacity: 0, y: 0 }}
-                    animate={{ scale: 1, opacity: 1, y: -120 }}
-                    exit={{ scale: 1.5, opacity: 0, y: -240 }}
-                    className="absolute z-20"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 2, opacity: 0 }}
+                    className="absolute top-4 z-20"
                   >
-                    <div className="px-10 py-5 bg-gradient-to-r from-orange-600 to-red-600 rounded-[2rem] shadow-[0_15px_60px_rgba(234,88,12,0.5)] border border-orange-400/40">
-                      <span className="text-2xl font-black text-white italic uppercase tracking-tighter">
-                        NEURAL OVERLOAD: {currentStreak}×
+                    <div className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full shadow-2xl shadow-orange-500/40">
+                      <span className="text-sm font-black text-white uppercase tracking-widest">
+                        {currentStreak}× Combo!
                       </span>
                     </div>
                   </motion.div>
@@ -344,75 +327,49 @@ export function ArenaPlay() {
               </AnimatePresence>
 
               {/* Timer ring + Card */}
-              <div className="relative mb-16 flex items-center justify-center w-full max-w-2xl group">
-                {/* Card Background Glow */}
-                <div className={cn(
-                  "absolute -inset-20 blur-[120px] transition-all duration-1000",
-                  phase === 'question' ? "bg-cyan-400/10" : "bg-emerald-400/10"
-                )} />
-
+              <div className="relative mb-8 flex items-center justify-center w-full">
                 {/* Card */}
                 <motion.div
                   key={`${currentCardIndex}-${phase}`}
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  className="w-full min-h-[380px] p-12 sm:p-20 modular-card backdrop-blur-3xl flex flex-col items-center justify-center text-center relative z-10 transition-all bg-white/[0.01]"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="w-full max-w-sm min-h-[180px] p-6 sm:p-8 rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl flex flex-col items-center justify-center text-center shadow-2xl relative z-10"
                 >
-                  <div className="absolute top-10 left-12 right-12 flex justify-between items-center opacity-30">
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white" />
-                    <div className="w-2 h-2 rounded-full bg-white mx-4 shadow-[0_0_10px_rgba(255,255,255,1)]" />
-                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white" />
-                  </div>
-
                   {phase === 'question' ? (
                     <>
-                      <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-10 italic">Neural Stimulus</span>
-                      <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">{currentCard.front}</p>
+                      <span className="text-[8px] font-black text-cyan-400 uppercase tracking-[0.4em] mb-4">Question</span>
+                      <p className="text-xl font-black text-white leading-relaxed">{currentCard.front}</p>
                     </>
                   ) : (
-                    <motion.div 
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="w-full space-y-12"
-                    >
-                      <div>
-                        <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-5 italic">Stimulus Output</span>
-                        <p className="text-xl font-black text-white/30 italic uppercase tracking-widest">{currentCard.front}</p>
-                      </div>
-                      
-                      <div className="h-[1px] w-32 bg-white/10 mx-auto" />
-
-                      <div>
-                        <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-6 italic text-shadow-glow">Neural Response</span>
-                        <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase">{currentCard.back}</p>
-                      </div>
-                    </motion.div>
+                    <>
+                      <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-2">Question</span>
+                      <p className="text-sm font-bold text-blue-300 mb-4">{currentCard.front}</p>
+                      <div className="w-full h-px bg-white/10 my-3" />
+                      <span className="text-[8px] font-black text-yellow-400 uppercase tracking-[0.4em] mb-2">Answer</span>
+                      <p className="text-xl font-black text-white leading-relaxed">{currentCard.back}</p>
+                    </>
                   )}
-
-                  <div className="absolute bottom-10 left-16 right-16 flex justify-between items-center opacity-10">
-                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Protocol v4.0</div>
-                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Sync Stable</div>
-                  </div>
                 </motion.div>
 
                 {/* Timer ring (Overlaying) */}
                 {phase === 'question' && (
-                  <div className="absolute -inset-12 flex items-center justify-center pointer-events-none z-0">
-                    <svg width="100%" height="100%" viewBox="0 0 100 100" className="w-[115%] h-[115%] max-w-[600px] transform -rotate-90 opacity-20 group-hover:opacity-40 transition-opacity">
-                      <circle cx="50" cy="50" r={timerRadius} fill="none" stroke="white" strokeWidth="0.5" opacity="0.05" />
+                  <div className="absolute -inset-6 flex items-center justify-center pointer-events-none z-0">
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" className="w-[110%] h-[110%] max-w-[400px] transform -rotate-90 opacity-20 sm:opacity-40">
+                      <circle cx="50" cy="50" r={timerRadius} fill="none" stroke="white" strokeWidth="1" opacity="0.1" />
                       <motion.circle
                         cx="50" cy="50" r={timerRadius}
                         fill="none"
-                        stroke={cardTimeLeft <= 5 ? '#ef4444' : cardTimeLeft <= 10 ? '#f59e0b' : '#22d3ee'}
-                        strokeWidth="1.5" strokeLinecap="round"
+                        stroke={cardTimeLeft <= 5 ? '#ef4444' : cardTimeLeft <= 10 ? '#f59e0b' : '#00d2ff'}
+                        strokeWidth="2" strokeLinecap="round"
                         strokeDasharray={timerCircumference}
                         strokeDashoffset={timerOffset}
-                        style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s', filter: 'drop-shadow(0 0 8px currentColor)' }}
+                        style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
                       />
                     </svg>
-                    <div className="absolute top-0 right-0 p-12">
+                    <div className="absolute top-0 right-0 p-8">
                        <span className={cn(
-                        "text-6xl font-black tabular-nums italic text-shadow-glow",
-                        cardTimeLeft <= 5 ? "text-red-500 animate-pulse" : cardTimeLeft <= 10 ? "text-amber-500" : "text-cyan-400"
+                        "text-2xl font-black tabular-nums drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]",
+                        cardTimeLeft <= 5 ? "text-red-400" : cardTimeLeft <= 10 ? "text-amber-400" : "text-cyan-400"
                       )}>
                         {cardTimeLeft}
                       </span>
@@ -421,45 +378,37 @@ export function ArenaPlay() {
                 )}
               </div>
 
-            {/* Action buttons */}
-            <div className="mt-auto pb-12 w-full flex flex-col items-center gap-8">
+              {/* Action buttons */}
               {phase === 'question' ? (
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-cyan-400/20 blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                  <motion.button
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleReveal}
-                    className="relative px-12 py-6 rounded-2xl bg-white text-black font-black text-[10px] uppercase tracking-[0.6em] italic shadow-2xl transition-all overflow-hidden flex items-center gap-6 group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="relative z-10 group-hover:text-white transition-colors">Forge Neural Link</span>
-                    <ChevronRight size={14} className="relative z-10 group-hover:text-white transition-all group-hover:translate-x-1" />
-                  </motion.button>
-                </div>
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleReveal}
+                  className="px-12 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:brightness-110 transition-all"
+                >
+                  Reveal Answer
+                </motion.button>
               ) : (
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  className="flex gap-6 w-full max-w-sm"
+                  className="flex gap-4 w-full max-w-sm pb-8 sm:pb-0"
                 >
                   <button
                     onClick={() => handleGrade(false)}
-                    className="flex-1 py-5 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 font-black text-[9px] uppercase tracking-[0.4em] italic hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all active:scale-95 flex items-center justify-center gap-3"
+                    className="flex-1 py-4 rounded-2xl bg-red-500/10 border-2 border-red-500/30 text-red-400 font-black text-sm uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <X size={14} strokeWidth={3} /> Re-Inject
+                    <X size={18} /> Wrong
                   </button>
                   <button
                     onClick={() => handleGrade(true)}
-                    className="flex-1 py-5 rounded-xl bg-cyan-500 text-black font-black text-[9px] uppercase tracking-[0.4em] italic hover:bg-cyan-400 transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(34,211,238,0.2)]"
+                    className="flex-1 py-4 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-400 font-black text-sm uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <Zap size={14} className="fill-current" /> Optimized
+                    <span>✓</span> Correct
                   </button>
                 </motion.div>
               )}
-            </div>
             </div>
           </motion.div>
         ) : null}
