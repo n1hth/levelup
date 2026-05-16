@@ -1567,7 +1567,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       isOrbHidden, setOrbHidden,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
-      sendDuelInvite, acceptDuelInvite, getNotifications, clearNotifications,
+      sendDuelInvite, acceptDuelInvite, cancelDuel, getNotifications, clearNotifications,
       joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
     }}>
       {children}
