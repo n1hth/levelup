@@ -174,18 +174,18 @@ export function Battle() {
               </div>
 
               {eligibleDecks.length === 0 ? (
-                <div className="system-panel p-12 md:p-20 text-center border-white/5 bg-white/[0.01] rounded-3xl md:rounded-[3rem]">
-                  <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-inner">
-                    <Swords size={24} className="md:size-[40px] text-white/5" />
+                <div className="system-panel p-12  text-center border-white/5 bg-white/[0.01] rounded-3xl ">
+                  <div className="w-16 h-16   rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center mx-auto mb-6  shadow-inner">
+                    <Swords size={24} className=" text-white/5" />
                   </div>
-                  <h3 className="text-base md:text-xl font-black text-white mb-2 md:mb-3 italic uppercase tracking-wider">Arsenal Depleted</h3>
-                  <p className="text-[8px] md:text-[10px] font-black text-white/10 mb-8 md:mb-10 uppercase tracking-[0.2em] md:tracking-[0.3em] max-w-[200px] md:max-w-xs mx-auto italic leading-relaxed">
+                  <h3 className="text-base  font-black text-white mb-2  italic uppercase tracking-wider">Arsenal Depleted</h3>
+                  <p className="text-[8px]  font-black text-white/10 mb-8  uppercase tracking-[0.2em]  max-w-[200px]  mx-auto italic leading-relaxed">
                     Minimum requirement: 4 neural fragments.
                   </p>
-                  <button onClick={() => navigate('/decks')} className="px-8 md:px-10 py-4 md:py-5 bg-cyan-600 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] italic rounded-xl md:rounded-2xl hover:bg-cyan-500 transition-all shadow-2xl shadow-cyan-900/20 active:scale-95">REPLENISH ARSENAL</button>
+                  <button onClick={() => navigate('/decks')} className="px-8  py-4  bg-cyan-600 text-[9px]  font-black uppercase tracking-[0.3em]  italic rounded-xl  hover:bg-cyan-500 transition-all shadow-2xl shadow-cyan-900/20 active:scale-95">REPLENISH ARSENAL</button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3 md:gap-4">
+                <div className="grid grid-cols-1 gap-3 ">
                   {eligibleDecks.map((deck, i) => {
                     const cards = getDeckCards(deck.id);
                     const history = getDeckArenaHistory(deck.id);
@@ -199,32 +199,32 @@ export function Battle() {
                         transition={{ delay: i * 0.05 }}
                         whileHover={{ y: -4, borderColor: 'rgba(34,211,238,0.2)', backgroundColor: 'rgba(255,255,255,0.03)' }}
                         onClick={() => setSelectedDeck(deck)}
-                        className="w-full system-panel p-3.5 md:p-6 border-white/5 bg-white/[0.01] flex flex-col gap-3 md:gap-6 text-left transition-all active:scale-[0.98] group relative overflow-hidden rounded-xl md:rounded-[2.5rem]"
+                        className="w-full system-panel p-3.5  border-white/5 bg-white/[0.01] flex flex-col gap-3  text-left transition-all active:scale-[0.98] group relative overflow-hidden rounded-xl "
                       >
                         <div className="flex items-start justify-between">
-                          <div className={cn("w-10 h-10 md:w-16 md:h-16 rounded-lg md:rounded-2xl flex items-center justify-center text-white text-lg md:text-2xl font-black shrink-0 shadow-2xl relative border border-white/10 overflow-hidden", deck.color)}>
+                          <div className={cn("w-10 h-10   rounded-lg  flex items-center justify-center text-white text-lg  font-black shrink-0 shadow-2xl relative border border-white/10 overflow-hidden", deck.color)}>
                             <div className="absolute inset-0 bg-black/10" />
                             <span className="relative z-10 italic">{deck.title.charAt(0).toUpperCase()}</span>
                           </div>
                           {bestAccuracy !== null && (
                             <div className="px-2 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
-                               <span className="text-[6px] md:text-[8px] font-black text-cyan-400 italic uppercase tracking-widest">ACC: {bestAccuracy}%</span>
+                               <span className="text-[6px]  font-black text-cyan-400 italic uppercase tracking-widest">ACC: {bestAccuracy}%</span>
                             </div>
                           )}
                         </div>
 
                         <div className="min-w-0">
-                          <h4 className="text-base md:text-xl font-black text-white truncate tracking-tighter italic uppercase group-hover:text-cyan-400 transition-colors">{deck.title}</h4>
-                          <div className="flex items-center gap-3 mt-0.5 md:mt-2">
-                            <span className="text-[7px] md:text-[9px] font-black text-white/10 uppercase italic tracking-widest flex items-center gap-1.5">
-                              <Zap className="size-2 md:size-2.5 text-cyan-400/30" /> {cards.length} FRAGS
+                          <h4 className="text-base  font-black text-white truncate tracking-tighter italic uppercase group-hover:text-cyan-400 transition-colors">{deck.title}</h4>
+                          <div className="flex items-center gap-3 mt-0.5 ">
+                            <span className="text-[7px]  font-black text-white/10 uppercase italic tracking-widest flex items-center gap-1.5">
+                              <Zap className="size-2  text-cyan-400/30" /> {cards.length} FRAGS
                             </span>
                           </div>
                         </div>
 
-                        <div className="pt-2.5 md:pt-4 border-t border-white/5 flex items-center justify-between">
-                           <span className="text-[6px] md:text-[8px] font-black text-white/5 uppercase tracking-[0.2em] md:tracking-[0.4em] italic group-hover:text-cyan-400/40 transition-colors">Tactical Deployment Available</span>
-                           <ChevronRight className="size-2.5 md:size-3 text-white/10 group-hover:text-cyan-400 transition-all group-hover:translate-x-1" />
+                        <div className="pt-2.5  border-t border-white/5 flex items-center justify-between">
+                           <span className="text-[6px]  font-black text-white/5 uppercase tracking-[0.2em]  italic group-hover:text-cyan-400/40 transition-colors">Tactical Deployment Available</span>
+                           <ChevronRight className="size-2.5  text-white/10 group-hover:text-cyan-400 transition-all group-hover:translate-x-1" />
                         </div>
                       </motion.button>
                     );
@@ -245,21 +245,21 @@ export function Battle() {
             className="space-y-6 px-4 pb-20"
           >
             {/* Mission Terminal Setup */}
-            <div className="space-y-4 md:space-y-6">
-              <div className="system-panel p-5 md:p-10 border-white/5 bg-white/[0.01] rounded-3xl md:rounded-[2.5rem] relative overflow-hidden group">
+            <div className="space-y-4 ">
+              <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-3xl  relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                    <Target size={120} className="text-white rotate-12" />
                 </div>
 
-                <div className="relative z-10 space-y-6 md:space-y-10">
+                <div className="relative z-10 space-y-6 ">
                   {/* Step 1: Mode */}
-                  <div className="space-y-4 md:space-y-6">
+                  <div className="space-y-4 ">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px] md:text-xs font-black text-red-500 italic shrink-0">01</div>
-                      <h3 className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Engagement Protocol</h3>
+                      <div className="w-6 h-6   rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px]  font-black text-red-500 italic shrink-0">01</div>
+                      <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Engagement Protocol</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 gap-3 ">
                       {[
                         { id: 'writing', label: 'Semantic Sprint', icon: '✍️', desc: '90s linguistic overload', color: 'red' },
                         { id: 'deck', label: 'Fragment Clash', icon: '🃏', desc: 'Neural deck combat', color: 'purple' },
@@ -268,7 +268,7 @@ export function Battle() {
                           key={mode.id}
                           onClick={() => { setDuelMode(mode.id as any); setDuelOpponent(null); }}
                           className={cn(
-                            "group p-4 md:p-6 rounded-2xl md:rounded-3xl border transition-all text-left relative overflow-hidden",
+                            "group p-4  rounded-2xl  border transition-all text-left relative overflow-hidden",
                             duelMode === mode.id 
                               ? `bg-${mode.color}-500/10 border-${mode.color}-500/30 ring-1 ring-${mode.color}-500/20` 
                               : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03] hover:border-white/10"
@@ -276,14 +276,14 @@ export function Battle() {
                         >
                           <div className="flex items-center gap-4">
                             <div className={cn(
-                              "w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all",
+                              "w-10 h-10   rounded-xl  flex items-center justify-center transition-all",
                               duelMode === mode.id ? `bg-${mode.color}-500/20 text-white` : "bg-white/[0.03] text-white/20"
                             )}>
-                              <span className="text-lg md:text-xl">{mode.icon}</span>
+                              <span className="text-lg ">{mode.icon}</span>
                             </div>
                             <div className="min-w-0">
-                               <h4 className={cn("text-[11px] md:text-sm font-black uppercase italic tracking-wider truncate", duelMode === mode.id ? "text-white" : "text-white/40")}>{mode.label}</h4>
-                               <p className="text-[8px] md:text-[9px] font-black text-white/10 uppercase tracking-widest italic mt-0.5 truncate">{mode.desc}</p>
+                               <h4 className={cn("text-[11px]  font-black uppercase italic tracking-wider truncate", duelMode === mode.id ? "text-white" : "text-white/40")}>{mode.label}</h4>
+                               <p className="text-[8px]  font-black text-white/10 uppercase tracking-widest italic mt-0.5 truncate">{mode.desc}</p>
                             </div>
                           </div>
                         </button>
@@ -297,14 +297,14 @@ export function Battle() {
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4 md:space-y-6 pt-6 md:pt-10 border-t border-white/5"
+                        className="space-y-4  pt-6  border-t border-white/5"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-[10px] md:text-xs font-black text-cyan-400 italic shrink-0">02</div>
-                          <h3 className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Designate Target</h3>
+                          <div className="w-6 h-6   rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-[10px]  font-black text-cyan-400 italic shrink-0">02</div>
+                          <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Designate Target</h3>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 md:gap-4">
+                        <div className="grid grid-cols-1 gap-3 ">
                           {[
                             { id: 'random', label: 'Neural Queue', icon: '🎲', desc: 'Scan for global peers' },
                             { id: 'friend', label: 'Direct Strike', icon: '⚔️', desc: 'Target synced contact' },
@@ -313,7 +313,7 @@ export function Battle() {
                               key={opp.id}
                               onClick={() => setDuelOpponent(opp.id as any)}
                               className={cn(
-                                "group p-4 md:p-6 rounded-2xl md:rounded-3xl border transition-all text-left relative overflow-hidden",
+                                "group p-4  rounded-2xl  border transition-all text-left relative overflow-hidden",
                                 duelOpponent === opp.id 
                                   ? "bg-cyan-500/10 border-cyan-400/30 ring-1 ring-cyan-500/20" 
                                   : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03] hover:border-white/10"
@@ -321,14 +321,14 @@ export function Battle() {
                             >
                                <div className="flex items-center gap-4">
                                 <div className={cn(
-                                  "w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all",
+                                  "w-10 h-10   rounded-xl  flex items-center justify-center transition-all",
                                   duelOpponent === opp.id ? "bg-cyan-400/20 text-cyan-400" : "bg-white/[0.03] text-white/20"
                                 )}>
-                                  <span className="text-lg md:text-xl">{opp.icon}</span>
+                                  <span className="text-lg ">{opp.icon}</span>
                                 </div>
                                 <div className="min-w-0">
-                                   <h4 className={cn("text-[11px] md:text-sm font-black uppercase italic tracking-wider truncate", duelOpponent === opp.id ? "text-white" : "text-white/40")}>{opp.label}</h4>
-                                   <p className="text-[8px] md:text-[9px] font-black text-white/10 uppercase tracking-widest italic mt-0.5 truncate">{opp.desc}</p>
+                                   <h4 className={cn("text-[11px]  font-black uppercase italic tracking-wider truncate", duelOpponent === opp.id ? "text-white" : "text-white/40")}>{opp.label}</h4>
+                                   <p className="text-[8px]  font-black text-white/10 uppercase tracking-widest italic mt-0.5 truncate">{opp.desc}</p>
                                 </div>
                               </div>
                             </button>
@@ -341,16 +341,16 @@ export function Battle() {
                             <motion.div 
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="p-5 md:p-6 rounded-2xl md:rounded-3xl bg-cyan-400/5 border border-cyan-400/10 mt-4"
+                              className="p-5  rounded-2xl  bg-cyan-400/5 border border-cyan-400/10 mt-4"
                             >
-                               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-6">
-                                  <div className="space-y-1 text-center sm:text-left">
-                                     <h4 className="text-[9px] md:text-[10px] font-black text-cyan-400 uppercase tracking-widest italic">Synchronizing...</h4>
-                                     <p className="text-[8px] md:text-[9px] font-black text-white/20 uppercase italic max-w-xs leading-tight">Connecting to Neural Battlefront for peer matching.</p>
+                               <div className="flex flex-col  items-center justify-between gap-4 ">
+                                  <div className="space-y-1 text-center ">
+                                     <h4 className="text-[9px]  font-black text-cyan-400 uppercase tracking-widest italic">Synchronizing...</h4>
+                                     <p className="text-[8px]  font-black text-white/20 uppercase italic max-w-xs leading-tight">Connecting to Neural Battlefront for peer matching.</p>
                                   </div>
                                   <button 
                                     onClick={handleStartMatchmaking}
-                                    className="w-full sm:w-auto px-8 md:px-12 py-3.5 md:py-5 rounded-xl md:rounded-2xl bg-cyan-500 text-black font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em] italic shadow-2xl hover:bg-cyan-400 transition-all active:scale-95 shrink-0"
+                                    className="w-full  px-8  py-3.5  rounded-xl  bg-cyan-500 text-black font-black text-[9px]  uppercase tracking-[0.4em] italic shadow-2xl hover:bg-cyan-400 transition-all active:scale-95 shrink-0"
                                   >
                                     INITIATE QUEUE
                                   </button>
@@ -414,34 +414,34 @@ export function Battle() {
             </div>
 
             {/* Combat Logs / Guidelines */}
-            <div className="grid grid-cols-1 gap-4 md:gap-6">
-              <div className="system-panel p-5 md:p-8 border-white/5 bg-white/[0.01] rounded-[1.5rem] md:rounded-[2.5rem]">
-                <h3 className="text-[8px] md:text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mb-6 md:mb-8 flex items-center gap-3">
+            <div className="grid grid-cols-1 gap-4 ">
+              <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-[1.5rem] ">
+                <h3 className="text-[8px]  font-black text-white/20 uppercase tracking-[0.5em] italic mb-6  flex items-center gap-3">
                    <Target size={12} className="text-cyan-500/50" /> Combat Protocols
                 </h3>
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-4 ">
                   {[
                     { id: '01', title: 'SYNCHRONICITY', text: 'Seal lock before link.' },
                     { id: '02', title: 'HONOUR BOND', text: 'Mutual validation required.' },
                   ].map(p => (
-                    <div key={p.id} className="flex gap-3 md:gap-4">
-                      <span className="text-[10px] md:text-sm font-black text-cyan-400 italic opacity-40 shrink-0">{p.id}</span>
-                      <div className="space-y-0.5 md:space-y-1">
-                        <div className="text-[8px] md:text-[10px] font-black text-white/60 italic uppercase tracking-widest">{p.title}</div>
-                        <p className="text-[7px] md:text-[9px] font-bold text-white/5 uppercase italic leading-tight tracking-wider">{p.text}</p>
+                    <div key={p.id} className="flex gap-3 ">
+                      <span className="text-[10px]  font-black text-cyan-400 italic opacity-40 shrink-0">{p.id}</span>
+                      <div className="space-y-0.5 ">
+                        <div className="text-[8px]  font-black text-white/60 italic uppercase tracking-widest">{p.title}</div>
+                        <p className="text-[7px]  font-bold text-white/5 uppercase italic leading-tight tracking-wider">{p.text}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
               
-              <div className="system-panel p-5 md:p-8 border-white/5 bg-white/[0.01] rounded-[1.5rem] md:rounded-[2.5rem] relative overflow-hidden">
+              <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-[1.5rem]  relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(239,68,68,0.03),transparent_60%)]" />
-                <h3 className="text-[8px] md:text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mb-6 md:mb-8 flex items-center gap-3">
+                <h3 className="text-[8px]  font-black text-white/20 uppercase tracking-[0.5em] italic mb-6  flex items-center gap-3">
                    <Swords size={12} className="text-red-500/50" /> Security Advisory
                 </h3>
-                <div className="p-4 md:p-6 rounded-lg md:rounded-2xl bg-white/[0.01] border border-white/5">
-                   <p className="text-[7px] md:text-[9px] font-black text-white/10 uppercase italic leading-tight tracking-widest">
+                <div className="p-4  rounded-lg  bg-white/[0.01] border border-white/5">
+                   <p className="text-[7px]  font-black text-white/10 uppercase italic leading-tight tracking-widest">
                      Engagement requires neural stability. Protocol abortion leads to penalty.
                    </p>
                 </div>

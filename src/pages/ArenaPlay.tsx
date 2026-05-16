@@ -356,7 +356,7 @@ export function ArenaPlay() {
                   key={`${currentCardIndex}-${phase}`}
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
-                  className="w-full min-h-[380px] p-12 sm:p-20 modular-card backdrop-blur-3xl flex flex-col items-center justify-center text-center relative z-10 transition-all bg-white/[0.01]"
+                  className="w-full min-h-[380px] p-12  modular-card backdrop-blur-3xl flex flex-col items-center justify-center text-center relative z-10 transition-all bg-white/[0.01]"
                 >
                   <div className="absolute top-10 left-12 right-12 flex justify-between items-center opacity-30">
                     <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white" />
@@ -367,7 +367,7 @@ export function ArenaPlay() {
                   {phase === 'question' ? (
                     <>
                       <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-10 italic">Neural Stimulus</span>
-                      <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">{currentCard.front}</p>
+                      <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">{currentCard.front}</p>
                     </>
                   ) : (
                     <motion.div 
@@ -383,7 +383,7 @@ export function ArenaPlay() {
 
                       <div>
                         <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-6 italic text-shadow-glow">Neural Response</span>
-                        <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase">{currentCard.back}</p>
+                        <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase">{currentCard.back}</p>
                       </div>
                     </motion.div>
                   )}

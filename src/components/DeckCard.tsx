@@ -30,11 +30,11 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.08 }}
-      className="group relative cursor-pointer sm:h-full"
+      className="group relative cursor-pointer "
       onClick={onClick}
     >
       {/* MOBILE: OLD DESIGN */}
-      <div className="sm:hidden bg-[#0A0C10] border border-white/5 p-8 rounded-[2.5rem] group-hover:bg-white/[0.04] transition-all relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      <div className=" bg-[#0A0C10] border border-white/5 p-8 rounded-[2.5rem] group-hover:bg-white/[0.04] transition-all relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent" />
         
         {stats.due > 0 && (
@@ -95,7 +95,7 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
       </div>
 
       {/* DESKTOP: NEW DESIGN */}
-      <div className="hidden sm:flex bg-[#0A0C10]/60 border border-white/5 p-8 rounded-[2rem] group-hover:bg-white/[0.04] group-hover:border-white/10 transition-all relative overflow-hidden backdrop-blur-xl h-full flex-col justify-between">
+      <div className="hidden  bg-[#0A0C10]/60 border border-white/5 p-8 rounded-[2rem] group-hover:bg-white/[0.04] group-hover:border-white/10 transition-all relative overflow-hidden backdrop-blur-xl h-full flex-col justify-between">
         <div>
           <div className="flex items-start justify-between mb-8">
              <div className={cn(

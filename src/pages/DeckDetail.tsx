@@ -59,7 +59,7 @@ export function DeckDetail() {
 
         {/* Hero Section */}
         <section className="relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-8 border-b border-white/5 pb-8">
+          <div className="flex flex-col  items-start  justify-between gap-8 border-b border-white/5 pb-8">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-4">
                 <div className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest italic border bg-white/5 border-white/10 text-white")}>
@@ -69,7 +69,7 @@ export function DeckDetail() {
                 <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Cards</span>
               </div>
               
-              <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tighter italic uppercase leading-none mb-6">
+              <h1 className="text-5xl  font-black text-white tracking-tighter italic uppercase leading-none mb-6">
                 {deck.title}
               </h1>
               
@@ -82,8 +82,8 @@ export function DeckDetail() {
               </div>
             </div>
 
-            <div className={cn("w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] shrink-0", deck.color || 'from-cyan-400 to-blue-500')}>
-               <Box size={32} className="sm:size-[40px] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+            <div className={cn("w-20 h-20   rounded-3xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] shrink-0", deck.color || 'from-cyan-400 to-blue-500')}>
+               <Box size={32} className=" drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export function DeckDetail() {
         </section>
 
         {/* Diagnostics Grid */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        <section className="grid grid-cols-2  gap-6">
            <div className="space-y-1">
              <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cards</p>
              <p className="text-2xl font-black text-white tracking-tighter italic">{stats.total}</p>

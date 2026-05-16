@@ -229,8 +229,8 @@ export function Focus() {
         {/* Header HUD - More Minimal */}
         <motion.div variants={itemVariants} className="w-full pt-4">
            <div className="flex flex-col items-center">
-              <span className="text-[7px] md:text-[8px] font-black text-cyan-400/30 uppercase tracking-[0.6em] md:tracking-[0.8em] italic mb-1">CORTEX PROTOCOL v4.2</span>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-widest uppercase italic leading-none flex items-center gap-1">
+              <span className="text-[7px]  font-black text-cyan-400/30 uppercase tracking-[0.6em]  italic mb-1">CORTEX PROTOCOL v4.2</span>
+              <h2 className="text-3xl  font-black text-white tracking-widest uppercase italic leading-none flex items-center gap-1">
                 DEEP<span className="text-cyan-400">PULSE</span>
               </h2>
            </div>
@@ -296,7 +296,7 @@ export function Focus() {
                 onClick={() => !hasStarted && setNoPauseChallenge(!noPauseChallenge)}
                 disabled={hasStarted}
                 className={cn(
-                  "h-14 md:h-16 px-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center transition-all border gap-1 min-w-[70px] active:scale-95",
+                  "h-14  px-6 rounded-2xl  flex flex-col items-center justify-center transition-all border gap-1 min-w-[70px] active:scale-95",
                   noPauseChallenge 
                     ? "bg-cyan-500/10 border-cyan-400/30 text-cyan-400" 
                     : "bg-white/[0.01] border-white/5 text-white/10 hover:text-white/20"
@@ -306,12 +306,12 @@ export function Focus() {
                 <span className="text-[6px] font-black uppercase tracking-widest">{noPauseChallenge ? "LOCKED" : "GUARD"}</span>
               </button>
 
-              <div className="flex-1 flex gap-2 h-14 md:h-16">
+              <div className="flex-1 flex gap-2 h-14 ">
                 <button 
                   onClick={isActive && !isPaused ? handlePause : handleStart}
                   disabled={noPauseChallenge && isPaused}
                   className={cn(
-                    "flex-1 rounded-2xl md:rounded-3xl border transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden active:scale-95 group",
+                    "flex-1 rounded-2xl  border transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden active:scale-95 group",
                     isActive && !isPaused
                       ? "bg-cyan-500/10 border-cyan-400/40 text-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.15)]" 
                       : "bg-white text-black border-transparent hover:bg-cyan-400 transition-colors"
@@ -350,7 +350,7 @@ export function Focus() {
                   onClick={handleReset}
                   disabled={!hasStarted && timeLeft === totalTime}
                   className={cn(
-                    "w-14 md:w-16 rounded-2xl md:rounded-3xl flex items-center justify-center transition-all border bg-white/[0.02] active:scale-95",
+                    "w-14  rounded-2xl  flex items-center justify-center transition-all border bg-white/[0.02] active:scale-95",
                     (!hasStarted && timeLeft === totalTime) ? "text-white/5 border-white/5" : "text-white/30 border-white/10 hover:text-cyan-400 hover:border-cyan-400/20"
                   )}
                 >

@@ -51,7 +51,7 @@ export function FlashCard({ card, onFlip }: FlashCardProps) {
           </div>
 
           <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-8 italic">Neural Stimulus</span>
-          <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">
+          <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">
             {card.front}
           </p>
 
@@ -77,7 +77,7 @@ export function FlashCard({ card, onFlip }: FlashCardProps) {
           </div>
 
           <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-8 italic text-shadow-glow">Response Decrypted</span>
-          <p className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-tight uppercase">
+          <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase">
             {card.back}
           </p>
 

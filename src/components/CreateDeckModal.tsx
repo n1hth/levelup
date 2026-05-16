@@ -56,7 +56,7 @@ export function CreateDeckModal({ onClose, onCreated }: CreateDeckModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4"
+        className="fixed inset-0 z-[100] flex items-end  justify-center p-4"
         style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
         onClick={e => e.target === e.currentTarget && onClose()}
       >
@@ -65,10 +65,10 @@ export function CreateDeckModal({ onClose, onCreated }: CreateDeckModalProps) {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full max-w-lg bg-[#0A0C10] border border-white/5 rounded-[3rem] p-8 relative shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col md:flex-row gap-8"
+          className="w-full max-w-lg bg-[#0A0C10] border border-white/5 rounded-[3rem] p-8 relative shadow-[0_30px_70px_rgba(0,0,0,0.7)] flex flex-col  gap-8"
         >
           {/* Left panel for branding/visuals */}
-          <div className="hidden md:flex md:w-1/3 flex-col justify-between border-r border-white/5 pr-8">
+          <div className="hidden   flex-col justify-between border-r border-white/5 pr-8">
             <div>
               <div className="w-16 h-16 bg-white/[0.01] border border-white/5 rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl">
                 <BookOpen size={32} className="text-cyan-400" />
@@ -89,7 +89,7 @@ export function CreateDeckModal({ onClose, onCreated }: CreateDeckModalProps) {
           </div>
 
           <div className="flex-1 space-y-6">
-            <div className="flex items-center justify-between md:hidden mb-4">
+            <div className="flex items-center justify-between  mb-4">
               <h2 className="text-2xl font-black text-white tracking-tighter leading-none italic uppercase">New Archive</h2>
               <button onClick={onClose} className="p-2 text-white/20 hover:text-white transition-colors">
                 <X size={20} />
@@ -189,7 +189,7 @@ export function CreateDeckModal({ onClose, onCreated }: CreateDeckModalProps) {
             </div>
           </div>
           
-          <button onClick={onClose} className="hidden md:flex absolute -top-4 -right-4 w-12 h-12 rounded-2xl bg-black border border-white/10 items-center justify-center text-white/20 hover:text-white hover:border-white transition-all shadow-3xl">
+          <button onClick={onClose} className="hidden  absolute -top-4 -right-4 w-12 h-12 rounded-2xl bg-black border border-white/10 items-center justify-center text-white/20 hover:text-white hover:border-white transition-all shadow-3xl">
             <X size={24} />
           </button>
         </motion.div>

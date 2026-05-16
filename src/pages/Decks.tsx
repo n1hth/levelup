@@ -49,27 +49,27 @@ export function Decks() {
         className="max-w-6xl mx-auto space-y-12 pb-24 px-4"
       >
         {/* Refined Header */}
-        <header className="flex items-center justify-between pt-12 border-b border-white/5 pb-8 px-2 sm:px-0">
+        <header className="flex items-center justify-between pt-12 border-b border-white/5 pb-8 px-2 ">
            <div>
              <div className="flex items-center gap-3 mb-2 text-white/20">
-                <LayoutGrid size={14} className="hidden sm:block" />
+                <LayoutGrid size={14} className="hidden " />
                 <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Storage</span>
              </div>
-             <h1 className="text-2xl sm:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
+             <h1 className="text-2xl  font-black text-white italic tracking-tighter uppercase leading-none">
                Decks
              </h1>
            </div>
            
            <button
              onClick={() => setShowCreate(true)}
-             className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+             className="flex items-center justify-center w-12 h-12   bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
            >
              <Plus size={24} className="stroke-[3]" />
            </button>
         </header>
 
         {/* Search & Intelligence Controls */}
-        <section className="flex flex-col sm:flex-row gap-4 px-2 sm:px-0">
+        <section className="flex flex-col  gap-4 px-2 ">
           <div className="relative flex-1 group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" size={14} />
             <input
@@ -83,7 +83,7 @@ export function Decks() {
           
           <div className="flex gap-4">
             {subjects.length > 0 && (
-              <div className="relative flex-1 sm:flex-initial">
+              <div className="relative flex-1 ">
                 <select
                   value={filterSubject}
                   onChange={e => setFilterSubject(e.target.value)}
@@ -102,7 +102,7 @@ export function Decks() {
         </section>
 
         {/* Result Grid */}
-        <section className="px-2 sm:px-0">
+        <section className="px-2 ">
           {state.decks.length === 0 ? (
             <motion.div variants={itemVariants}>
               <EmptyState onCreate={() => setShowCreate(true)} />
@@ -113,12 +113,12 @@ export function Decks() {
               <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">No gate patterns found</p>
             </motion.div>
           ) : (
-            <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pb-20">
+            <div className="flex flex-col    gap-6  pb-20">
               {filtered.map((deck, i) => (
                 <motion.div
                   variants={itemVariants}
                   key={deck.id}
-                  className="w-full sm:h-full"
+                  className="w-full "
                 >
                   <DeckCard
                     key={deck.id}

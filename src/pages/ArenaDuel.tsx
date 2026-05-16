@@ -571,7 +571,7 @@ export function ArenaDuel() {
         )}
 
         <div className="flex items-center gap-6">
-           <div className="text-right hidden sm:block">
+           <div className="text-right hidden ">
               <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic mb-1 pr-1">Target Identity</div>
               <div className="flex items-center gap-3">
                  <div className="text-sm font-black uppercase tracking-tight truncate max-w-[120px] italic">{opponent?.name || 'ANONYMOUS'}</div>

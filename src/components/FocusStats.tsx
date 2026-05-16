@@ -129,7 +129,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   return (
     <div className="flex flex-col items-center justify-center text-center group">
       <div className="mb-2 opacity-20 group-hover:opacity-100 transition-opacity duration-500 scale-90 group-hover:scale-100">{icon}</div>
-      <div className="text-sm md:text-base font-black text-white italic tabular-nums leading-none mb-1.5">{value}</div>
+      <div className="text-sm  font-black text-white italic tabular-nums leading-none mb-1.5">{value}</div>
       <div className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] italic leading-none">{label}</div>
     </div>
   );

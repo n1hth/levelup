@@ -67,7 +67,7 @@ export function ArenaResults({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,211,238,0.1),transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
 
-      <div className="w-full max-w-lg px-6 md:px-8 space-y-6 md:space-y-10 overflow-y-auto max-h-screen py-10 md:py-16 relative z-10">
+      <div className="w-full max-w-lg px-6  space-y-6  overflow-y-auto max-h-screen py-10  relative z-10">
         {/* Header */}
         <motion.div
           initial={{ y: -30, opacity: 0 }}
@@ -78,13 +78,13 @@ export function ArenaResults({
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 md:px-6 md:py-2 rounded-full border border-white/10 bg-white/5 mb-6 md:mb-8 backdrop-blur-xl shadow-2xl"
+            className="inline-flex items-center gap-2 px-4 py-1.5   rounded-full border border-white/10 bg-white/5 mb-6  backdrop-blur-xl shadow-2xl"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,1)]" />
-            <span className="text-[8px] md:text-[10px] font-black text-white/50 uppercase tracking-[0.4em] md:tracking-[0.6em] italic">Neural Extraction Finalized</span>
+            <span className="text-[8px]  font-black text-white/50 uppercase tracking-[0.4em]  italic">Neural Extraction Finalized</span>
           </motion.div>
-          <h2 className="text-4xl md:text-7xl font-black text-white tracking-widest uppercase italic leading-none text-shadow-glow">Victory</h2>
-          <p className="text-[9px] md:text-[12px] font-black text-cyan-400/40 uppercase tracking-[0.3em] md:tracking-[0.5em] mt-3 md:mt-5 italic tabular-nums">{difficulty.toUpperCase()} PROTOCOL COMPLETED</p>
+          <h2 className="text-4xl  font-black text-white tracking-widest uppercase italic leading-none text-shadow-glow">Victory</h2>
+          <p className="text-[9px]  font-black text-cyan-400/40 uppercase tracking-[0.3em]  mt-3  italic tabular-nums">{difficulty.toUpperCase()} PROTOCOL COMPLETED</p>
         </motion.div>
 
         {/* Modular Grid Results */}
@@ -94,11 +94,11 @@ export function ArenaResults({
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="modular-card col-span-2 p-6 md:p-10 flex flex-col md:flex-row items-center justify-around bg-white/[0.01] gap-8 md:gap-4"
+            className="modular-card col-span-2 p-6  flex flex-col  items-center justify-around bg-white/[0.01] gap-8 "
            >
               {/* Accuracy Ring */}
               <div className="relative group">
-                <svg width="140" height="140" viewBox="0 0 130 130" className="transform -rotate-90 relative z-10 w-28 h-28 md:w-32 md:h-32">
+                <svg width="140" height="140" viewBox="0 0 130 130" className="transform -rotate-90 relative z-10 w-28 h-28  ">
                   <circle cx="65" cy="65" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="8" />
                   <motion.circle
                     cx="65" cy="65" r={ringRadius}
@@ -115,32 +115,32 @@ export function ArenaResults({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', delay: 1 }}
-                    className="text-4xl md:text-5xl font-black italic tracking-tighter"
+                    className="text-4xl  font-black italic tracking-tighter"
                     style={{ color: gradeColor }}
                   >
                     {grade}
                   </motion.span>
-                  <span className="text-[8px] md:text-[9px] font-black text-white/30 uppercase tracking-widest italic tabular-nums">{accuracy}%</span>
+                  <span className="text-[8px]  font-black text-white/30 uppercase tracking-widest italic tabular-nums">{accuracy}%</span>
                 </div>
               </div>
 
-              <div className="hidden md:block h-20 w-px bg-white/10" />
+              <div className="hidden  h-20 w-px bg-white/10" />
 
               {/* XP Yield */}
               <div className="text-center relative">
-                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic mb-2 md:mb-3 block">Neural Yield</span>
+                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic mb-2  block">Neural Yield</span>
                 <div className="flex items-center gap-3">
-                  <Zap size={24} className="md:size-[28px] text-cyan-400 fill-cyan-400/20 shadow-[0_0_20px_rgba(34,211,238,0.6)]" />
-                  <span className="text-5xl md:text-6xl font-black text-white tabular-nums italic tracking-tighter">+{animatedXp}</span>
+                  <Zap size={24} className=" text-cyan-400 fill-cyan-400/20 shadow-[0_0_20px_rgba(34,211,238,0.6)]" />
+                  <span className="text-5xl  font-black text-white tabular-nums italic tracking-tighter">+{animatedXp}</span>
                 </div>
                 {isPersonalBest && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.5 }}
-                    className="absolute -bottom-10 md:-bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 md:px-4 py-1.5 bg-yellow-400 text-black rounded-lg shadow-[0_0_20px_rgba(250,204,21,0.4)]"
+                    className="absolute -bottom-10  left-1/2 -translate-x-1/2 whitespace-nowrap px-3  py-1.5 bg-yellow-400 text-black rounded-lg shadow-[0_0_20px_rgba(250,204,21,0.4)]"
                   >
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest leading-none">NEW RECORD</span>
+                    <span className="text-[9px]  font-black uppercase tracking-widest leading-none">NEW RECORD</span>
                   </motion.div>
                 )}
               </div>
@@ -148,24 +148,24 @@ export function ArenaResults({
 
             {/* Detail Cards */}
            {[
-            { icon: <Target className="size-3.5 md:size-[18px] text-emerald-400" />, value: `${correctCount}`, label: 'Fragments' },
-            { icon: <Flame className="size-3.5 md:size-[18px] text-orange-400" />, value: `${bestStreak}×`, label: 'Streak' },
-            { icon: <Clock className="size-3.5 md:size-[18px] text-cyan-400" />, value: `${avgResponseTime.toFixed(1)}s`, label: 'Latency' },
-            { icon: <Star className="size-3.5 md:size-[18px] text-yellow-400" />, value: `${wrongCount}`, label: 'Decay' },
+            { icon: <Target className="size-3.5  text-emerald-400" />, value: `${correctCount}`, label: 'Fragments' },
+            { icon: <Flame className="size-3.5  text-orange-400" />, value: `${bestStreak}×`, label: 'Streak' },
+            { icon: <Clock className="size-3.5  text-cyan-400" />, value: `${avgResponseTime.toFixed(1)}s`, label: 'Latency' },
+            { icon: <Star className="size-3.5  text-yellow-400" />, value: `${wrongCount}`, label: 'Decay' },
           ].map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 + i * 0.1 }}
-              className="modular-card p-4 md:p-6 bg-white/[0.01]"
+              className="modular-card p-4  bg-white/[0.01]"
             >
-              <div className="flex items-center justify-between mb-2 md:mb-4">
+              <div className="flex items-center justify-between mb-2 ">
                 {s.icon}
-                <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-white/5 shadow-inner" />
+                <div className="w-1  h-1  rounded-full bg-white/5 shadow-inner" />
               </div>
-              <span className="text-2xl md:text-3xl font-black text-white italic tracking-tighter block mb-0.5 md:mb-1 tabular-nums">{s.value}</span>
-              <span className="text-[8px] md:text-[10px] font-black text-white/20 uppercase tracking-[0.3em] md:tracking-[0.4em] italic leading-none">{s.label}</span>
+              <span className="text-2xl  font-black text-white italic tracking-tighter block mb-0.5  tabular-nums">{s.value}</span>
+              <span className="text-[8px]  font-black text-white/20 uppercase tracking-[0.3em]  italic leading-none">{s.label}</span>
             </motion.div>
           ))}
         </div>
@@ -199,16 +199,16 @@ export function ArenaResults({
         >
           <button
             onClick={onExit}
-            className="flex-1 py-4 md:py-6 rounded-xl md:rounded-2xl border border-white/10 bg-white/[0.02] text-white/40 font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.6em] italic hover:bg-white/[0.05] hover:text-white transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-4  rounded-xl  border border-white/10 bg-white/[0.02] text-white/40 font-black text-[9px]  uppercase tracking-[0.4em]  italic hover:bg-white/[0.05] hover:text-white transition-all flex items-center justify-center gap-2"
           >
             Terminal
           </button>
           <button
             onClick={onPlayAgain}
-            className="flex-1 py-4 md:py-6 rounded-xl md:rounded-2xl bg-white text-black font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.6em] italic hover:bg-cyan-400 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 relative overflow-hidden group"
+            className="flex-1 py-4  rounded-xl  bg-white text-black font-black text-[9px]  uppercase tracking-[0.4em]  italic hover:bg-cyan-400 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 relative overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <RotateCcw className="size-3.5 md:size-[16px] relative z-10" />
+            <RotateCcw className="size-3.5  relative z-10" />
             <span className="relative z-10">Re-Engage</span>
           </button>
         </motion.div>
