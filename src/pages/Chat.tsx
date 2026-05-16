@@ -48,6 +48,7 @@ export function Chat() {
   const [dmInput, setDmInput] = useState('');
   const [friend, setFriend] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setOrbHidden(true);
@@ -101,6 +102,8 @@ export function Chat() {
     if (dmInput && userId) {
       sendMessage(userId, dmInput);
       setDmInput('');
+      // Force input to stay focused
+      setTimeout(() => inputRef.current?.focus(), 10);
     }
   };
 
@@ -171,15 +174,23 @@ export function Chat() {
         <div className="relative flex items-center gap-4">
           <div className="flex-1 relative">
             <input 
+              ref={inputRef}
               type="text" 
               value={dmInput}
               onChange={e => setDmInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault(); // Prevent mobile keyboard from closing
+                  handleSend();
+                }
+              }}
               placeholder="Type message..."
               className="w-full bg-white/[0.02] border border-white/5 rounded-full py-4.5 px-6 outline-none focus:border-cyan-400/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/10 font-black text-[11px] uppercase italic tracking-widest"
             />
           </div>
           <button 
+            onMouseDown={e => e.preventDefault()}
+            onTouchStart={e => e.preventDefault()}
             onClick={handleSend}
             className="group relative"
           >
