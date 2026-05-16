@@ -96,7 +96,10 @@ export function Chat() {
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedMsg = payload.new as any;
-            setMessages(prev => prev.map(msg => msg.id === updatedMsg.id ? updatedMsg : msg));
+            console.log("Message Updated (Read Receipt):", updatedMsg);
+            setMessages(prev => prev.map(msg => 
+              msg.id === updatedMsg.id ? { ...msg, ...updatedMsg } : msg
+            ));
           }
         })
         .subscribe();
@@ -112,6 +115,15 @@ export function Chat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (userId && messages.length > 0) {
+      const hasUnread = messages.some(m => m.sender_id === userId && !m.is_read);
+      if (hasUnread) {
+        markMessagesAsRead(userId);
+      }
+    }
+  }, [messages, userId, markMessagesAsRead]);
 
   const handleSend = async () => {
     if (dmInput && userId) {

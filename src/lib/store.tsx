@@ -1507,12 +1507,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!state.user) return;
     try {
       // Mark messages where I am the receiver and they are the sender
-      await supabase
+      const { error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .eq('receiver_id', state.user.id)
         .eq('sender_id', senderId)
         .eq('is_read', false);
+      
+      if (error) {
+        console.error("Read Receipt Update Error (check RLS):", error);
+      }
     } catch (err) {
       console.error("Failed to mark messages as read:", err);
     }
