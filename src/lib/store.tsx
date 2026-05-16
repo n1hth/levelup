@@ -159,7 +159,7 @@ interface AppContextType {
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
   sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
-  acceptDuelInvite: (requestId: string) => Promise<void>;
+  acceptDuelInvite: (requestId: string) => Promise<string | null>;
   getNotifications: () => Promise<any[]>;
   clearNotifications: () => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
@@ -1194,15 +1194,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.user]);
 
   const acceptDuelInvite = useCallback(async (requestId: string) => {
-    if (!state.user) return;
+    if (!state.user) return null;
     try {
-      const { error } = await supabase
+      // 1. Get the request details to find the sender
+      const { data: request } = await supabase
+        .from('duel_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+      
+      if (!request) return null;
+
+      // 2. Update the request status
+      await supabase
         .from('duel_requests')
         .update({ status: 'accepted' })
         .eq('id', requestId);
-      if (error) throw error;
+
+      // 3. Find and update the associated duel record
+      const { data: duel, error: duelErr } = await supabase
+        .from('duels')
+        .update({ status: 'setup' })
+        .eq('player1_id', request.sender_id)
+        .eq('player2_id', state.user.id)
+        .eq('status', 'invited')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .select()
+        .single();
+
+      if (duelErr) throw duelErr;
+      return duel.id;
     } catch (err) {
       console.error("Accept duel failed:", err);
+      return null;
     }
   }, [state.user]);
 
@@ -1430,7 +1455,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         player2_id: opponentId,
         mode,
         p1_deck_id: deckId || null,
-        status: 'setup'
+        status: 'invited'
       }).select().single();
       if (error) throw error;
       return data.id;

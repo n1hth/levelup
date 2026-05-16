@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/src/lib/store.tsx';
+import { supabase } from '@/src/lib/supabase';
 import { cn } from '@/src/lib/utils.ts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -97,9 +98,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
       if (notif.type === 'friend') {
         await acceptFriendRequest(notif.id);
       } else {
-        await acceptDuelInvite(notif.id);
-        navigate(`/duels/${notif.duel_id}`);
-        setIsNavOpen(false);
+        const duelId = await acceptDuelInvite(notif.id);
+        if (duelId) {
+          navigate(`/duels/${duelId}`);
+          setIsNavOpen(false);
+        } else {
+          alert("Duel record not found or already started.");
+        }
       }
     }
     fetchNotifications();
@@ -109,6 +114,32 @@ export function Orb({ onInteractionChange }: OrbProps) {
     await clearNotifications();
     fetchNotifications();
   };
+
+  // Global Duel Sync Listener
+  useEffect(() => {
+    if (!state.user) return;
+    
+    const channel = supabase
+      .channel('global-duel-sync')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'duels'
+      }, (payload: any) => {
+        const isMyDuel = payload.new.player1_id === state.user?.id || payload.new.player2_id === state.user?.id;
+        if (isMyDuel && payload.new.status === 'setup') {
+          // If we are already on the duel page, don't re-navigate
+          if (!window.location.pathname.startsWith(`/duels/${payload.new.id}`)) {
+            navigate(`/duels/${payload.new.id}`);
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [state.user?.id, navigate]);
 
   // Rank-based details
   const rank = getRank();

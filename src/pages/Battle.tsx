@@ -46,29 +46,14 @@ export function Battle() {
 
     await sendDuelInvite(friendId, duelId); 
     setIsInviting(false);
-    navigate(`/duels/${duelId}`);
+    // Stay here, or could show a "Waiting" state
+    alert("Challenge Sent! Waiting for opponent to accept...");
     setDuelOpponent(null);
   };
 
   useEffect(() => {
     if (!state.user) return;
     
-    // Listen for incoming friend duels
-    const channel = supabase
-      .channel('incoming-duels')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'duels', 
-        filter: `player2_id=eq.${state.user.id}` 
-      }, (payload) => {
-        if (payload.new.status === 'setup') {
-          // Auto-redirect to the duel
-          navigate(`/duels/${payload.new.id}`);
-        }
-      })
-      .subscribe();
-
     if (activeTab === 'duels') {
       getFriends().then(setFriends);
     }
@@ -95,7 +80,6 @@ export function Battle() {
       });
     
     return () => { 
-      channel.unsubscribe();
       lobby.unsubscribe();
     };
   }, [activeTab, getFriends, state.user, navigate]);
