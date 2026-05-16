@@ -38,7 +38,7 @@ export interface OrbProps {
 }
 
 export function Orb({ onInteractionChange }: OrbProps) {
-  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite } = useApp();
+  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite, clearNotifications } = useApp();
   const [orbState, setOrbState] = useState<OrbState>('dormant');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -76,32 +76,12 @@ export function Orb({ onInteractionChange }: OrbProps) {
     };
   }, [isNavOpen, isInsightOpen, isHolding]);
 
-  const playSoftChime = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      console.warn("AudioContext not supported", e);
-    }
-  };
-
   const fetchNotifications = async () => {
     const data = await getNotifications();
     if (data.length > notifications.length) {
-      playSoftChime();
+      // Bright pulse on new notification
       setShowPulseWave(true);
-      setTimeout(() => setShowPulseWave(false), 2500);
+      setTimeout(() => setShowPulseWave(false), 1500);
     }
     setNotifications(data);
   };
@@ -122,6 +102,11 @@ export function Orb({ onInteractionChange }: OrbProps) {
         setIsNavOpen(false);
       }
     }
+    fetchNotifications();
+  };
+
+  const handleClearAll = async () => {
+    await clearNotifications();
     fetchNotifications();
   };
 
@@ -287,8 +272,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
                   <span className="text-[10px] font-black text-cyan-400/90 uppercase tracking-[0.25em]">Neural Alerts</span>
                 </div>
                 <button 
-                  onClick={() => setNotifications([])}
-                  className="text-[8px] font-black text-white/20 uppercase tracking-widest hover:text-red-400 transition-colors active:scale-95 px-2 py-1 rounded-lg hover:bg-red-500/10"
+                  onClick={handleClearAll}
+                  className="text-[8px] font-black text-white/40 uppercase tracking-widest hover:text-red-400 transition-colors active:scale-95 px-2.5 py-1.5 rounded-lg border border-white/5 hover:border-red-500/20 bg-white/5"
                 >
                   Clear All
                 </button>
@@ -348,7 +333,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={() => { setIsNavOpen(false); setIsInsightOpen(false); }}
-            className="fixed inset-0 z-[80] bg-black/60 pointer-events-auto"
+            className="fixed inset-0 z-[80] bg-black/60 pointer-events-auto backdrop-blur-md"
           />
         )}
       </AnimatePresence>
@@ -596,9 +581,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
               
               {orbState === 'peaked' && (
                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-[60%] h-[60%] rounded-full border-[1.5px] border-white/30" />
-                 </div>
-              )}
+                     <div className="w-[60%] h-[60%] rounded-full border-[1.5px] border-white/30" />
+                  </div>
+               )}
+
+               {notifications.length > 0 && (
+                 <div className="absolute top-4 right-4 w-3 h-3 bg-cyan-400 rounded-full border-2 border-[#00E5FF] shadow-[0_0_10px_rgba(0,229,255,0.8)] z-20" />
+               )}
             </motion.div>
 
             <AnimatePresence>

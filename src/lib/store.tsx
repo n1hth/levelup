@@ -161,6 +161,7 @@ interface AppContextType {
   sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<void>;
   getNotifications: () => Promise<any[]>;
+  clearNotifications: () => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
@@ -1244,6 +1245,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
+  const clearNotifications = useCallback(async () => {
+    if (!state.user) return;
+    try {
+      await Promise.all([
+        supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
+        supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending')
+      ]);
+    } catch (err) {
+      console.error("Clear notifications failed:", err);
+    }
+  }, [state.user]);
+
   const getFriends = useCallback(async () => {
     if (!state.user) return [];
     
@@ -1510,7 +1523,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       isOrbHidden, setOrbHidden,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
-      sendDuelInvite, acceptDuelInvite, getNotifications,
+      sendDuelInvite, acceptDuelInvite, getNotifications, clearNotifications,
       joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
     }}>
       {children}
