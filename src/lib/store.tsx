@@ -1648,24 +1648,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, [state.user]);
 
+  const contextValue = useMemo(() => ({
+    state, isLoading, session,
+    setUser, resetUser, signOut,
+    addXp, getLevel, getRank, getXpProgress: getXpProgressData,
+    addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
+    addDeck, updateDeck, deleteDeck,
+    addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
+    addDeckStudySession,
+    getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
+    getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
+    addArenaSession, getArenaStats, getDeckArenaHistory,
+    getWeeklyInsights, getMilestones,
+    isOrbHidden, setOrbHidden,
+    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+    sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
+    joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
+  }), [
+    state, isLoading, session, setUser, resetUser, signOut, addXp, getLevel, getRank, getXpProgressData,
+    addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
+    addDeck, updateDeck, deleteDeck, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
+    addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
+    getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
+    addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, isOrbHidden, setOrbHidden,
+    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+    sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
+    joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
+  ]);
+
   return (
-    <AppContext.Provider value={{
-      state, isLoading, session,
-      setUser, resetUser, signOut,
-      addXp, getLevel, getRank, getXpProgress: getXpProgressData,
-      addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
-      addDeck, updateDeck, deleteDeck,
-      addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
-      addDeckStudySession,
-      getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
-      getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
-      addArenaSession, getArenaStats, getDeckArenaHistory,
-      getWeeklyInsights, getMilestones,
-      isOrbHidden, setOrbHidden,
-      searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
-      sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
-      joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
-    }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

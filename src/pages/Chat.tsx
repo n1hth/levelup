@@ -148,7 +148,7 @@ export function Chat() {
     }
   };
 
-  return createPortal(
+  return (
     <motion.div 
       initial={{ opacity: 0, x: '100%' }}
       animate={{ opacity: 1, x: 0 }}
@@ -254,7 +254,6 @@ export function Chat() {
           </button>
         </div>
       </div>
-    </motion.div>,
-    document.body
+    </motion.div>
   );
 }
