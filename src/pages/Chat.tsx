@@ -83,7 +83,13 @@ export function Chat() {
             const newMsg = payload.new as any;
             if ((newMsg.sender_id === userId && newMsg.receiver_id === state.user?.id) || 
                 (newMsg.sender_id === state.user?.id && newMsg.receiver_id === userId)) {
-              setMessages(prev => [...prev, newMsg]);
+              setMessages(prev => {
+                if (prev.some(m => m.id === newMsg.id || (m.content === newMsg.content && newMsg.sender_id === state.user?.id))) {
+                  // Replace optimistic update with real DB record
+                  return prev.map(m => m.content === newMsg.content && m.sender_id === state.user?.id ? newMsg : m);
+                }
+                return [...prev, newMsg];
+              });
               if (newMsg.sender_id === userId) {
                 markMessagesAsRead(userId);
               }
@@ -107,10 +113,24 @@ export function Chat() {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (dmInput && userId) {
-      sendMessage(userId, dmInput);
+      const content = dmInput;
       setDmInput('');
+      
+      // Optimistic UI update
+      const tempId = Math.random().toString();
+      setMessages(prev => [...prev, {
+        id: tempId,
+        sender_id: state.user!.id,
+        receiver_id: userId,
+        content: content,
+        created_at: new Date().toISOString(),
+        is_read: false
+      }]);
+
+      await sendMessage(userId, content);
+      
       // Force input to stay focused
       setTimeout(() => inputRef.current?.focus(), 10);
     }
@@ -155,11 +175,13 @@ export function Chat() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 space-y-6 no-scrollbar">
         {messages.map((msg, i) => {
           const isMe = msg.sender_id === state.user?.id;
+          const isLastMessage = i === messages.length - 1;
+          
           return (
             <motion.div 
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              key={i} 
+              key={msg.id || i} 
               className={cn("flex flex-col", isMe ? "items-end" : "items-start")}
             >
               <div className={cn(
@@ -174,12 +196,13 @@ export function Chat() {
                 <span className="text-[7px] font-black text-white/10 uppercase tracking-widest italic">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                {isMe && (
-                  msg.is_read ? (
-                    <CheckCheck size={10} className="text-cyan-400" />
-                  ) : (
-                    <Check size={10} className="text-white/20" />
-                  )
+                {isMe && isLastMessage && (
+                  <span className={cn(
+                    "text-[7px] font-black uppercase tracking-widest italic",
+                    msg.is_read ? "text-cyan-400" : "text-white/20"
+                  )}>
+                    {msg.is_read ? 'Seen' : 'Sent'}
+                  </span>
                 )}
               </div>
             </motion.div>
