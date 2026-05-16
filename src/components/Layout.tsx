@@ -7,7 +7,6 @@ import {
   Zap, 
   Flame, 
 } from 'lucide-react';
-import { NotificationHub } from './NotificationHub.tsx';
 import { Orb } from './Orb.tsx';
 
 // ═══════════════════════════════════════════════
@@ -67,8 +66,6 @@ export function Layout() {
                        <span className="text-[10px] font-black text-white italic tracking-tighter tabular-nums">×{(1 + state.momentum * 0.1).toFixed(1)}</span>
                      </div>
                   </div>
-                  <div className="w-px h-6 bg-white/5 mx-1" />
-                  <NotificationHub />
                 </div>
               </div>
             </div>

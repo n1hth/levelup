@@ -15,7 +15,10 @@ import {
   Activity,
   Flame,
   Zap,
-  RotateCcw
+  RotateCcw,
+  Bell,
+  UserPlus,
+  X
 } from 'lucide-react';
 
 export type OrbState = 'dormant' | 'idle' | 'active' | 'peaked' | 'depleted' | 'evolving';
@@ -35,13 +38,15 @@ export interface OrbProps {
 }
 
 export function Orb({ onInteractionChange }: OrbProps) {
-  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden } = useApp();
+  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite } = useApp();
   const [orbState, setOrbState] = useState<OrbState>('dormant');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [pulseType, setPulseType] = useState<'open' | 'close'>('open');
   const [showPulseWave, setShowPulseWave] = useState(false);
+  
+  const [notifications, setNotifications] = useState<any[]>([]);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -55,6 +60,55 @@ export function Orb({ onInteractionChange }: OrbProps) {
     else if (isNavOpen) onInteractionChange?.('nav-open');
     else onInteractionChange?.('none');
   }, [isHolding, isInsightOpen, isNavOpen, onInteractionChange]);
+
+  const playSoftChime = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.warn("AudioContext not supported", e);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    const data = await getNotifications();
+    if (data.length > notifications.length) {
+      playSoftChime();
+      setShowPulseWave(true);
+      setTimeout(() => setShowPulseWave(false), 2500);
+    }
+    setNotifications(data);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(interval);
+  }, [notifications.length]);
+
+  const handleAction = async (notif: any, action: 'accept' | 'decline') => {
+    if (action === 'accept') {
+      if (notif.type === 'friend') {
+        await acceptFriendRequest(notif.id);
+      } else {
+        await acceptDuelInvite(notif.id);
+        navigate(`/duels/${notif.duel_id}`);
+        setIsNavOpen(false);
+      }
+    }
+    fetchNotifications();
+  };
 
   // Rank-based details
   const rank = getRank();
@@ -239,6 +293,51 @@ export function Orb({ onInteractionChange }: OrbProps) {
                     transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                     className="absolute pointer-events-none w-[400px] h-[400px] bottom-[-160px]"
                   >
+                    {/* Floating Heavenly Window for Notifications */}
+                    <AnimatePresence>
+                      {notifications.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                          className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[280px] max-h-[140px] overflow-y-auto no-scrollbar pointer-events-auto flex flex-col gap-2 z-[110]"
+                        >
+                          {notifications.map(notif => (
+                            <div key={notif.id} className="bg-[#0f1b29]/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-3 shadow-[0_0_20px_rgba(0,229,255,0.1)] flex flex-col gap-2">
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-8 h-8 rounded-full flex items-center justify-center text-white",
+                                  notif.type === 'friend' ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"
+                                )}>
+                                  {notif.type === 'friend' ? <UserPlus size={14} /> : <Swords size={14} />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
+                                  <div className="text-[8px] font-black text-cyan-400/70 uppercase tracking-widest leading-none">
+                                    {notif.type === 'friend' ? 'Syndicate Request' : 'Duel Challenge'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => handleAction(notif, 'accept')}
+                                  className="flex-1 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 text-[9px] font-black uppercase tracking-widest transition-colors"
+                                >
+                                  Accept
+                                </button>
+                                <button 
+                                  onClick={() => handleAction(notif, 'decline')}
+                                  className="px-3 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <svg width="400" height="400" viewBox="0 0 400 400" className="overflow-visible">
                       <g transform="translate(200, 200)">
                         {/* Global Background Track */}
