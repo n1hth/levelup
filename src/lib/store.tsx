@@ -1679,7 +1679,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addArenaSession, getArenaStats, getDeckArenaHistory,
     getWeeklyInsights, getMilestones,
     isOrbHidden, setOrbHidden,
-    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
     joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
   }), [
@@ -1689,7 +1689,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
     getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
     addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, isOrbHidden, setOrbHidden,
-    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
+    searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
     joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
   ]);
