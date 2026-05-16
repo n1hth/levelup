@@ -1209,33 +1209,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
-  const acceptDuelInvite = useCallback(async (requestId: string) => {
+  const acceptDuelInvite = useCallback(async (duelId: string) => {
     if (!state.user) return null;
     try {
-      // 1. Get the request details to find the sender
-      const { data: request } = await supabase
-        .from('duel_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
-      
-      if (!request) return null;
-
-      // 2. Update the request status
-      await supabase
-        .from('duel_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId);
-
-      // 3. Find and update the associated duel record
+      // Update the duel status to 'setup'
       const { data: duel, error: duelErr } = await supabase
         .from('duels')
         .update({ status: 'setup' })
-        .eq('player1_id', request.sender_id)
-        .eq('player2_id', state.user.id)
-        .eq('status', 'invited')
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('id', duelId)
         .select()
         .single();
 
@@ -1257,10 +1238,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('status', 'pending');
 
       const { data: duelReqs } = await supabase
-        .from('duel_requests')
-        .select('*, sender:profiles!duel_requests_sender_id_fkey(name, username)')
-        .eq('receiver_id', state.user.id)
-        .eq('status', 'pending');
+        .from('duels')
+        .select('*, sender:profiles!duels_player1_id_fkey(name, username)')
+        .eq('player2_id', state.user.id)
+        .eq('status', 'invited');
 
       const notifications = [
         ...(friendReqs || []).map(r => ({
@@ -1275,7 +1256,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           type: 'duel',
           sender: (r as any).sender.name,
           username: (r as any).sender.username,
-          deck_id: r.deck_id,
+          duel_id: r.id,
           timestamp: r.created_at
         }))
       ];

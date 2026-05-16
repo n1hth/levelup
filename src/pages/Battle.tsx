@@ -44,7 +44,6 @@ export function Battle() {
       return;
     }
 
-    await sendDuelInvite(friendId, duelId); 
     setIsInviting(false);
     navigate(`/duels/${duelId}`);
     setDuelOpponent(null);
