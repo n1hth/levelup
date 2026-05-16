@@ -393,11 +393,11 @@ export function Battle() {
                                   ))}
                                </div>
                                <button 
-                                  disabled={!selectedFriendId || !friends.find(f => f.id === selectedFriendId)?.isOnline}
+                                  disabled={!selectedFriendId || isInviting}
                                   onClick={() => selectedFriendId && handleInviteFriend(selectedFriendId)}
                                   className={cn(
                                     "w-full py-5 rounded-2xl font-black uppercase tracking-[0.5em] text-[11px] shadow-2xl transition-all italic",
-                                    selectedFriendId && friends.find(f => f.id === selectedFriendId)?.isOnline
+                                    selectedFriendId
                                       ? "bg-cyan-500 text-black hover:bg-cyan-400 shadow-cyan-500/20 active:scale-95" 
                                       : "bg-white/5 text-white/10 cursor-not-allowed"
                                   )}
