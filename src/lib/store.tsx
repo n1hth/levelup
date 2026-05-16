@@ -161,6 +161,7 @@ interface AppContextType {
   sendDuelInvite: (friendId: string, duelId: string, deckId?: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<string | null>;
   cancelDuel: (duelId: string) => Promise<boolean>;
+  dismissNotification: (notification: any) => Promise<void>;
   getNotifications: () => Promise<any[]>;
   clearNotifications: () => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
@@ -1213,11 +1214,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const cancelDuel = useCallback(async (duelId: string) => {
     if (!state.user) return false;
     try {
-      // Attempt delete, fallback to status update
-      const { error } = await supabase.from('duels').delete().eq('id', duelId);
-      if (error) {
-        await supabase.from('duels').update({ status: 'cancelled' }).eq('id', duelId);
+      const { error } = await supabase
+        .from('duels')
+        .update({ status: 'cancelled' })
+        .eq('id', duelId)
+        .eq('player1_id', state.user.id);
+      if (error) throw error;
+
+      const { error: requestError } = await supabase
+        .from('duel_requests')
+        .update({ status: 'withdrawn' })
+        .eq('duel_id', duelId)
+        .eq('sender_id', state.user.id)
+        .eq('status', 'pending');
+      if (requestError && !requestError.message.includes('duel_id')) {
+        throw requestError;
       }
+
       return true;
     } catch (err) {
       console.error("Cancel duel failed:", err);
@@ -1263,6 +1276,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('status', 'invited')
         .gt('created_at', oneMinuteAgo);
 
+      const { data: cancelledDuels } = await supabase
+        .from('duels')
+        .select('*, sender:profiles!player1_id(name, username)')
+        .eq('player2_id', state.user.id)
+        .eq('status', 'cancelled')
+        .limit(10);
+
       const notifications = [
         ...(friendReqs || []).map(r => ({
           id: r.id,
@@ -1279,6 +1299,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           message: 'requested to duel',
           duel_id: r.id,
           timestamp: r.created_at
+        })),
+        ...(cancelledDuels || []).map(r => ({
+          id: `${r.id}:cancelled`,
+          type: 'duel_cancelled',
+          sender: (r as any).sender.name,
+          username: (r as any).sender.username,
+          message: 'withdrew their duel challenge',
+          duel_id: r.id,
+          timestamp: r.updated_at || r.created_at
         }))
       ];
       return notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -1288,13 +1317,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
+  const dismissNotification = useCallback(async (notification: any) => {
+    if (!state.user) return;
+    try {
+      if (notification.type === 'friend') {
+        await supabase
+          .from('friends')
+          .update({ status: 'declined' })
+          .eq('id', notification.id)
+          .eq('friend_id', state.user.id);
+      } else if (notification.type === 'duel') {
+        await supabase
+          .from('duels')
+          .update({ status: 'declined' })
+          .eq('id', notification.duel_id || notification.id)
+          .eq('player2_id', state.user.id)
+          .eq('status', 'invited');
+      } else if (notification.type === 'duel_cancelled') {
+        await supabase
+          .from('duels')
+          .update({ status: 'cancelled_seen' })
+          .eq('id', notification.duel_id)
+          .eq('player2_id', state.user.id)
+          .eq('status', 'cancelled');
+      }
+    } catch (err) {
+      console.error("Dismiss notification failed:", err);
+    }
+  }, [state.user]);
+
   const clearNotifications = useCallback(async () => {
     if (!state.user) return;
     try {
       await Promise.all([
         supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
         supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending'),
-        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited')
+        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited'),
+        supabase.from('duels').update({ status: 'cancelled_seen' }).eq('player2_id', state.user.id).eq('status', 'cancelled')
       ]);
     } catch (err) {
       console.error("Clear notifications failed:", err);
@@ -1567,7 +1626,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       getWeeklyInsights, getMilestones,
       isOrbHidden, setOrbHidden,
       searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages,
-      sendDuelInvite, acceptDuelInvite, cancelDuel, getNotifications, clearNotifications,
+      sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
       joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
     }}>
       {children}

@@ -39,7 +39,7 @@ export interface OrbProps {
 }
 
 export function Orb({ onInteractionChange }: OrbProps) {
-  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite, clearNotifications } = useApp();
+  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite, dismissNotification, clearNotifications } = useApp();
   const [orbState, setOrbState] = useState<OrbState>('dormant');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -92,8 +92,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
 
-      // Check specifically for new duel request to show bubble
-      const newDuel = newItems.find(n => n.type === 'duel');
+      // Check specifically for duel events to show bubble
+      const newDuel = newItems.find(n => n.type === 'duel' || n.type === 'duel_cancelled');
       if (newDuel) {
         setLatestDuelNotif(newDuel);
         setShowBubble(true);
@@ -115,7 +115,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
     if (action === 'accept') {
       if (notif.type === 'friend') {
         await acceptFriendRequest(notif.id);
-      } else {
+      } else if (notif.type === 'duel') {
         const duelId = await acceptDuelInvite(notif.id);
         if (duelId) {
           navigate(`/duels/${duelId}`);
@@ -123,7 +123,11 @@ export function Orb({ onInteractionChange }: OrbProps) {
         } else {
           alert("Duel record not found or already started.");
         }
+      } else {
+        await dismissNotification(notif);
       }
+    } else {
+      await dismissNotification(notif);
     }
     fetchNotifications();
   };
@@ -347,7 +351,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                            notif.type === 'friend' ? "bg-emerald-500/15 text-emerald-400" : "bg-cyan-500/15 text-cyan-400"
+                            notif.type === 'friend' ? "bg-emerald-500/15 text-emerald-400" : notif.type === 'duel_cancelled' ? "bg-red-500/15 text-red-400" : "bg-cyan-500/15 text-cyan-400"
                           )}>
                             {notif.type === 'friend' ? <UserPlus size={15} /> : <Swords size={15} />}
                           </div>
@@ -359,12 +363,21 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button 
-                            onClick={() => handleAction(notif, 'accept')}
-                            className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
-                          >
-                            Accept
-                          </button>
+                          {notif.type === 'duel_cancelled' ? (
+                            <button
+                              onClick={() => handleAction(notif, 'decline')}
+                              className="flex-1 py-2 rounded-xl bg-red-500/15 text-red-300 hover:bg-red-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+                            >
+                              Acknowledge
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleAction(notif, 'accept')}
+                              className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+                            >
+                              Accept
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleAction(notif, 'decline')}
                             className="px-3 rounded-xl bg-white/[0.04] text-white/30 hover:bg-red-500/15 hover:text-red-400 transition-all flex items-center justify-center active:scale-95"
@@ -694,8 +707,14 @@ export function Orb({ onInteractionChange }: OrbProps) {
                   <Swords size={16} className="text-cyan-400" />
                </div>
                <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">Incoming Challenge</span>
-                  <span className="text-[11px] font-black text-white uppercase italic tracking-tight">{latestDuelNotif.sender} issued a duel</span>
+                  <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">
+                    {latestDuelNotif.type === 'duel_cancelled' ? 'Challenge Withdrawn' : 'Incoming Challenge'}
+                  </span>
+                  <span className="text-[11px] font-black text-white uppercase italic tracking-tight">
+                    {latestDuelNotif.type === 'duel_cancelled'
+                      ? `${latestDuelNotif.sender} backed out`
+                      : `${latestDuelNotif.sender} issued a duel`}
+                  </span>
                </div>
                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-cyan-900/20 border-r border-b border-cyan-400/30 rotate-45 backdrop-blur-3xl" />
             </div>
