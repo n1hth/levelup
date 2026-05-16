@@ -62,10 +62,9 @@ export function Decks() {
            
            <button
              onClick={() => setShowCreate(true)}
-             className="flex items-center justify-center w-12 h-12 sm:w-auto sm:h-auto sm:px-6 sm:py-3 bg-white text-black rounded-full sm:rounded-full hover:bg-cyan-400 transition-all active:scale-95 group font-black italic text-[10px] uppercase tracking-widest shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)] sm:shadow-none"
+             className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
            >
-             <Plus size={20} className="sm:size-4 stroke-[3]" />
-             <span className="hidden sm:inline sm:ml-3">Initialize Deck</span>
+             <Plus size={24} className="stroke-[3]" />
            </button>
         </header>
 
