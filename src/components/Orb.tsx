@@ -300,10 +300,10 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           initial={{ opacity: 0, y: 20, scale: 0.9 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                          className="absolute -top-[140px] left-1/2 -translate-x-1/2 w-[260px] max-h-[160px] overflow-y-auto no-scrollbar pointer-events-auto flex flex-col gap-2 z-[110]"
+                          className="absolute -top-[520px] left-1/2 -translate-x-1/2 w-[320px] max-h-[380px] overflow-y-auto no-scrollbar pointer-events-auto z-[110]"
                         >
                           {/* Bento Box Container with Glow */}
-                          <div className="bg-[#0f1b29]/60 backdrop-blur-2xl border border-cyan-500/30 rounded-[2.5rem] p-4 shadow-[0_0_30px_rgba(0,229,255,0.2)] relative overflow-hidden group">
+                          <div className="bg-[#0f1b29]/60 backdrop-blur-3xl border border-cyan-500/30 rounded-[2.5rem] p-5 shadow-[0_0_50px_rgba(0,229,255,0.25)] relative overflow-hidden group">
                             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
                             
                             <div className="flex items-center gap-2 mb-3 px-1">
