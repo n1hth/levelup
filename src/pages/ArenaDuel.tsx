@@ -490,7 +490,12 @@ export function ArenaDuel() {
         </div>
 
         <button 
-          onClick={() => navigate('/battle')}
+          onClick={async () => {
+            if (duel?.id) {
+              await supabase.from('duels').delete().eq('id', duel.id);
+            }
+            navigate('/battle');
+          }}
           className="absolute bottom-16 px-10 py-4 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-black text-white/20 uppercase tracking-[0.4em] hover:text-red-500 hover:bg-red-500/10 transition-all z-10 italic"
         >
           Retract Challenge
@@ -590,7 +595,11 @@ export function ArenaDuel() {
                   <Swords size={32} className="text-cyan-400 relative z-10" />
                 </div>
                 <h2 className="text-4xl font-black uppercase italic tracking-tighter">
-                  {duel.mode === 'deck' ? 'Select <span className="text-purple-400">Armament</span>' : 'Deploy <span className="text-cyan-400">Subject</span>'}
+                  {duel.mode === 'deck' ? (
+                    <>Select <span className="text-purple-400">Armament</span></>
+                  ) : (
+                    <>Deploy <span className="text-cyan-400">Subject</span></>
+                  )}
                 </h2>
                 <p className="text-[11px] font-bold text-white/30 uppercase tracking-[0.3em] leading-relaxed italic max-w-sm mx-auto">
                   {duel.mode === 'deck' 

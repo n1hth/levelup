@@ -1237,11 +1237,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('friend_id', state.user.id)
         .eq('status', 'pending');
 
+      // Only show duels created in the last 60 seconds
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+
       const { data: duelReqs } = await supabase
         .from('duels')
         .select('*, sender:profiles!duels_player1_id_fkey(name, username)')
         .eq('player2_id', state.user.id)
-        .eq('status', 'invited');
+        .eq('status', 'invited')
+        .gt('created_at', oneMinuteAgo);
 
       const notifications = [
         ...(friendReqs || []).map(r => ({
@@ -1256,6 +1260,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           type: 'duel',
           sender: (r as any).sender.name,
           username: (r as any).sender.username,
+          message: 'requested to duel',
           duel_id: r.id,
           timestamp: r.created_at
         }))
