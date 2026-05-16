@@ -126,53 +126,87 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Quests — MOVED TO SECOND POSITION */}
-        <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01]">
-          <div className="flex items-center justify-between mb-4 px-1">
-             <div className="flex items-center gap-2">
-               <Target size={14} className="text-cyan-400" />
-               <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">Daily Quests</h3>
-             </div>
-             <span className="text-[9px] font-black text-cyan-400 tabular-nums">[{missionsComplete}/3]</span>
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            {missions.map((m) => (
-              <div key={m.id} className={cn(
-                "px-4 py-2.5 rounded-xl border flex items-center justify-between",
-                m.done ? "bg-cyan-500/[0.03] border-cyan-400/20 shadow-[0_0_15px_rgba(34,211,238,0.05)]" : "bg-white/[0.01] border-white/5"
-              )}>
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] border shadow-inner",
-                    m.done ? "bg-cyan-400 border-cyan-400 text-slate-950" : "bg-white/5 border-white/5 text-white/30"
-                  )}>
-                    {m.done ? <Sparkles size={10} /> : m.icon}
-                  </div>
-                  <span className={cn("text-[9px] font-black uppercase italic tracking-widest", m.done ? "text-cyan-400" : "text-white/40")}>{m.title}</span>
-                </div>
-                <div className="flex flex-col items-end">
-                   <span className="text-[7px] font-black text-white/20 tabular-nums mb-1">{m.current}/{m.target}</span>
-                   <div className="w-12 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                     <div className={cn("h-full", m.done ? "bg-cyan-400" : "bg-white/20")} style={{ width: `${(m.current/m.target)*100}%` }} />
-                   </div>
-                </div>
+        {/* Protocols & History Row */}
+        <div className="col-span-12 grid grid-cols-1 md:grid-cols-12 gap-8 pt-4">
+           {/* Quests */}
+           <motion.div variants={itemVariants} className="md:col-span-7 space-y-6">
+              <div className="flex items-center justify-between px-2">
+                 <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic flex items-center gap-3">
+                    <Target size={14} className="text-cyan-400" /> Daily Quests
+                 </h3>
+                 <span className="text-[9px] font-black text-white/10 uppercase tracking-widest italic">{missionsComplete} / 3 Complete</span>
               </div>
-            ))}
-          </div>
-        </motion.div>
+              
+              <div className="grid grid-cols-1 gap-2">
+                {missions.map((m) => (
+                  <div key={m.id} className={cn(
+                    "px-6 py-4 rounded-[1.5rem] border flex items-center justify-between group transition-all",
+                    m.done ? "bg-emerald-500/5 border-emerald-500/20" : "bg-white/[0.01] border-white/5 hover:border-white/10"
+                  )}>
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center text-[10px] border shadow-inner transition-all",
+                        m.done ? "bg-emerald-500 border-emerald-500 text-black" : "bg-white/5 border-white/5 text-white/30"
+                      )}>
+                        {m.done ? <Sparkles size={14} /> : m.icon}
+                      </div>
+                      <div>
+                        <span className={cn("text-[10px] font-black uppercase italic tracking-widest block", m.done ? "text-emerald-400" : "text-white")}>{m.title}</span>
+                        <span className="text-[8px] font-black text-white/10 uppercase tracking-widest italic">{m.current}/{m.target} PROGRESS</span>
+                      </div>
+                    </div>
+                    {m.done && <Sparkles size={14} className="text-emerald-400" />}
+                  </div>
+                ))}
+              </div>
+           </motion.div>
+
+           {/* Raid History */}
+           <motion.div variants={itemVariants} className="md:col-span-5 space-y-6">
+              <div className="flex items-center justify-between px-2">
+                 <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic flex items-center gap-3">
+                    <Clock size={14} className="text-purple-400" /> Raid History
+                 </h3>
+                 <button onClick={() => navigate('/decks')} className="text-[8px] font-black text-white/10 uppercase tracking-widest italic hover:text-white transition-colors">All Decks</button>
+              </div>
+
+              <div className="space-y-3">
+                 {activity.length === 0 ? (
+                   <div className="py-12 text-center bg-white/[0.01] border border-dashed border-white/5 rounded-[2rem]">
+                      <p className="text-[9px] font-black text-white/10 uppercase tracking-widest italic">No combat records</p>
+                   </div>
+                 ) : (
+                   activity.slice(0, 4).map((act, i) => (
+                     <div key={i} className="flex items-center gap-4 p-4 bg-white/[0.01] border border-white/5 rounded-2xl group hover:bg-white/[0.03] transition-all">
+                        <div className="w-10 h-10 rounded-xl bg-black border border-white/5 flex items-center justify-center shrink-0 group-hover:border-cyan-400/20 transition-colors">
+                           <BookOpen size={16} className="text-white/10 group-hover:text-cyan-400/40 transition-colors" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-white italic uppercase truncate">{act.deckTitle}</p>
+                           <p className="text-[8px] font-bold text-white/10 uppercase tracking-widest italic mt-0.5">{getRelativeTime(act.timestamp)}</p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-xs font-black text-cyan-400 italic">+{act.xp} XP</p>
+                        </div>
+                     </div>
+                   ))
+                 )}
+              </div>
+           </motion.div>
+        </div>
 
         {/* Action Row */}
         <motion.div variants={itemVariants} className="col-span-6">
           <button
             onClick={() => navigate('/focus')}
-            className="w-full system-panel p-5 modular-card group text-left flex flex-col justify-between aspect-square active:scale-95 transition-transform bg-white/[0.01]"
+            className="w-full system-panel p-6 modular-card group text-left flex flex-col justify-between aspect-square active:scale-95 transition-transform bg-white/[0.01]"
           >
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
-              <Timer size={20} className="text-cyan-400" />
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+              <Timer size={24} className="text-cyan-400" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Focus</h3>
-              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">Study sessions</p>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-tight">Focus Mode</h3>
+              <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">Deep learning sessions</p>
             </div>
           </button>
         </motion.div>
@@ -180,30 +214,30 @@ export function Dashboard() {
         <motion.div variants={itemVariants} className="col-span-6">
           <button
             onClick={() => navigate('/decks')}
-            className="w-full system-panel p-5 modular-card group text-left flex flex-col justify-between aspect-square active:scale-95 transition-transform bg-white/[0.01]"
+            className="w-full system-panel p-6 modular-card group text-left flex flex-col justify-between aspect-square active:scale-95 transition-transform bg-white/[0.01]"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
-              <BookOpen size={20} className="text-blue-400" />
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+              <BookOpen size={24} className="text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Decks</h3>
-              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">{allDue} Due</p>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter leading-tight">My Decks</h3>
+              <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">{allDue} Cards Due</p>
             </div>
           </button>
         </motion.div>
 
         {/* Stats Row */}
-        <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01] flex justify-between items-center">
+        <motion.div variants={itemVariants} className="col-span-12 system-panel p-6 modular-card bg-white/[0.01] flex justify-between items-center overflow-x-auto">
           {[
-            { value: todaySessions, label: 'SESSIONS', icon: <Activity className="text-cyan-400" size={14} /> },
-            { value: todayFocusMin, label: 'MINS', icon: <Clock className="text-blue-400" size={14} /> },
-            { value: todayCards, label: 'CARDS', icon: <BookOpen className="text-emerald-400" size={14} /> },
-            { value: todayXp, label: 'XP', icon: <Zap className="text-yellow-400" size={14} /> },
+            { value: todaySessions, label: 'SESSIONS', icon: <Activity className="text-cyan-400" size={16} /> },
+            { value: todayFocusMin, label: 'MINS', icon: <Clock className="text-blue-400" size={16} /> },
+            { value: todayCards, label: 'CARDS', icon: <BookOpen className="text-emerald-400" size={16} /> },
+            { value: todayXp, label: 'XP', icon: <Zap className="text-yellow-400" size={16} /> },
           ].map((s) => (
-            <div key={s.label} className="flex flex-col items-center gap-1">
+            <div key={s.label} className="flex flex-col items-center gap-2 min-w-[70px]">
               <div className="text-white/20">{s.icon}</div>
-              <span className="text-sm font-black text-white italic tabular-nums leading-none">{s.value}</span>
-              <span className="text-[6px] font-black text-white/20 uppercase tracking-widest">{s.label}</span>
+              <span className="text-base font-black text-white italic tabular-nums leading-none">{s.value}</span>
+              <span className="text-[7px] font-black text-white/20 uppercase tracking-widest">{s.label}</span>
             </div>
           ))}
         </motion.div>

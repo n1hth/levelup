@@ -21,9 +21,9 @@ import { supabase } from '@/src/lib/supabase';
 type Tab = 'friends' | 'leaderboard' | 'community';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
-  { id: 'friends', label: 'FRIENDS', icon: Users },
-  { id: 'leaderboard', label: 'LEADERBOARD', icon: Trophy },
-  { id: 'community', label: 'COMMUNITY', icon: Globe },
+  { id: 'friends', label: 'HUNTERS', icon: Users },
+  { id: 'leaderboard', label: 'RANKINGS', icon: Trophy },
+  { id: 'community', label: 'GUILD', icon: Globe },
 ];
 
 function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number }) {
@@ -97,14 +97,14 @@ export function Social() {
         // Enforce mock activities for now as requested by user
         let enriched = data.map((f: any) => ({
           ...f,
-          activity: Math.random() > 0.7 ? 'In Battle' : Math.random() > 0.4 ? 'In Focus' : 'Idle',
-          streak: Math.floor(Math.random() * 12)
+          activity: Math.random() > 0.7 ? 'In Combat' : Math.random() > 0.4 ? 'In Gate Run' : 'Idle',
+          streak: Math.floor(Math.random() * 15)
         }));
 
         // Add fake users if the list is small for demo
         if (enriched.length < 5) {
           const fakeUsers = [
-            { friendshipId: 'f1', id: 'u1', name: 'Nikku', activity: 'In Focus', streak: 5, status: 'accepted' },
+            { friendshipId: 'f1', id: 'u1', name: 'Nikku', activity: 'In Gate Run', streak: 5, status: 'accepted' },
             { friendshipId: 'f2', id: 'u2', name: 'Kishore Varma', activity: 'Idle', streak: 3, status: 'accepted' },
             { friendshipId: 'f3', id: 'u3', name: 'Gopi Krishna', activity: 'In Battle', streak: 8, status: 'accepted' },
             { friendshipId: 'f4', id: 'u4', name: 'Ice Mel', activity: 'In Focus', streak: 1, status: 'accepted' },
@@ -243,7 +243,7 @@ export function Social() {
                   type="text" 
                   value={friendSearch} 
                   onChange={e => handleFriendSearch(e.target.value)} 
-                  placeholder="Search network..."
+                  placeholder="Search Hunters..."
                   className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-3 pl-10 pr-4 outline-none focus:border-cyan-400/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 font-black text-[11px] tracking-widest uppercase italic shadow-inner" 
                 />
               </div>

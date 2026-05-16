@@ -128,10 +128,10 @@ export function Profile() {
 
             <div className="flex items-center justify-center gap-4 mt-6">
               <div className="px-3 py-1 bg-white/[0.03] rounded-lg border border-white/5">
-                 <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Node Member since <span className="text-cyan-400/60">{memberSince}</span></span>
+                 <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Member since <span className="text-cyan-400/60">{memberSince}</span></span>
               </div>
               <div className="px-3 py-1 bg-white/[0.03] rounded-lg border border-white/5">
-                 <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">{state.totalXp.toLocaleString()} Total Load</span>
+                 <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">{state.totalXp.toLocaleString()} Total XP</span>
               </div>
             </div>
           </div>
@@ -141,10 +141,10 @@ export function Profile() {
       {/* ═══ Quick Stats ═══ */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
         {[
-          { icon: <Flame size={20} className="text-orange-500" />, value: state.streak, label: 'Persistence', suffix: 'D' },
-          { icon: <Zap size={20} className="text-cyan-400" />, value: `×${(1 + state.momentum * 0.1).toFixed(1)}`, label: 'Velocity', suffix: '' },
+          { icon: <Flame size={20} className="text-orange-500" />, value: state.streak, label: 'Streak', suffix: 'D' },
+          { icon: <Zap size={20} className="text-cyan-400" />, value: `×${(1 + state.momentum * 0.1).toFixed(1)}`, label: 'Momentum', suffix: '' },
           { icon: <BookOpen size={20} className="text-emerald-400" />, value: cardsMastered, label: 'Mastery', suffix: '' },
-          { icon: <Clock size={20} className="text-blue-400" />, value: Math.round(totalFocusTime / 3600), label: 'ActiveTime', suffix: 'H' },
+          { icon: <Clock size={20} className="text-blue-400" />, value: Math.round(totalFocusTime / 3600), label: 'Time Spent', suffix: 'H' },
         ].map((stat, i) => (
           <div
             key={stat.label}
@@ -164,7 +164,7 @@ export function Profile() {
       {/* ═══ Rank Progression ═══ */}
       <motion.div variants={itemVariants} className="system-panel p-8 border-white/5 bg-white/[0.01]">
         <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-8 flex items-center gap-3 italic">
-          <Shield size={16} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" /> Hierarchical Status
+          <Shield size={16} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" /> Hunter Rankings
         </h3>
         <div className="space-y-3">
           {RANKS.map((r, i) => {
@@ -200,7 +200,7 @@ export function Profile() {
                   <div className="flex items-center gap-3">
                     <span className={cn("text-sm font-black uppercase italic tracking-tighter", isCurrent ? "text-cyan-400" : "text-white")}>{r.title}</span>
                     {isCurrent && (
-                      <span className="text-[8px] font-black text-black bg-cyan-400 px-2 py-0.5 rounded-full uppercase tracking-widest italic animate-pulse">Synced</span>
+                      <span className="text-[8px] font-black text-black bg-cyan-400 px-2 py-0.5 rounded-full uppercase tracking-widest italic animate-pulse">Current</span>
                     )}
                   </div>
                   <span className="text-[9px] font-black text-white/30 italic uppercase tracking-widest mt-1 block">
@@ -220,7 +220,7 @@ export function Profile() {
         {nextRank && (
           <div className="mt-10 pt-6 border-t border-white/5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] italic">Next Calibration: {nextRank.letter}</span>
+              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] italic">Next Rank: {nextRank.letter}</span>
               <span className="text-[10px] font-black text-cyan-400 italic">Lv. {nextRank.minLevel}</span>
             </div>
             <div className="w-full h-[2px] bg-white/[0.03] mt-3 overflow-hidden border border-white/5">
@@ -236,10 +236,10 @@ export function Profile() {
         )}
       </motion.div>
 
-      {/* ═══ Study Activity Heatmap ═══ */}
+      {/* ═══ Study Activity History ═══ */}
       <motion.div variants={itemVariants} className="system-panel p-8 border-white/5 bg-white/[0.01]">
         <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-8 flex items-center gap-3 italic">
-          <Activity size={16} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" /> Synchronization Density
+          <Activity size={16} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" /> Study History
         </h3>
 
         {/* Heatmap Grid — 12 weeks × 7 days */}
@@ -271,7 +271,7 @@ export function Profile() {
                     {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-black border border-white/10 text-white text-[9px] font-black rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl backdrop-blur-xl italic">
                       {day.date}<br/>
-                      <span className="text-cyan-400">{day.minutes}M SYNCED</span>
+                      <span className="text-cyan-400">{day.minutes}M STUDIED</span>
                     </div>
                   </motion.div>
                 );
@@ -293,7 +293,7 @@ export function Profile() {
       <motion.div variants={itemVariants} className="system-panel p-8 border-white/5 bg-white/[0.01]">
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] flex items-center gap-3 italic">
-            <Trophy size={16} className="text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]" /> Commendations
+            <Trophy size={16} className="text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]" /> Achievements
           </h3>
           <span className="text-[10px] font-black text-white/20 italic tabular-nums">{unlockedCount} <span className="text-white/5 mx-1">/</span> {achievements.length}</span>
         </div>
@@ -325,10 +325,10 @@ export function Profile() {
       {/* ═══ Danger Zone ═══ */}
       <motion.div variants={itemVariants} className="system-panel p-8 border-red-500/10 bg-red-500/[0.01]">
         <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-4 flex items-center gap-3 italic">
-          <AlertTriangle size={16} className="animate-pulse" /> Critical Access
+          <AlertTriangle size={16} className="animate-pulse" /> Danger Zone
         </h3>
         <p className="text-[10px] font-black text-white/20 mb-8 leading-relaxed uppercase tracking-widest italic">
-          System wipe requested. All neural progress, fragment decks, and XP loads will be purged from the core. This is irreversible.
+          Irreversible action. All study progress, decks, and level data will be permanently deleted.
         </p>
         
         <div className="grid grid-cols-2 gap-4">
@@ -336,13 +336,13 @@ export function Profile() {
             onClick={() => setShowResetConfirm(true)}
             className="py-4 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500 font-black text-[10px] uppercase tracking-[0.2em] italic hover:bg-red-500/10 hover:border-red-500/40 transition-all shadow-2xl"
           >
-            PURGE CORE
+            DELETE DATA
           </button>
           <button
             onClick={() => signOut()}
             className="py-4 rounded-2xl border border-white/5 bg-white/[0.03] text-white/60 font-black text-[10px] uppercase tracking-[0.2em] italic hover:bg-white/[0.05] hover:text-white transition-all shadow-2xl"
           >
-            DISCONNECT
+            LOGOUT
           </button>
         </div>
       </motion.div>

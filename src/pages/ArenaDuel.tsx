@@ -431,7 +431,7 @@ export function ArenaDuel() {
 
         <div className="space-y-4 z-10">
           <span className="text-[10px] font-black tracking-[1em] text-cyan-400/40 uppercase italic">Broadcasting Signal</span>
-          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Neural <span className="text-cyan-400">Scan</span></h2>
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Matchmaking</h2>
           <motion.p 
             animate={{ opacity: [0.3, 1, 0.3] }} 
             transition={{ duration: 2, repeat: Infinity }}
