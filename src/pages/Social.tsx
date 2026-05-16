@@ -95,23 +95,12 @@ export function Social() {
   useEffect(() => {
     if (activeTab === 'friends') {
       getFriends().then((data) => {
-        // Enforce mock activities for now as requested by user
         let enriched = data.map((f: any) => ({
           ...f,
-          activity: Math.random() > 0.7 ? 'In Combat' : Math.random() > 0.4 ? 'In Gate Run' : 'Idle',
-          streak: Math.floor(Math.random() * 15)
+          activity: 'Idle', // Defaulting to Idle for now since real activity isn't fully tracked
+          streak: f.streak || 0
         }));
 
-        // Add fake users if the list is small for demo
-        if (enriched.length < 5) {
-          const fakeUsers = [
-            { friendshipId: 'f1', id: 'u1', name: 'Nikku', activity: 'In Gate Run', streak: 5, status: 'accepted' },
-            { friendshipId: 'f2', id: 'u2', name: 'Kishore Varma', activity: 'Idle', streak: 3, status: 'accepted' },
-            { friendshipId: 'f3', id: 'u3', name: 'Gopi Krishna', activity: 'In Battle', streak: 8, status: 'accepted' },
-            { friendshipId: 'f4', id: 'u4', name: 'Ice Mel', activity: 'In Focus', streak: 1, status: 'accepted' },
-          ];
-          enriched = [...enriched, ...fakeUsers];
-        }
         setFriends(enriched);
       });
     } else if (activeTab === 'leaderboard') {

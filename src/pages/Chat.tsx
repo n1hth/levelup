@@ -109,7 +109,7 @@ export function Chat() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 40 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[200] bg-black flex flex-col"
+      className="fixed inset-0 z-[200] bg-black flex flex-col w-full max-w-lg mx-auto"
     >
       {/* Header */}
       <div className="p-6 pt-12 border-b border-white/5 flex items-center justify-between bg-black/40 backdrop-blur-3xl z-30">
