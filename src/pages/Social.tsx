@@ -111,10 +111,9 @@ export function Social() {
       getFriends().then((data) => {
         let enriched = data.map((f: any) => ({
           ...f,
-          activity: 'Idle', // Defaulting to Idle for now since real activity isn't fully tracked
+          activity: 'Idle',
           streak: f.streak || 0
         }));
-
         setFriends(enriched);
       });
     } else if (activeTab === 'leaderboard') {
@@ -123,6 +122,34 @@ export function Social() {
       getPublicDuels().then(setPublicDuels);
     }
   }, [activeTab, getFriends, getLeaderboard, getPublicDuels]);
+
+  // Real-time listener for friends list updates (messages, etc)
+  useEffect(() => {
+    if (activeTab !== 'friends' || !state.user) return;
+
+    const channel = supabase
+      .channel('social-friends-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'messages'
+      }, () => {
+        // Refresh friends list to update previews and unread dots
+        getFriends().then((data) => {
+          let enriched = data.map((f: any) => ({
+            ...f,
+            activity: 'Idle',
+            streak: f.streak || 0
+          }));
+          setFriends(enriched);
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTab, state.user, getFriends]);
 
   const handleFriendSearch = async (val: string) => {
     setFriendSearch(val);
