@@ -1248,55 +1248,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
 
-      const { data: friendReqs } = await supabase
+      const { data: friendReqsRaw } = await supabase
         .from('friends')
-        .select('*, sender:profiles!friends_user_id_fkey(name, username)')
+        .select('*')
         .eq('friend_id', state.user.id)
         .eq('status', 'pending');
 
       const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
 
-      const { data: duelReqs } = await supabase
+      const { data: duelReqsRaw } = await supabase
         .from('duels')
-        .select('*, sender:profiles!player1_id(name, username)')
+        .select('*')
         .eq('player2_id', state.user.id)
         .eq('status', 'invited')
         .gt('created_at', oneMinuteAgo);
 
-      const { data: cancelledDuels } = await supabase
+      const { data: cancelledDuelsRaw } = await supabase
         .from('duels')
-        .select('*, sender:profiles!player1_id(name, username)')
+        .select('*')
         .eq('player2_id', state.user.id)
         .eq('status', 'cancelled')
         .gt('updated_at', oneMinuteAgo)
         .limit(10);
 
+      // Fetch profiles for all unique sender IDs
+      const senderIds = Array.from(new Set([
+        ...(friendReqsRaw || []).map(r => r.user_id),
+        ...(duelReqsRaw || []).map(r => r.player1_id),
+        ...(cancelledDuelsRaw || []).map(r => r.player1_id)
+      ]));
+
+      const { data: senderProfiles } = senderIds.length > 0 
+        ? await supabase.from('profiles').select('id, name, username').in('id', senderIds)
+        : { data: [] };
+
       const notifications = [
-        ...(friendReqs || []).map(r => ({
-          id: r.id,
-          type: 'friend',
-          sender: (r as any).sender.name,
-          username: (r as any).sender.username,
-          timestamp: r.created_at
-        })),
-        ...(duelReqs || []).map(r => ({
-          id: r.id,
-          type: 'duel',
-          sender: (r as any).sender.name,
-          username: (r as any).sender.username,
-          message: 'requested to duel',
-          duel_id: r.id,
-          timestamp: r.created_at
-        })),
-        ...(cancelledDuels || []).map(r => ({
-          id: `${r.id}:cancelled`,
-          type: 'duel_cancelled',
-          sender: (r as any).sender.name,
-          username: (r as any).sender.username,
-          message: 'withdrew their duel challenge',
-          duel_id: r.id,
-          timestamp: r.updated_at || r.created_at
-        }))
+        ...(friendReqsRaw || []).map(r => {
+          const profile = (senderProfiles || []).find(p => p.id === r.user_id);
+          return {
+            id: r.id,
+            type: 'friend',
+            sender: profile?.name || 'Unknown',
+            username: profile?.username || 'unknown',
+            timestamp: r.created_at
+          };
+        }),
+        ...(duelReqsRaw || []).map(r => {
+          const profile = (senderProfiles || []).find(p => p.id === r.player1_id);
+          return {
+            id: r.id,
+            type: 'duel',
+            sender: profile?.name || 'Unknown',
+            username: profile?.username || 'unknown',
+            message: 'requested to duel',
+            duel_id: r.id,
+            timestamp: r.created_at
+          };
+        }),
+        ...(cancelledDuelsRaw || []).map(r => {
+          const profile = (senderProfiles || []).find(p => p.id === r.player1_id);
+          return {
+            id: `${r.id}:cancelled`,
+            type: 'duel_cancelled',
+            sender: profile?.name || 'Unknown',
+            username: profile?.username || 'unknown',
+            message: 'withdrew their duel challenge',
+            duel_id: r.id,
+            timestamp: r.updated_at || r.created_at
+          };
+        })
       ];
       
       const clearedAt = parseInt(localStorage.getItem('notifications_cleared_at') || '0', 10);
