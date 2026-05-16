@@ -66,16 +66,7 @@ export function Chat() {
       });
 
       getMessages(userId).then(data => {
-        if (data.length === 0) {
-          const fakeMsgs = [
-            { id: 'm1', sender_id: userId, content: `Hey! Any updates on the project?`, created_at: new Date().toISOString() },
-            { id: 'm2', sender_id: state.user?.id || 'me', content: `Working on the social features right now. Almost done!`, created_at: new Date().toISOString() },
-            { id: 'm3', sender_id: userId, content: `Awesome. Keep me posted on the neural links.`, created_at: new Date().toISOString() },
-          ];
-          setMessages(fakeMsgs as any);
-        } else {
-          setMessages(data);
-        }
+        setMessages(data || []);
       });
 
       const channel = supabase
@@ -114,9 +105,10 @@ export function Chat() {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      exit={{ opacity: 0, x: 40 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[200] bg-black flex flex-col"
     >
       {/* Header */}

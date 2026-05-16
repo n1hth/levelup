@@ -62,9 +62,13 @@ function AppContent() {
     return <QuickStart initialPhase={initialPhase} />;
   }
 
+  // Only trigger full page unmounts when entering/leaving full-screen isolated views
+  const isIsolatedView = location.pathname.startsWith('/duels') || location.pathname.startsWith('/social/chat');
+  const routeKey = isIsolatedView ? location.pathname : 'main-layout';
+
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={routeKey}>
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/home" replace />} />
           <Route path="home" element={<Dashboard />} />
@@ -75,12 +79,13 @@ function AppContent() {
           <Route path="battle" element={<Battle />} />
           <Route path="arenas" element={<Navigate to="/battle" replace />} />
           <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
-          <Route path="social" element={<Social />} />
-          <Route path="social/chat/:userId" element={<Chat />} />
+          <Route path="social" element={<Social />}>
+            <Route path="chat/:userId" element={<Chat />} />
+          </Route>
           <Route path="profile" element={<Profile />} />
         </Route>
         
-        {/* Unified Duel Route - Handles Searching & Combat */}
+        {/* Isolated Full-Screen Routes */}
         <Route path="duels/:duelId" element={<ArenaDuel />} />
         
         <Route path="*" element={<Navigate to="/home" replace />} />

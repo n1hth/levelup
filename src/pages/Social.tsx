@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { Users, Trophy, 
   Plus, 
   Zap, 
@@ -61,6 +61,7 @@ function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number
 
 export function Social() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
@@ -338,11 +339,10 @@ export function Social() {
                           <span className="text-sm font-black text-white uppercase italic tracking-tight group-hover:text-cyan-400 transition-colors">
                             {friend.name}
                           </span>
-                          <span className="text-[9px] font-black text-white/10 uppercase italic">2h ago</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-[10px] font-black text-white/30 uppercase italic truncate pr-4">
-                            SIGNAL DETECTED: CONNECTION STABLE...
+                            SECURE CONNECTION
                           </p>
                           {friend.streak && friend.streak > 0 && (
                             <div className="flex items-center gap-1 text-orange-500/50">
@@ -648,6 +648,11 @@ export function Social() {
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Nested slide-over views (e.g. Chat) */}
+      <AnimatePresence mode="wait">
+        <Outlet key={location.pathname} />
       </AnimatePresence>
     </motion.div>
   );
