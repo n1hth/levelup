@@ -50,6 +50,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
   const [latestDuelNotif, setLatestDuelNotif] = useState<any>(null);
   
   const [notifications, setNotifications] = useState<any[]>([]);
+  const notificationsRef = useRef<any[]>([]);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -81,19 +82,22 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
   const fetchNotifications = async () => {
     const data = await getNotifications();
-    if (data.length > notifications.length) {
+    const prevCount = notificationsRef.current.length;
+    
+    if (data.length > prevCount) {
       // Bright pulse on new notification
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
 
       // Check for new duel request to show bubble
-      const newDuel = data.find(n => n.type === 'duel' && !notifications.find(pn => pn.id === n.id));
+      const newDuel = data.find(n => n.type === 'duel' && !notificationsRef.current.find(pn => pn.id === n.id));
       if (newDuel) {
         setLatestDuelNotif(newDuel);
         setShowBubble(true);
         setTimeout(() => setShowBubble(false), 8000);
       }
     }
+    notificationsRef.current = data;
     setNotifications(data);
   };
 
@@ -101,7 +105,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
-  }, [notifications.length]);
+  }, []); // Poll independently of state changes
 
   const handleAction = async (notif: any, action: 'accept' | 'decline') => {
     if (action === 'accept') {

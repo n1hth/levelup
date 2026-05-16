@@ -158,7 +158,7 @@ interface AppContextType {
   sendFriendRequest: (friendId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriend: (friendshipId: string) => Promise<void>;
-  sendDuelInvite: (friendId: string, deckId?: string) => Promise<void>;
+  sendDuelInvite: (friendId: string, duelId: string, deckId?: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<string | null>;
   getNotifications: () => Promise<any[]>;
   clearNotifications: () => Promise<void>;
@@ -1178,18 +1178,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
-  const sendDuelInvite = useCallback(async (friendId: string, deckId?: string) => {
+  const sendDuelInvite = useCallback(async (friendId: string, duelId: string, deckId?: string) => {
     if (!state.user) return;
     try {
       const { error } = await supabase.from('duel_requests').insert({
         sender_id: state.user.id,
         receiver_id: friendId,
+        duel_id: duelId, // Trying to use duel_id column
         deck_id: deckId || null,
         status: 'pending'
       });
-      if (error) throw error;
-    } catch (err) {
+      if (error) {
+        console.error("Duel invite insert failed:", error.message);
+        // Fallback: Try without duel_id if it doesn't exist
+        if (error.message.includes("column \"duel_id\" does not exist")) {
+           const { error: error2 } = await supabase.from('duel_requests').insert({
+             sender_id: state.user.id,
+             receiver_id: friendId,
+             deck_id: deckId || null,
+             status: 'pending'
+           });
+           if (error2) throw error2;
+        } else {
+          throw error;
+        }
+      }
+    } catch (err: any) {
       console.error("Duel invite failed:", err);
+      alert("Combat Link Broadcast Failed: " + err.message);
     }
   }, [state.user]);
 
