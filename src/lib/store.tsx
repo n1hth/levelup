@@ -160,6 +160,7 @@ interface AppContextType {
   removeFriend: (friendshipId: string) => Promise<void>;
   sendDuelInvite: (friendId: string, duelId: string, deckId?: string) => Promise<void>;
   acceptDuelInvite: (requestId: string) => Promise<string | null>;
+  cancelDuel: (duelId: string) => Promise<boolean>;
   getNotifications: () => Promise<any[]>;
   clearNotifications: () => Promise<void>;
   getFriends: () => Promise<{ friendshipId: string; id: string; name: string; status: string; total_xp: number; isIncoming: boolean }[]>;
@@ -1206,6 +1207,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error("Duel invite failed:", err);
       alert("Combat Link Broadcast Failed: " + err.message);
+    }
+  }, [state.user]);
+
+  const cancelDuel = useCallback(async (duelId: string) => {
+    if (!state.user) return false;
+    try {
+      // Attempt delete, fallback to status update
+      const { error } = await supabase.from('duels').delete().eq('id', duelId);
+      if (error) {
+        await supabase.from('duels').update({ status: 'cancelled' }).eq('id', duelId);
+      }
+      return true;
+    } catch (err) {
+      console.error("Cancel duel failed:", err);
+      return false;
     }
   }, [state.user]);
 

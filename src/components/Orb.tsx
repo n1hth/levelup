@@ -230,10 +230,14 @@ export function Orb({ onInteractionChange }: OrbProps) {
   };
 
   const orbVariants = {
-    navOpen: { scale: 1 },
+    navOpen: { 
+      scale: 1.05,
+      y: -5,
+      transition: { duration: 0.3 }
+    },
     dormant: {
       scale: [1, 1.02, 1],
-      y: [0, -4, 0],
+      y: [0, -8, 0], // Increased float
       transition: { 
         duration: 4, 
         repeat: Infinity, 
@@ -242,7 +246,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
     },
     idle: {
       scale: [1, 1.05, 1],
-      y: [0, -6, 0],
+      y: [0, -12, 0], // Increased float
       transition: { 
         duration: 3, 
         repeat: Infinity, 
