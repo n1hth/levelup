@@ -185,7 +185,7 @@ export function Chat() {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 space-y-6 no-scrollbar">
-        {messages.map((msg, i) => {
+        {(messages || []).filter(Boolean).map((msg, i) => {
           const isMe = msg.sender_id === state.user?.id;
           const isLastMessage = i === messages.length - 1;
           

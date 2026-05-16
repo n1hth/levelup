@@ -109,6 +109,7 @@ export function Social() {
   useEffect(() => {
     if (activeTab === 'friends') {
       getFriends().then((data) => {
+        if (!data) return;
         let enriched = data.map((f: any) => ({
           ...f,
           activity: 'Idle',
@@ -136,6 +137,7 @@ export function Social() {
       }, () => {
         // Refresh friends list to update previews and unread dots
         getFriends().then((data) => {
+          if (!data) return;
           let enriched = data.map((f: any) => ({
             ...f,
             activity: 'Idle',

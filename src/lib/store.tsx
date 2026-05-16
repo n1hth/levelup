@@ -380,20 +380,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('id', session.user.id)
         .single();
 
-      // Setup Real-time listener for messages
-      const messageChannel = supabase
-        .channel('messages-realtime')
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'messages',
-          filter: `receiver_id=eq.${session.user.id}`
-        }, (payload) => {
-          console.log("New message received:", payload);
-          // Auto-refresh messages if we are in a chat
-        })
-        .subscribe();
-
       if (profileError && profileError.code !== 'PGRST116') {
         throw profileError;
       }
@@ -1398,19 +1384,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (profError) throw profError;
 
-      // Fetch last messages for these friends
-      const messagePromises = friendIds.map(friendId => 
-        supabase
-          .from('messages')
-          .select('*')
-          .or(`and(sender_id.eq.${state.user!.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${state.user!.id})`)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-      );
-      
-      const messageResults = await Promise.allSettled(messagePromises);
-      const lastMessages = messageResults.map(r => r.status === 'fulfilled' ? r.value.data : null).filter(Boolean);
+      // Fetch recent messages for these friends in one go
+      const { data: recentMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${state.user!.id},receiver_id.eq.${state.user!.id}`)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      const lastMessages = friendIds.map(friendId => {
+        return (recentMessages || []).find(m => 
+          (m.sender_id === state.user!.id && m.receiver_id === friendId) || 
+          (m.sender_id === friendId && m.receiver_id === state.user!.id)
+        );
+      }).filter(Boolean);
 
       return friendships.map(f => {
         const friendId = f.user_id === state.user!.id ? f.friend_id : f.user_id;
