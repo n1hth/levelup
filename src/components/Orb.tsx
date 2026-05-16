@@ -247,7 +247,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
       {/* FIXED NOTIFICATION BENTO BOX — TOP HALF       */}
       {/* ═══════════════════════════════════════════════ */}
       <AnimatePresence>
-        {isNavOpen && notifications.length > 0 && (
+        {isNavOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -281,38 +281,61 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
               {/* Scrollable notification list */}
               <div className="px-4 pb-4 space-y-2.5 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(45vh - 80px)' }}>
-                {notifications.map(notif => (
-                  <div key={notif.id} className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-3 transition-all hover:bg-white/[0.07] active:scale-[0.98]">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                        notif.type === 'friend' ? "bg-emerald-500/15 text-emerald-400" : "bg-cyan-500/15 text-cyan-400"
-                      )}>
-                        {notif.type === 'friend' ? <UserPlus size={15} /> : <Swords size={15} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
-                        <div className="text-[8px] font-bold text-cyan-400/40 uppercase tracking-[0.15em] mt-0.5">
-                          {notif.type === 'friend' ? 'Syndicate Link Request' : 'Duel Challenge Issued'}
+                <AnimatePresence mode="popLayout">
+                  {notifications.length > 0 ? (
+                    notifications.map(notif => (
+                      <motion.div 
+                        key={notif.id}
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-3 transition-all hover:bg-white/[0.07] active:scale-[0.98]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                            notif.type === 'friend' ? "bg-emerald-500/15 text-emerald-400" : "bg-cyan-500/15 text-cyan-400"
+                          )}>
+                            {notif.type === 'friend' ? <UserPlus size={15} /> : <Swords size={15} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
+                            <div className="text-[8px] font-bold text-cyan-400/40 uppercase tracking-[0.15em] mt-0.5">
+                              {notif.type === 'friend' ? 'Syndicate Link Request' : 'Duel Challenge Issued'}
+                            </div>
+                          </div>
                         </div>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleAction(notif, 'accept')}
+                            className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+                          >
+                            Accept
+                          </button>
+                          <button 
+                            onClick={() => handleAction(notif, 'decline')}
+                            className="px-3 rounded-xl bg-white/[0.04] text-white/30 hover:bg-red-500/15 hover:text-red-400 transition-all flex items-center justify-center active:scale-95"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="py-8 flex flex-col items-center justify-center gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center opacity-20">
+                         <Bell size={14} className="text-white" />
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleAction(notif, 'accept')}
-                        className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
-                      >
-                        Accept
-                      </button>
-                      <button 
-                        onClick={() => handleAction(notif, 'decline')}
-                        className="px-3 rounded-xl bg-white/[0.04] text-white/30 hover:bg-red-500/15 hover:text-red-400 transition-all flex items-center justify-center active:scale-95"
-                      >
-                        <X size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                      <span className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] italic">All Systems Clear</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
               {/* Bottom accent line */}
