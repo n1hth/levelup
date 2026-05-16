@@ -1260,13 +1260,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getNotifications = useCallback(async () => {
     if (!state.user) return [];
     try {
+      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
+
       const { data: friendReqs } = await supabase
         .from('friends')
         .select('*, sender:profiles!friends_user_id_fkey(name, username)')
         .eq('friend_id', state.user.id)
         .eq('status', 'pending');
 
-      // Only show duels created in the last 60 seconds
       const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
 
       const { data: duelReqs } = await supabase
@@ -1281,6 +1282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select('*, sender:profiles!player1_id(name, username)')
         .eq('player2_id', state.user.id)
         .eq('status', 'cancelled')
+        .gt('updated_at', oneMinuteAgo)
         .limit(10);
 
       const notifications = [
@@ -1310,7 +1312,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           timestamp: r.updated_at || r.created_at
         }))
       ];
-      return notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      const clearedAt = parseInt(localStorage.getItem('notifications_cleared_at') || '0', 10);
+
+      return notifications
+        .filter(n => {
+           const isDismissed = dismissedIds.includes(n.id) || dismissedIds.includes(n.duel_id);
+           const isBeforeClear = new Date(n.timestamp).getTime() <= clearedAt;
+           return !isDismissed && !isBeforeClear;
+        })
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (err) {
       console.error("Fetch notifications failed:", err);
       return [];
@@ -1320,6 +1331,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const dismissNotification = useCallback(async (notification: any) => {
     if (!state.user) return;
     try {
+      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
+      if (!dismissedIds.includes(notification.id)) {
+        dismissedIds.push(notification.id);
+        if (notification.duel_id) dismissedIds.push(notification.duel_id);
+        localStorage.setItem('dismissed_notifications', JSON.stringify(dismissedIds));
+      }
+
       if (notification.type === 'friend') {
         await supabase
           .from('friends')
@@ -1333,14 +1351,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .eq('id', notification.duel_id || notification.id)
           .eq('player2_id', state.user.id)
           .eq('status', 'invited');
-      } else if (notification.type === 'duel_cancelled') {
-        await supabase
-          .from('duels')
-          .update({ status: 'cancelled_seen' })
-          .eq('id', notification.duel_id)
-          .eq('player2_id', state.user.id)
-          .eq('status', 'cancelled');
       }
+      // Note: No database update needed for duel_cancelled, handled securely via local storage
     } catch (err) {
       console.error("Dismiss notification failed:", err);
     }
@@ -1349,11 +1361,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearNotifications = useCallback(async () => {
     if (!state.user) return;
     try {
+      // Record the clear timestamp to filter out any existing notifications locally
+      localStorage.setItem('notifications_cleared_at', Date.now().toString());
+
       await Promise.all([
         supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
         supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending'),
-        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited'),
-        supabase.from('duels').update({ status: 'cancelled_seen' }).eq('player2_id', state.user.id).eq('status', 'cancelled')
+        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited')
       ]);
     } catch (err) {
       console.error("Clear notifications failed:", err);
