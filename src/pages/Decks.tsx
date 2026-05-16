@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, BookOpen, Sparkles } from 'lucide-react';
+import { Plus, Search, Filter, BookOpen, Sparkles, LayoutGrid } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { DeckCard } from '@/src/components/DeckCard.tsx';
 import { CreateDeckModal } from '@/src/components/CreateDeckModal.tsx';
@@ -46,83 +46,92 @@ export function Decks() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="space-y-6 pb-8"
+        className="max-w-6xl mx-auto space-y-12 pb-24 px-4"
       >
-      <div className="pt-8 px-6 flex items-center justify-between">
-         <div className="text-left">
-           <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
-             Neural Archives
-           </h1>
-           <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mt-1.5 italic">Knowledge Repository Active</p>
-         </div>
-         <motion.button
-           whileHover={{ scale: 1.05 }}
-           whileTap={{ scale: 0.95 }}
-           onClick={() => setShowCreate(true)}
-           className="p-2.5 rounded-xl transition-all border bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-         >
-           <Plus size={16} className="stroke-[3]" />
-         </motion.button>
-      </div>
+        {/* Refined Header */}
+        <header className="flex items-end justify-between pt-12 border-b border-white/5 pb-8">
+           <div>
+             <div className="flex items-center gap-3 mb-2 text-white/20">
+                <LayoutGrid size={14} />
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Knowledge Repository</span>
+             </div>
+             <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
+               Neural Archives
+             </h1>
+           </div>
+           
+           <button
+             onClick={() => setShowCreate(true)}
+             className="flex items-center gap-3 px-6 py-3 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group font-black italic text-[10px] uppercase tracking-widest"
+           >
+             <Plus size={16} className="stroke-[3]" />
+             Initialize Deck
+           </button>
+        </header>
 
-      {/* Search & Filter */}
-      <motion.div variants={itemVariants} className="px-6 flex gap-3">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" size={14} />
-          <input
-            type="text"
-            placeholder="Query neural database..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-3 pl-10 pr-4 text-[11px] font-black outline-none focus:border-cyan-400/20 focus:bg-white/[0.04] transition-all text-white shadow-inner placeholder:text-white/5 italic uppercase tracking-widest"
-          />
-        </div>
-        {subjects.length > 0 && (
-          <div className="relative">
-            <select
-              value={filterSubject}
-              onChange={e => setFilterSubject(e.target.value)}
-              className={cn(
-                "h-full bg-white/[0.02] border border-white/5 rounded-2xl px-8 py-3 text-[9px] font-black outline-none focus:border-cyan-400/20 focus:bg-white/[0.04] transition-all appearance-none pr-12 italic uppercase tracking-[0.2em]",
-                filterSubject ? "text-cyan-400" : "text-white/20"
-              )}
-            >
-              <option value="" className="bg-[#050608]">DOMAINS</option>
-              {subjects.map(s => <option key={s} value={s} className="bg-[#050608]">{s.toUpperCase()}</option>)}
-            </select>
-            <Filter size={12} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none" />
+        {/* Search & Intelligence Controls */}
+        <section className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" size={14} />
+            <input
+              type="text"
+              placeholder="Query neural patterns..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-[11px] font-black outline-none focus:border-white/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 italic uppercase tracking-widest"
+            />
           </div>
-        )}
-      </motion.div>
+          
+          <div className="flex gap-4">
+            {subjects.length > 0 && (
+              <div className="relative">
+                <select
+                  value={filterSubject}
+                  onChange={e => setFilterSubject(e.target.value)}
+                  className={cn(
+                    "h-full bg-white/[0.02] border border-white/5 rounded-2xl px-8 py-4 text-[9px] font-black outline-none focus:border-white/20 focus:bg-white/[0.04] transition-all appearance-none pr-12 italic uppercase tracking-[0.2em]",
+                    filterSubject ? "text-cyan-400" : "text-white/40"
+                  )}
+                >
+                  <option value="" className="bg-[#050608]">All Domains</option>
+                  {subjects.map(s => <option key={s} value={s} className="bg-[#050608]">{s.toUpperCase()}</option>)}
+                </select>
+                <Filter size={12} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none" />
+              </div>
+            )}
+          </div>
+        </section>
 
-        {/* Deck list */}
-        {state.decks.length === 0 ? (
-          <motion.div variants={itemVariants}>
-            <EmptyState onCreate={() => setShowCreate(true)} />
-          </motion.div>
-        ) : filtered.length === 0 ? (
-          <motion.div variants={itemVariants} className="text-center py-20 border border-dashed border-white/5 rounded-[3rem] bg-white/[0.01]">
-            <Search size={48} className="mx-auto mb-4 text-white/10" />
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] italic">No neural patterns matched the query</p>
-          </motion.div>
-        ) : (
-          <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-            {filtered.map((deck, i) => (
-              <motion.div
-                variants={itemVariants}
-                key={deck.id}
-              >
-                <DeckCard
+        {/* Result Grid */}
+        <section>
+          {state.decks.length === 0 ? (
+            <motion.div variants={itemVariants}>
+              <EmptyState onCreate={() => setShowCreate(true)} />
+            </motion.div>
+          ) : filtered.length === 0 ? (
+            <motion.div variants={itemVariants} className="text-center py-32 border border-dashed border-white/5 rounded-[3rem] bg-white/[0.01]">
+              <Search size={40} className="mx-auto mb-6 text-white/5" />
+              <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Zero synchronization patterns matched</p>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 pb-20">
+              {filtered.map((deck, i) => (
+                <motion.div
+                  variants={itemVariants}
                   key={deck.id}
-                  deck={deck}
-                  stats={getDeckStats(deck.id)}
-                  index={i}
-                  onClick={() => navigate(`/decks/${deck.id}`)}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+                >
+                  <DeckCard
+                    key={deck.id}
+                    deck={deck}
+                    stats={getDeckStats(deck.id)}
+                    index={i}
+                    onClick={() => navigate(`/decks/${deck.id}`)}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </section>
       </motion.div>
 
       <AnimatePresence>
@@ -142,25 +151,25 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-20 px-10 text-center bg-[#07090D] border border-white/5 rounded-[2.5rem] shadow-[inset_0_0_60px_rgba(0,0,0,0.5)] mx-6"
+        className="flex flex-col items-center justify-center py-32 px-10 text-center bg-white/[0.01] border border-white/5 rounded-[3rem] shadow-2xl mx-4"
       >
         <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-24 h-24 rounded-[3rem] bg-black border border-white/5 flex items-center justify-center mb-8 shadow-2xl relative group overflow-hidden"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-24 h-24 rounded-full bg-black border border-white/5 flex items-center justify-center mb-10 shadow-inner relative group"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <BookOpen size={40} className="text-white/10 group-hover:text-cyan-400 transition-colors relative z-10" />
+          <div className="absolute inset-0 bg-cyan-400/5 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <BookOpen size={40} className="text-white/5 group-hover:text-cyan-400/40 transition-colors relative z-10" />
         </motion.div>
-        <h2 className="text-xl font-black text-white tracking-tighter mb-3 uppercase italic leading-none">Archives <span className="text-white/20">Quiescent</span></h2>
-        <p className="text-[11px] font-black text-white/10 leading-relaxed uppercase tracking-[0.2em] italic opacity-60 mb-10 max-w-xs">
-          Neural transmissions are Currently Synchronized. Awaiting repository initialization.
+        <h2 className="text-3xl font-black text-white tracking-tighter mb-4 uppercase italic leading-none">Archives <span className="text-white/20">Awaiting Data</span></h2>
+        <p className="text-[11px] font-black text-white/20 leading-relaxed uppercase tracking-[0.2em] italic mb-12 max-w-sm">
+          The neural network is currently clear. Initialize a new knowledge domain to begin synaptic synchronization.
         </p>
         <button 
           onClick={onCreate} 
-          className="px-12 py-5 bg-white/[0.03] text-white border border-white/10 rounded-2xl hover:bg-white hover:text-black transition-all font-black italic tracking-widest text-xs shadow-2xl active:scale-95 flex items-center gap-3"
+          className="px-10 py-5 bg-white text-black rounded-full hover:bg-cyan-400 transition-all font-black italic tracking-widest text-[10px] uppercase shadow-2xl active:scale-95 flex items-center gap-4"
         >
-          <Sparkles size={16} className="text-cyan-400" /> INITIALIZE REPO
+          <Sparkles size={16} fill="currentColor" /> Initialize Repository
         </button>
       </motion.div>
   );
