@@ -82,21 +82,25 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
   const fetchNotifications = async () => {
     const data = await getNotifications();
-    const prevCount = notificationsRef.current.length;
+    const prevNotifs = notificationsRef.current;
     
-    if (data.length > prevCount) {
-      // Bright pulse on new notification
+    // Check for new notifications by ID
+    const newItems = data.filter(n => !prevNotifs.find(pn => pn.id === n.id));
+    
+    if (newItems.length > 0) {
+      // Bright pulse on any new notification
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
 
-      // Check for new duel request to show bubble
-      const newDuel = data.find(n => n.type === 'duel' && !notificationsRef.current.find(pn => pn.id === n.id));
+      // Check specifically for new duel request to show bubble
+      const newDuel = newItems.find(n => n.type === 'duel');
       if (newDuel) {
         setLatestDuelNotif(newDuel);
         setShowBubble(true);
         setTimeout(() => setShowBubble(false), 8000);
       }
     }
+    
     notificationsRef.current = data;
     setNotifications(data);
   };
@@ -350,7 +354,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           <div className="flex-1 min-w-0">
                             <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
                             <div className="text-[8px] font-bold text-cyan-400/40 uppercase tracking-[0.15em] mt-0.5">
-                              {notif.type === 'friend' ? 'Syndicate Link Request' : 'Duel Challenge Issued'}
+                              {notif.type === 'friend' ? 'Syndicate Link Request' : (notif.message || 'Duel Challenge Issued')}
                             </div>
                           </div>
                         </div>

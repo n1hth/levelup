@@ -492,7 +492,16 @@ export function ArenaDuel() {
         <button 
           onClick={async () => {
             if (duel?.id) {
-              await supabase.from('duels').delete().eq('id', duel.id);
+              try {
+                // Try deleting first
+                const { error: delErr } = await supabase.from('duels').delete().eq('id', duel.id);
+                if (delErr) {
+                  // Fallback: update status so it doesn't show in notifications
+                  await supabase.from('duels').update({ status: 'cancelled' }).eq('id', duel.id);
+                }
+              } catch (e) {
+                console.error("Retract failed:", e);
+              }
             }
             navigate('/battle');
           }}
