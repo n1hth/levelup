@@ -1260,15 +1260,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .from('duels')
         .select('*')
         .eq('player2_id', state.user.id)
-        .eq('status', 'invited')
-        .gt('created_at', oneMinuteAgo);
+        .eq('status', 'invited');
 
       const { data: cancelledDuelsRaw } = await supabase
         .from('duels')
         .select('*')
         .eq('player2_id', state.user.id)
         .eq('status', 'cancelled')
-        .gt('updated_at', oneMinuteAgo)
         .limit(10);
 
       // Fetch profiles for all unique sender IDs

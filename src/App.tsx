@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from '@/src/lib/store.tsx';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Layout } from './components/Layout.tsx';
 import { Focus } from './pages/Focus.tsx';
 import { Decks } from './pages/Decks.tsx';
