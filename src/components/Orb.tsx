@@ -125,6 +125,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
   };
 
   const handleClearAll = async () => {
+    setNotifications([]);
+    notificationsRef.current = [];
     await clearNotifications();
     fetchNotifications();
   };

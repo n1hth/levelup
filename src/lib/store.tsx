@@ -1277,7 +1277,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       await Promise.all([
         supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
-        supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending')
+        supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending'),
+        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited')
       ]);
     } catch (err) {
       console.error("Clear notifications failed:", err);
