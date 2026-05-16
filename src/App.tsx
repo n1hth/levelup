@@ -63,7 +63,7 @@ function AppContent() {
   }
 
   // Only trigger full page unmounts when entering/leaving full-screen isolated views
-  const isIsolatedView = location.pathname.startsWith('/duels') || location.pathname.startsWith('/social/chat');
+  const isIsolatedView = location.pathname.startsWith('/duels');
   const routeKey = isIsolatedView ? location.pathname : 'main-layout';
 
   return (

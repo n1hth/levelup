@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Send, Trash2, AtSign } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -103,7 +104,7 @@ export function Chat() {
     }
   };
 
-  return (
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0, x: '100%' }}
       animate={{ opacity: 1, x: 0 }}
@@ -189,6 +190,7 @@ export function Chat() {
           </button>
         </div>
       </div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
