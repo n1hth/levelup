@@ -39,7 +39,7 @@ function mapCardFromDb(row: any) {
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards } = useApp();
+  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards, cancelDuel } = useApp();
   
   useEffect(() => {
     console.log("ArenaDuel State Check:", {
