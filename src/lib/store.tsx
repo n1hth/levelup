@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { generateId } from './utils';
 import { getLevelFromXp, getRankFromLevel, getXpProgress } from './xp';
 import { applyReview, defaultSM2, isDue, RATING_XP, type Rating, type CardSM2, type MasteryState } from './sm2';
