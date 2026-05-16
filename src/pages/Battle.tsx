@@ -397,9 +397,9 @@ export function Battle() {
                                   onClick={() => selectedFriendId && handleInviteFriend(selectedFriendId)}
                                   className={cn(
                                     "w-full py-5 rounded-2xl font-black uppercase tracking-[0.5em] text-[11px] shadow-2xl transition-all italic",
-                                    selectedFriendId
-                                      ? "bg-cyan-500 text-black hover:bg-cyan-400 shadow-cyan-500/20 active:scale-95" 
-                                      : "bg-white/5 text-white/10 cursor-not-allowed"
+                                    selectedFriendId 
+                                      ? "bg-cyan-400 text-black hover:bg-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.3)] active:scale-95 cursor-pointer opacity-100" 
+                                      : "bg-white/5 text-white/10 cursor-not-allowed opacity-50"
                                   )}
                                >
                                   {isInviting ? "LOCKING NEURAL LINK..." : "STRIKE TARGET"}
