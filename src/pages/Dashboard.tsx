@@ -144,6 +144,41 @@ export function Dashboard() {
           </div>
         </motion.div>
 
+        {/* Protocols — MOVED TO SECOND POSITION */}
+        <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01]">
+          <div className="flex items-center justify-between mb-4 px-1">
+             <div className="flex items-center gap-2">
+               <Target size={14} className="text-cyan-400" />
+               <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">Daily Protocols</h3>
+             </div>
+             <span className="text-[9px] font-black text-cyan-400 tabular-nums">[{missionsComplete}/3]</span>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {missions.map((m) => (
+              <div key={m.id} className={cn(
+                "px-4 py-2.5 rounded-xl border flex items-center justify-between",
+                m.done ? "bg-cyan-500/[0.03] border-cyan-400/20 shadow-[0_0_15px_rgba(34,211,238,0.05)]" : "bg-white/[0.01] border-white/5"
+              )}>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] border shadow-inner",
+                    m.done ? "bg-cyan-400 border-cyan-400 text-slate-950" : "bg-white/5 border-white/5 text-white/30"
+                  )}>
+                    {m.done ? <Sparkles size={10} /> : m.icon}
+                  </div>
+                  <span className={cn("text-[9px] font-black uppercase italic tracking-widest", m.done ? "text-cyan-400" : "text-white/40")}>{m.title}</span>
+                </div>
+                <div className="flex flex-col items-end">
+                   <span className="text-[7px] font-black text-white/20 tabular-nums mb-1">{m.current}/{m.target}</span>
+                   <div className="w-12 h-0.5 bg-white/5 rounded-full overflow-hidden">
+                     <div className={cn("h-full", m.done ? "bg-cyan-400" : "bg-white/20")} style={{ width: `${(m.current/m.target)*100}%` }} />
+                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Action Row */}
         <motion.div variants={itemVariants} className="col-span-6">
           <button
@@ -189,41 +224,6 @@ export function Dashboard() {
               <span className="text-[6px] font-black text-white/20 uppercase tracking-widest">{s.label}</span>
             </div>
           ))}
-        </motion.div>
-
-        {/* Protocols */}
-        <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01]">
-          <div className="flex items-center justify-between mb-4 px-1">
-             <div className="flex items-center gap-2">
-               <Target size={14} className="text-cyan-400" />
-               <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">Daily Protocols</h3>
-             </div>
-             <span className="text-[9px] font-black text-cyan-400 tabular-nums">[{missionsComplete}/3]</span>
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            {missions.map((m) => (
-              <div key={m.id} className={cn(
-                "px-4 py-2.5 rounded-xl border flex items-center justify-between",
-                m.done ? "bg-cyan-500/[0.03] border-cyan-400/20 shadow-[0_0_15px_rgba(34,211,238,0.05)]" : "bg-white/[0.01] border-white/5"
-              )}>
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] border shadow-inner",
-                    m.done ? "bg-cyan-400 border-cyan-400 text-slate-950" : "bg-white/5 border-white/5 text-white/30"
-                  )}>
-                    {m.done ? <Sparkles size={10} /> : m.icon}
-                  </div>
-                  <span className={cn("text-[9px] font-black uppercase italic tracking-widest", m.done ? "text-cyan-400" : "text-white/40")}>{m.title}</span>
-                </div>
-                <div className="flex flex-col items-end">
-                   <span className="text-[7px] font-black text-white/20 tabular-nums mb-1">{m.current}/{m.target}</span>
-                   <div className="w-12 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                     <div className={cn("h-full", m.done ? "bg-cyan-400" : "bg-white/20")} style={{ width: `${(m.current/m.target)*100}%` }} />
-                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </motion.div>
 
       </div>

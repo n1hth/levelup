@@ -264,10 +264,10 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {isNavOpen && notifications.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -30, scale: 0.95 }}
+            initial={{ opacity: 0, y: -20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            exit={{ opacity: 0, y: -10, scale: 0.97 }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             className="fixed top-[60px] left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-[380px] z-[110] pointer-events-auto"
           >
             {/* Outer Glow */}
@@ -286,7 +286,12 @@ export function Orb({ onInteractionChange }: OrbProps) {
                   </div>
                   <span className="text-[10px] font-black text-cyan-400/90 uppercase tracking-[0.25em]">Neural Alerts</span>
                 </div>
-                <span className="text-[9px] font-black text-white/20 tabular-nums">{notifications.length}</span>
+                <button 
+                  onClick={() => setNotifications([])}
+                  className="text-[8px] font-black text-white/20 uppercase tracking-widest hover:text-red-400 transition-colors active:scale-95 px-2 py-1 rounded-lg hover:bg-red-500/10"
+                >
+                  Clear All
+                </button>
               </div>
 
               {/* Scrollable notification list */}
@@ -341,8 +346,9 @@ export function Orb({ onInteractionChange }: OrbProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             onClick={() => { setIsNavOpen(false); setIsInsightOpen(false); }}
-            className="fixed inset-0 z-[80] bg-black/50 pointer-events-auto backdrop-blur-md"
+            className="fixed inset-0 z-[80] bg-black/60 pointer-events-auto"
           />
         )}
       </AnimatePresence>
