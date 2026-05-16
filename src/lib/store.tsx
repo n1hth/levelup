@@ -1242,7 +1242,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const { data: duelReqs } = await supabase
         .from('duels')
-        .select('*, sender:profiles!duels_player1_id_fkey(name, username)')
+        .select('*, sender:profiles!player1_id(name, username)')
         .eq('player2_id', state.user.id)
         .eq('status', 'invited')
         .gt('created_at', oneMinuteAgo);
