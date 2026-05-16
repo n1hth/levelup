@@ -55,6 +55,9 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
   // Sync interactions with parent
   useEffect(() => {
+    if (isHolding) onInteractionChange?.('holding');
+    else if (isInsightOpen) onInteractionChange?.('insight');
+    else if (isNavOpen) onInteractionChange?.('nav-open');
     else onInteractionChange?.('none');
   }, [isHolding, isInsightOpen, isNavOpen, onInteractionChange]);
 
@@ -255,13 +258,91 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
   return (
     <>
+      {/* ═══════════════════════════════════════════════ */}
+      {/* FIXED NOTIFICATION BENTO BOX — TOP HALF       */}
+      {/* ═══════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {isNavOpen && notifications.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            className="fixed top-[60px] left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-[380px] z-[110] pointer-events-auto"
+          >
+            {/* Outer Glow */}
+            <div className="absolute -inset-3 bg-cyan-500/10 rounded-[3.5rem] blur-[30px] pointer-events-none" />
+            
+            {/* Bento Box */}
+            <div className="relative bg-[#0a1520]/80 backdrop-blur-3xl border border-cyan-500/25 rounded-[2rem] shadow-[0_0_80px_rgba(0,229,255,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] flex flex-col overflow-hidden">
+              {/* Gradient shimmer line */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+              
+              {/* Header — always pinned */}
+              <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-cyan-500/15 flex items-center justify-center">
+                    <Bell size={11} className="text-cyan-400" />
+                  </div>
+                  <span className="text-[10px] font-black text-cyan-400/90 uppercase tracking-[0.25em]">Neural Alerts</span>
+                </div>
+                <span className="text-[9px] font-black text-white/20 tabular-nums">{notifications.length}</span>
+              </div>
+
+              {/* Scrollable notification list */}
+              <div className="px-4 pb-4 space-y-2.5 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(45vh - 80px)' }}>
+                {notifications.map(notif => (
+                  <div key={notif.id} className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-3 transition-all hover:bg-white/[0.07] active:scale-[0.98]">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                        notif.type === 'friend' ? "bg-emerald-500/15 text-emerald-400" : "bg-cyan-500/15 text-cyan-400"
+                      )}>
+                        {notif.type === 'friend' ? <UserPlus size={15} /> : <Swords size={15} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
+                        <div className="text-[8px] font-bold text-cyan-400/40 uppercase tracking-[0.15em] mt-0.5">
+                          {notif.type === 'friend' ? 'Syndicate Link Request' : 'Duel Challenge Issued'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleAction(notif, 'accept')}
+                        className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+                      >
+                        Accept
+                      </button>
+                      <button 
+                        onClick={() => handleAction(notif, 'decline')}
+                        className="px-3 rounded-xl bg-white/[0.04] text-white/30 hover:bg-red-500/15 hover:text-red-400 transition-all flex items-center justify-center active:scale-95"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Bottom accent line */}
+              <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* BACKDROP + PULSE + ORB CONTAINER               */}
+      {/* ═══════════════════════════════════════════════ */}
       <AnimatePresence>
         {(isHolding || isInsightOpen || isNavOpen) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-black/40 pointer-events-auto backdrop-blur-md"
+            onClick={() => { setIsNavOpen(false); setIsInsightOpen(false); }}
+            className="fixed inset-0 z-[80] bg-black/50 pointer-events-auto backdrop-blur-md"
           />
         )}
       </AnimatePresence>
@@ -305,63 +386,6 @@ export function Orb({ onInteractionChange }: OrbProps) {
                     transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                     className="absolute pointer-events-none w-[400px] h-[400px] bottom-[-160px]"
                   >
-                    {/* Floating Heavenly Window for Notifications */}
-                    <AnimatePresence>
-                      {notifications.length > 0 && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                          className="absolute -top-[465px] left-1/2 -translate-x-1/2 w-[350px] pointer-events-auto z-[110]"
-                        >
-                          {/* Bento Box Container with Glow */}
-                          <div className="bg-[#0f1b29]/60 backdrop-blur-3xl border border-cyan-500/30 rounded-[2.5rem] p-5 shadow-[0_0_60px_rgba(0,229,255,0.3)] relative overflow-hidden group flex flex-col max-h-[360px]">
-                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
-                            
-                            <div className="flex items-center gap-2 mb-3 px-1 shrink-0">
-                              <Bell size={10} className="text-cyan-400" />
-                              <span className="text-[9px] font-black text-cyan-400 uppercase tracking-[0.3em]">Neural Alerts</span>
-                            </div>
-
-                            <div className="space-y-2 overflow-y-auto no-scrollbar pr-0.5">
-                              {notifications.map(notif => (
-                                <div key={notif.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex flex-col gap-2 transition-all hover:bg-white/[0.06] shrink-0">
-                                  <div className="flex items-center gap-3">
-                                    <div className={cn(
-                                      "w-7 h-7 rounded-xl flex items-center justify-center text-white",
-                                      notif.type === 'friend' ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"
-                                    )}>
-                                      {notif.type === 'friend' ? <UserPlus size={12} /> : <Swords size={12} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-[10px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
-                                      <div className="text-[7px] font-black text-cyan-400/50 uppercase tracking-widest leading-none">
-                                        {notif.type === 'friend' ? 'Syndicate Request' : 'Duel Challenge'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button 
-                                      onClick={() => handleAction(notif, 'accept')}
-                                      className="flex-1 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 text-[8px] font-black uppercase tracking-widest transition-colors"
-                                    >
-                                      Accept
-                                    </button>
-                                    <button 
-                                      onClick={() => handleAction(notif, 'decline')}
-                                      className="px-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center"
-                                    >
-                                      <X size={10} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
                     <svg width="400" height="400" viewBox="0 0 400 400" className="overflow-visible">
                       <g transform="translate(200, 200)">
                         {/* Global Background Track */}
