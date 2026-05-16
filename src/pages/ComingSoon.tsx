@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Lock, Sparkles } from 'lucide-react';
 
 export function ComingSoon({ feature }: { feature: string }) {

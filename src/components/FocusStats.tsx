@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Clock, Trophy, Flame, Zap, Activity } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { formatDuration, getRelativeTime, cn } from '@/src/lib/utils.ts';

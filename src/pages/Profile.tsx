@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Flame, BookOpen, Clock, ChevronRight, AlertTriangle, Trophy, Lock, Shield, Activity } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';

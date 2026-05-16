@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Sparkles, Star, ArrowUp, Trophy } from 'lucide-react';
 import { cn, formatDuration } from '@/src/lib/utils.ts';
 import { getRankColor, getRankTitle, type XpCalculation } from '@/src/lib/xp.ts';

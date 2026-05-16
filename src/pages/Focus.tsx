@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Timer as TimerIcon, Shield, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/src/lib/utils.ts';
 import { useApp } from '@/src/lib/store.tsx';

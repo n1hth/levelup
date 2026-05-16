@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '@/src/lib/utils.ts';
 import { RATING_LABELS, RATING_COLORS, RATING_XP, type Rating } from '@/src/lib/sm2.ts';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Trophy, Zap, Target, Clock, Flame, ChevronRight, RotateCcw, Star } from 'lucide-react';
 import { cn } from '@/src/lib/utils.ts';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, 
   Sparkles, 

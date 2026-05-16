@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, BookOpen, Sparkles, LayoutGrid } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';

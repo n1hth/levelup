@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Zap, X, Flame, ChevronRight } from 'lucide-react';
 import { useApp, type ArenaDifficulty } from '@/src/lib/store.tsx';

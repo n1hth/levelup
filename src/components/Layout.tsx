@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { type ReactNode, useState } from 'react';
 import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';

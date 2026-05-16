@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Send, Trash2, AtSign, Check, CheckCheck } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';

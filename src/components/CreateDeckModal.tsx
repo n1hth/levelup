@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Tag, Palette } from 'lucide-react';
 import { cn } from '@/src/lib/utils.ts';
 import { useApp } from '@/src/lib/store.tsx';

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';

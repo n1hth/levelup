@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/src/lib/utils.ts';
 import { type Card } from '@/src/lib/store.tsx';
 import { getMasteryColor, getMasteryLabel } from '@/src/lib/sm2.ts';

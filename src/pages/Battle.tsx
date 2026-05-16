@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Target, Trophy, Search, ChevronRight, Zap, Crown, MessageCircle, Users, Swords as DuelIcon, Shield } from 'lucide-react';
 import { useApp, type Deck } from '@/src/lib/store.tsx';

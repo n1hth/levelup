@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Layers, ChevronRight } from 'lucide-react';
 import { cn } from '@/src/lib/utils.ts';
 import { useApp } from '@/src/lib/store.tsx';

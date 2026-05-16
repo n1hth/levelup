@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { BookOpen, Zap, Clock, ChevronRight, Box } from 'lucide-react';
 import { cn, formatDuration, getRelativeTime } from '@/src/lib/utils.ts';
 import { type Deck } from '@/src/lib/store.tsx';
