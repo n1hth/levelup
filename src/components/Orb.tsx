@@ -300,40 +300,52 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           initial={{ opacity: 0, y: 20, scale: 0.9 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                          className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[280px] max-h-[140px] overflow-y-auto no-scrollbar pointer-events-auto flex flex-col gap-2 z-[110]"
+                          className="absolute -top-[140px] left-1/2 -translate-x-1/2 w-[260px] max-h-[160px] overflow-y-auto no-scrollbar pointer-events-auto flex flex-col gap-2 z-[110]"
                         >
-                          {notifications.map(notif => (
-                            <div key={notif.id} className="bg-[#0f1b29]/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-3 shadow-[0_0_20px_rgba(0,229,255,0.1)] flex flex-col gap-2">
-                              <div className="flex items-center gap-3">
-                                <div className={cn(
-                                  "w-8 h-8 rounded-full flex items-center justify-center text-white",
-                                  notif.type === 'friend' ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"
-                                )}>
-                                  {notif.type === 'friend' ? <UserPlus size={14} /> : <Swords size={14} />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
-                                  <div className="text-[8px] font-black text-cyan-400/70 uppercase tracking-widest leading-none">
-                                    {notif.type === 'friend' ? 'Syndicate Request' : 'Duel Challenge'}
+                          {/* Bento Box Container with Glow */}
+                          <div className="bg-[#0f1b29]/60 backdrop-blur-2xl border border-cyan-500/30 rounded-[2.5rem] p-4 shadow-[0_0_30px_rgba(0,229,255,0.2)] relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
+                            
+                            <div className="flex items-center gap-2 mb-3 px-1">
+                              <Bell size={10} className="text-cyan-400" />
+                              <span className="text-[9px] font-black text-cyan-400 uppercase tracking-[0.3em]">Neural Alerts</span>
+                            </div>
+
+                            <div className="space-y-2">
+                              {notifications.map(notif => (
+                                <div key={notif.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex flex-col gap-2 transition-all hover:bg-white/[0.06]">
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                      "w-7 h-7 rounded-xl flex items-center justify-center text-white",
+                                      notif.type === 'friend' ? "bg-emerald-500/20 text-emerald-400" : "bg-cyan-500/20 text-cyan-400"
+                                    )}>
+                                      {notif.type === 'friend' ? <UserPlus size={12} /> : <Swords size={12} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-[10px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
+                                      <div className="text-[7px] font-black text-cyan-400/50 uppercase tracking-widest leading-none">
+                                        {notif.type === 'friend' ? 'Syndicate Request' : 'Duel Challenge'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => handleAction(notif, 'accept')}
+                                      className="flex-1 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 text-[8px] font-black uppercase tracking-widest transition-colors"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button 
+                                      onClick={() => handleAction(notif, 'decline')}
+                                      className="px-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center"
+                                    >
+                                      <X size={10} />
+                                    </button>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => handleAction(notif, 'accept')}
-                                  className="flex-1 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 text-[9px] font-black uppercase tracking-widest transition-colors"
-                                >
-                                  Accept
-                                </button>
-                                <button 
-                                  onClick={() => handleAction(notif, 'decline')}
-                                  className="px-3 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center"
-                                >
-                                  <X size={12} />
-                                </button>
-                              </div>
+                              ))}
                             </div>
-                          ))}
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
