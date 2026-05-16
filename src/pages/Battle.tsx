@@ -92,16 +92,16 @@ export function Battle() {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="space-y-6 md:space-y-8 pb-32"
+      className="space-y-6 pb-32"
     >
       {/* Header HUD */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 px-4">
+      <div className="flex flex-col justify-between gap-3 px-4">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse" />
-            <span className="text-[6px] md:text-[8px] font-black tracking-[0.4em] text-white/20 uppercase italic">Neural Battlefront Core</span>
+            <span className="text-[6px] font-black tracking-[0.4em] text-white/20 uppercase italic">Neural Battlefront Core</span>
           </div>
-          <h2 className="text-2xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-2">
+          <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-2">
             ARENA <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500">ENGAGEMENT</span>
           </h2>
         </div>
@@ -111,12 +111,12 @@ export function Battle() {
           <div className="flex items-center gap-2.5 px-2.5 py-1.5 bg-white/[0.01] border border-white/5 rounded-lg backdrop-blur-md">
             <div className="flex flex-col">
               <span className="text-[5px] font-black text-white/10 uppercase tracking-widest leading-none mb-0.5">SESSIONS</span>
-              <span className="text-[10px] md:text-sm font-black text-white tabular-nums italic leading-none">{arenaStats.totalArenas}</span>
+              <span className="text-[10px] font-black text-white tabular-nums italic leading-none">{arenaStats.totalArenas}</span>
             </div>
             <div className="w-px h-3 bg-white/10" />
             <div className="flex flex-col">
               <span className="text-[5px] font-black text-white/10 uppercase tracking-widest leading-none mb-0.5">TOTAL XP</span>
-              <span className="text-[10px] md:text-sm font-black text-cyan-400 tabular-nums italic leading-none">+{arenaStats.totalArenaXp}</span>
+              <span className="text-[10px] font-black text-cyan-400 tabular-nums italic leading-none">+{arenaStats.totalArenaXp}</span>
             </div>
           </div>
         </div>
@@ -128,28 +128,28 @@ export function Battle() {
           <button
             onClick={() => setActiveTab('practice')}
             className={cn(
-              "py-2.5 md:py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all relative overflow-hidden group",
+              "py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all relative overflow-hidden group",
               activeTab === 'practice' 
                 ? "bg-white/[0.05] text-cyan-400 border border-cyan-400/20" 
                 : "text-white/20 hover:text-white/40"
             )}
           >
             {activeTab === 'practice' && <motion.div layoutId="tab-bg" className="absolute inset-0 bg-cyan-400/5 blur-lg" />}
-            <Target size={14} className="md:size-[18px]" />
-            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Neural Arenas</span>
+            <Target size={14} />
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Neural Arenas</span>
           </button>
           <button
             onClick={() => setActiveTab('duels')}
             className={cn(
-              "py-2.5 md:py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all relative overflow-hidden group",
+              "py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all relative overflow-hidden group",
               activeTab === 'duels' 
                 ? "bg-white/[0.05] text-red-500 border border-red-500/20" 
                 : "text-white/20 hover:text-white/40"
             )}
           >
             {activeTab === 'duels' && <motion.div layoutId="tab-bg" className="absolute inset-0 bg-red-500/5 blur-lg" />}
-            <Swords size={14} className="md:size-[18px]" />
-            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Active Duels</span>
+            <Swords size={14} />
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Active Duels</span>
           </button>
         </div>
       </div>
