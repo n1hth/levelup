@@ -312,20 +312,20 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           initial={{ opacity: 0, y: 20, scale: 0.9 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                          className="absolute -top-[480px] left-1/2 -translate-x-1/2 w-[350px] max-h-[360px] overflow-y-auto no-scrollbar pointer-events-auto z-[110]"
+                          className="absolute -top-[465px] left-1/2 -translate-x-1/2 w-[350px] pointer-events-auto z-[110]"
                         >
                           {/* Bento Box Container with Glow */}
-                          <div className="bg-[#0f1b29]/60 backdrop-blur-3xl border border-cyan-500/30 rounded-[2.5rem] p-5 shadow-[0_0_60px_rgba(0,229,255,0.3)] relative overflow-hidden group">
+                          <div className="bg-[#0f1b29]/60 backdrop-blur-3xl border border-cyan-500/30 rounded-[2.5rem] p-5 shadow-[0_0_60px_rgba(0,229,255,0.3)] relative overflow-hidden group flex flex-col max-h-[360px]">
                             <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
                             
-                            <div className="flex items-center gap-2 mb-3 px-1">
+                            <div className="flex items-center gap-2 mb-3 px-1 shrink-0">
                               <Bell size={10} className="text-cyan-400" />
                               <span className="text-[9px] font-black text-cyan-400 uppercase tracking-[0.3em]">Neural Alerts</span>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 overflow-y-auto no-scrollbar pr-0.5">
                               {notifications.map(notif => (
-                                <div key={notif.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex flex-col gap-2 transition-all hover:bg-white/[0.06]">
+                                <div key={notif.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex flex-col gap-2 transition-all hover:bg-white/[0.06] shrink-0">
                                   <div className="flex items-center gap-3">
                                     <div className={cn(
                                       "w-7 h-7 rounded-xl flex items-center justify-center text-white",
