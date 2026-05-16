@@ -6,7 +6,7 @@ import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
-type DuelPhase = 'SEARCHING' | 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW';
+type DuelPhase = 'SEARCHING' | 'WAITING' | 'LOBBY' | 'EXCHANGE' | 'TRIAL' | 'REVIEW';
 
 function mapDeckFromDb(row: any) {
   return {
@@ -132,7 +132,10 @@ export function ArenaDuel() {
     const fetchedMyTopicField = fetchedIsPlayer1 ? 'p1_topic' : 'p2_topic';
     const fetchedMyDeckField = fetchedIsPlayer1 ? 'p1_deck_id' : 'p2_deck_id';
     
-    if (d.status === 'setup') {
+    if (d.status === 'invited') {
+      setPhase('WAITING');
+    }
+    else if (d.status === 'setup') {
       if (d.mode === 'deck') {
         setPhase(d[fetchedMyDeckField] ? 'LOBBY' : 'EXCHANGE');
       } else {
@@ -443,6 +446,54 @@ export function ArenaDuel() {
           className="absolute bottom-16 px-10 py-4 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-black text-red-500/50 uppercase tracking-[0.4em] hover:text-red-500 hover:bg-red-500/10 transition-all z-10 italic"
         >
           Abort Protocol
+        </button>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════
+  //  RENDER: WAITING FOR OPPONENT (FRIENDLY)
+  // ════════════════════════════════════════
+  if (phase === 'WAITING') {
+    return (
+      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center text-center p-8 overflow-hidden z-[200]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.1),transparent_70%)]" />
+        
+        <div className="relative w-64 h-64 mb-12 z-10 flex items-center justify-center">
+          <motion.div 
+            animate={{ rotate: 360 }} 
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 rounded-full border border-purple-500/20" 
+          />
+          <div className="w-32 h-32 rounded-3xl bg-white/[0.02] border border-white/10 flex items-center justify-center relative backdrop-blur-3xl rotate-45">
+             <div className="rotate-[-45deg]">
+                <Shield size={40} className="text-purple-400 animate-pulse" />
+             </div>
+          </div>
+          {[1, 2].map(i => (
+            <motion.div
+              key={i}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 2, opacity: 0 }}
+              transition={{ duration: 4, repeat: Infinity, delay: i * 2 }}
+              className="absolute inset-0 rounded-full border border-purple-400/10"
+            />
+          ))}
+        </div>
+
+        <div className="space-y-4 z-10">
+          <span className="text-[9px] font-black tracking-[0.8em] text-purple-400/60 uppercase italic">Signal Transmitted</span>
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Neural <span className="text-purple-400">Await</span></h2>
+          <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.4em] italic leading-relaxed max-w-xs mx-auto">
+            Tactical challenge issued to <span className="text-white">{opponent?.name || 'Peer Node'}</span>.<br/>Synchronizing combat interface...
+          </p>
+        </div>
+
+        <button 
+          onClick={() => navigate('/battle')}
+          className="absolute bottom-16 px-10 py-4 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-black text-white/20 uppercase tracking-[0.4em] hover:text-red-500 hover:bg-red-500/10 transition-all z-10 italic"
+        >
+          Retract Challenge
         </button>
       </div>
     );

@@ -46,8 +46,7 @@ export function Battle() {
 
     await sendDuelInvite(friendId, duelId); 
     setIsInviting(false);
-    // Stay here, or could show a "Waiting" state
-    alert("Challenge Sent! Waiting for opponent to accept...");
+    navigate(`/duels/${duelId}`);
     setDuelOpponent(null);
   };
 

@@ -46,6 +46,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
   const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [pulseType, setPulseType] = useState<'open' | 'close'>('open');
   const [showPulseWave, setShowPulseWave] = useState(false);
+  const [showBubble, setShowBubble] = useState(false);
+  const [latestDuelNotif, setLatestDuelNotif] = useState<any>(null);
   
   const [notifications, setNotifications] = useState<any[]>([]);
   
@@ -83,6 +85,14 @@ export function Orb({ onInteractionChange }: OrbProps) {
       // Bright pulse on new notification
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
+
+      // Check for new duel request to show bubble
+      const newDuel = data.find(n => n.type === 'duel' && !notifications.find(pn => pn.id === n.id));
+      if (newDuel) {
+        setLatestDuelNotif(newDuel);
+        setShowBubble(true);
+        setTimeout(() => setShowBubble(false), 8000);
+      }
     }
     setNotifications(data);
   };
@@ -654,6 +664,31 @@ export function Orb({ onInteractionChange }: OrbProps) {
                 />
               )}
             </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ═══════════════════════════════════════════════ */}
+      {/* DUEL REQUEST BUBBLE                             */}
+      {/* ═══════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {showBubble && latestDuelNotif && !isNavOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, x: -50, scale: 0.8 }}
+            animate={{ opacity: 1, y: -110, x: -50, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, y: -130 }}
+            className="fixed bottom-0 left-1/2 z-[100] cursor-pointer"
+            onClick={() => setIsNavOpen(true)}
+          >
+            <div className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-3xl rounded-2xl px-5 py-3 flex items-center gap-4 shadow-[0_0_30px_rgba(6,182,212,0.2)] group">
+               <div className="w-8 h-8 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0">
+                  <Swords size={16} className="text-cyan-400" />
+               </div>
+               <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">Incoming Challenge</span>
+                  <span className="text-[11px] font-black text-white uppercase italic tracking-tight">{latestDuelNotif.sender} issued a duel</span>
+               </div>
+               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-cyan-900/20 border-r border-b border-cyan-400/30 rotate-45 backdrop-blur-3xl" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
