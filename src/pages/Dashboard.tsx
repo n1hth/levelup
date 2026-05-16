@@ -19,10 +19,10 @@ function getGreeting(): { text: string; emoji: string } {
 }
 
 function getMotivation(streak: number): string {
-  if (streak >= 7) return "You're on fire! Keep the momentum going.";
-  if (streak >= 3) return "Great streak! Don't break the chain.";
-  if (streak >= 1) return "Consistency is key. Show up again today.";
-  return "Start fresh today. Every session counts.";
+  if (streak >= 7) return "The Shadow Monarch's presence is overwhelming. Keep pushing.";
+  if (streak >= 3) return "Your mana is surging. Level up your rank today.";
+  if (streak >= 1) return "The System awaits your next move. Don't falter.";
+  return "Awaken your potential. The first quest begins now.";
 }
 
 const DAILY_XP_GOAL = 100;
@@ -30,6 +30,16 @@ const DAILY_XP_GOAL = 100;
 // ═══════════════════════════════════════════════
 // DASHBOARD PAGE
 // ═══════════════════════════════════════════════
+
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode, label: string, value: string | number, color: string }) {
+  return (
+    <div className="bg-white/[0.01] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2">
+      <div className={cn("opacity-70", color)}>{icon}</div>
+      <span className="text-sm font-black text-white italic">{value}</span>
+      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">{label}</span>
+    </div>
+  );
+}
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -99,34 +109,6 @@ export function Dashboard() {
         </div>
       </motion.div>
 
-      {/* ═══ Core Status Area (Bento Grid) ═══ */}
-      <div className="grid grid-cols-12 gap-4">
-        
-        {/* Left Col: Sync Ring (Hero) */}
-        <motion.div variants={itemVariants} className="col-span-12 system-panel p-6 modular-card group relative overflow-hidden flex flex-col items-center justify-center min-h-[300px]">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent pointer-events-none" />
-          
-          <div className="relative shrink-0 mb-6">
-             <svg width="180" height="180" viewBox="0 0 180 180" className="transform -rotate-90 drop-shadow-[0_0_30px_rgba(34,211,238,0.2)]">
-               <defs>
-                 <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                   <stop offset="0%" stopColor="#0891b2" />
-                   <stop offset="50%" stopColor="#22d3ee" />
-                   <stop offset="100%" stopColor="#ffffff" />
-                 </linearGradient>
-               </defs>
-               <circle cx="90" cy="90" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="10" />
-               <motion.circle
-                 cx="90" cy="90" r={ringRadius}
-                 fill="none" stroke="url(#ringGradient)" strokeWidth="10" strokeLinecap="round"
-                 strokeDasharray={ringCircumference}
-                 initial={{ strokeDashoffset: ringCircumference }}
-                 animate={{ strokeDashoffset: ringOffset }}
-                 transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-               />
-             </svg>
-             <div className="absolute inset-0 flex flex-col items-center justify-center">
-               <span className="text-[8px] font-black text-cyan-400/40 uppercase tracking-[0.4em] mb-1 italic">YIELD</span>
                <motion.span className="text-5xl font-black text-white italic tracking-tighter leading-none tabular-nums">
                  {todayXp}
                </motion.span>

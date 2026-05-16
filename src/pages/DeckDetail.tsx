@@ -19,8 +19,8 @@ export function DeckDetail() {
   if (!deck) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-white/40 font-black uppercase tracking-[0.5em] italic">System Error: Repository Not Found</p>
-        <button onClick={() => navigate('/decks')} className="mt-8 px-8 py-4 bg-white/5 text-[10px] font-black tracking-[0.3em] uppercase italic border border-white/10 rounded-full hover:bg-white/10 transition-all">RETURN TO ARCHIVES</button>
+        <p className="text-white/40 font-black uppercase tracking-[0.5em] italic">System Error: Gate Not Found</p>
+        <button onClick={() => navigate('/decks')} className="mt-8 px-8 py-4 bg-white/5 text-[10px] font-black tracking-[0.3em] uppercase italic border border-white/10 rounded-full hover:bg-white/10 transition-all">RETURN TO VAULT</button>
       </div>
     );
   }
@@ -38,7 +38,7 @@ export function DeckDetail() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="max-w-3xl mx-auto space-y-12 pb-32"
+        className="max-w-3xl mx-auto space-y-12 pb-32 px-4"
       >
         {/* Minimal Navigation */}
         <nav className="flex items-center justify-between pt-4">
@@ -46,30 +46,30 @@ export function DeckDetail() {
             onClick={() => navigate('/decks')}
             className="flex items-center gap-3 text-[9px] font-black text-white/30 uppercase tracking-[0.4em] hover:text-white transition-colors italic"
           >
-            <ArrowLeft size={14} /> Neural Archives
+            <ArrowLeft size={14} /> Back to Vault
           </button>
           
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
-                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-widest italic">Live Feed</span>
+                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-widest italic">Gate Active</span>
              </div>
           </div>
         </nav>
 
-        {/* Hero Section: Clean & Typographic */}
+        {/* Hero Section */}
         <section className="relative">
-          <div className="flex items-end justify-between gap-8 border-b border-white/5 pb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-8 border-b border-white/5 pb-8">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-4">
-                <div className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest italic", deck.color.replace('bg-', 'text-').replace('from-', 'text-'))}>
-                  {deck.subject || 'Core Domain'}
+                <div className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest italic border bg-white/5 border-white/10 text-white")}>
+                  {deck.subject || 'General Class'}
                 </div>
                 <div className="h-px w-8 bg-white/10" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Neural Slices</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Knowledge Cores</span>
               </div>
               
-              <h1 className="text-5xl font-black text-white tracking-tighter italic uppercase leading-none mb-6">
+              <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tighter italic uppercase leading-none mb-6">
                 {deck.title}
               </h1>
               
@@ -82,8 +82,8 @@ export function DeckDetail() {
               </div>
             </div>
 
-            <div className={cn("w-24 h-24 rounded-3xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] shrink-0", deck.color)}>
-               <Box size={40} className="drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+            <div className={cn("w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] shrink-0", deck.color || 'from-cyan-400 to-blue-500')}>
+               <Box size={32} className="sm:size-[40px] drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
             </div>
           </div>
 
@@ -94,72 +94,72 @@ export function DeckDetail() {
           )}
         </section>
 
-        {/* Neural Diagnostics Grid */}
-        <section className="grid grid-cols-4 gap-6">
+        {/* Diagnostics Grid */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-6">
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Archive Capacity</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cores</p>
              <p className="text-2xl font-black text-white tracking-tighter italic">{stats.total}</p>
            </div>
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Sync Required</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Runes Due</p>
              <p className={cn("text-2xl font-black tracking-tighter italic", stats.due > 0 ? "text-cyan-400" : "text-white/40")}>
                {stats.due}
              </p>
            </div>
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Synaptic Strength</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Clear Progress</p>
              <p className="text-2xl font-black text-white tracking-tighter italic">{stats.mastery}%</p>
            </div>
            <div className="flex items-end pb-1">
              <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats.mastery}%` }}
-                  className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
+                   initial={{ width: 0 }}
+                   animate={{ width: `${stats.mastery}%` }}
+                   className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
                 />
              </div>
            </div>
         </section>
 
-        {/* Refined Sync Action */}
+        {/* Sync Action */}
         <section className="pt-4">
            {stats.due > 0 ? (
              <motion.button
                whileHover={{ scale: 1.01 }}
                whileTap={{ scale: 0.99 }}
-               onClick={() => navigate(`/decks/${deck.id}/study`)}
+               onClick={() => navigate(`/study/${deck.id}`)}
                className="w-full h-16 rounded-2xl bg-white text-black font-black text-[11px] uppercase tracking-[0.5em] italic flex items-center justify-center gap-4 shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-cyan-400 transition-colors"
              >
                <Zap size={18} fill="currentColor" />
-               Initiate Synaptic Sync
+               Enter Gate Run
              </motion.button>
            ) : (
              <div className="w-full h-16 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-center gap-4 group">
                 <div className="w-2 h-2 rounded-full bg-cyan-400/20 group-hover:bg-cyan-400 transition-colors" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">Neural Network Optimized</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">Gate Cleared</span>
              </div>
            )}
         </section>
 
-        {/* Content Explorer */}
+        {/* Explorer */}
         <section className="space-y-6 pt-12">
           <div className="flex items-center justify-between">
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic flex items-center gap-3">
-              <BookOpen size={14} className="opacity-40" /> Archive Explorer
+              <BookOpen size={14} className="opacity-40" /> Rune Explorer
             </h2>
             <button
               onClick={() => setShowAddCard(true)}
               className="flex items-center gap-3 px-5 py-2.5 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group"
             >
               <Plus size={14} className="stroke-[3px]" />
-              <span className="text-[9px] font-black tracking-[0.1em] uppercase italic">Add Fragment</span>
+              <span className="text-[9px] font-black tracking-[0.1em] uppercase italic">Add Rune</span>
             </button>
           </div>
 
           <div className="grid gap-3">
             {cards.length === 0 ? (
               <div className="py-20 text-center border border-dashed border-white/10 rounded-3xl">
-                <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic">Awaiting first neural fragment insertion</p>
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic">Awaiting first rune infusion</p>
               </div>
             ) : (
               cards.map((card, i) => (
@@ -179,7 +179,7 @@ export function DeckDetail() {
                        </span>
                        {card.lastReviewedAt && (
                          <span className="text-[8px] text-white/10 font-black uppercase tracking-[0.1em] italic">
-                           Synced {getRelativeTime(card.lastReviewedAt)}
+                           Last Active {getRelativeTime(card.lastReviewedAt)}
                          </span>
                        )}
                     </div>
@@ -199,12 +199,12 @@ export function DeckDetail() {
           </div>
         </section>
 
-        {/* Minimal Danger Zone */}
+        {/* Danger Zone */}
         <section className="pt-24 border-t border-white/5">
            <div className="flex items-center justify-between opacity-40 hover:opacity-100 transition-opacity">
               <div className="flex items-center gap-4 text-red-500/80">
                  <Settings2 size={16} />
-                 <span className="text-[9px] font-black uppercase tracking-[0.3em] italic">Archive Termination</span>
+                 <span className="text-[9px] font-black uppercase tracking-[0.3em] italic">Void Protocol</span>
               </div>
               
               {!confirmDelete ? (
@@ -212,13 +212,13 @@ export function DeckDetail() {
                   onClick={() => setConfirmDelete(true)}
                   className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] hover:text-red-500 transition-colors italic underline underline-offset-4 decoration-white/5"
                 >
-                  Initiate Purge
+                  Initiate Expunge
                 </button>
               ) : (
                 <div className="flex items-center gap-4">
-                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest italic animate-pulse">Confirming Wipe?</span>
+                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest italic animate-pulse">Execute?</span>
                   <button onClick={() => setConfirmDelete(false)} className="text-[8px] font-black text-white/40 uppercase italic">Abort</button>
-                  <button onClick={handleDeleteDeck} className="px-4 py-1.5 rounded-full bg-red-600 text-white text-[8px] font-black uppercase italic shadow-lg shadow-red-600/20">Final Purge</button>
+                  <button onClick={handleDeleteDeck} className="px-4 py-1.5 rounded-full bg-red-600 text-white text-[8px] font-black uppercase italic shadow-lg shadow-red-600/20">Confirm Void</button>
                 </div>
               )}
            </div>

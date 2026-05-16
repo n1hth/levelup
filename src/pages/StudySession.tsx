@@ -93,7 +93,7 @@ export function StudySession() {
 
   return (
     <div className="fixed inset-0 bg-[#020617] text-white flex flex-col font-sans overflow-hidden z-[100]">
-      {/* Neural Core Background */}
+      {/* Dungeon Floor Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,211,238,0.08),transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none" />
 
@@ -110,14 +110,14 @@ export function StudySession() {
           <div className="h-12 w-[1px] bg-white/10" />
 
           <div>
-             <div className="text-[10px] font-black uppercase tracking-[0.6em] text-cyan-400 italic mb-2 pr-1 text-shadow-glow">Synaptic Extraction</div>
-             <h1 className="text-3xl font-black italic tracking-tighter leading-none uppercase truncate max-w-[300px]">{deck?.title || 'FRAGMENTED CORE'}</h1>
+             <div className="text-[10px] font-black uppercase tracking-[0.6em] text-cyan-400 italic mb-2 pr-1 text-shadow-glow">Gate Clearing</div>
+             <h1 className="text-3xl font-black italic tracking-tighter leading-none uppercase truncate max-w-[300px]">{deck?.title || 'MEMORY GATE'}</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-12">
           <div className="flex flex-col items-end">
-             <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-3 pr-1">Extraction Progress</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-3 pr-1">Clearing Progress</div>
              <div className="flex items-center gap-6">
                 <div className="w-64 h-2.5 rounded-full bg-white/[0.02] border border-white/5 p-0.5 overflow-hidden">
                   <motion.div
@@ -133,13 +133,13 @@ export function StudySession() {
           <div className="h-12 w-[1px] bg-white/10" />
 
           <div className="flex flex-col items-end">
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 pr-1 text-shadow-glow">Total Yield</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 pr-1 text-shadow-glow">Mana Yield</div>
             <div className="text-3xl font-black italic text-white tracking-widest tabular-nums">+{sessionXp} <span className="text-white/20">XP</span></div>
           </div>
         </div>
       </header>
 
-      {/* Main Learning Chamber */}
+      {/* Main Trial Grounds */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-12 max-w-4xl mx-auto w-full">
         <AnimatePresence mode="wait">
           {currentCard ? (
@@ -179,14 +179,14 @@ export function StudySession() {
                          <div className="flex gap-2">
                            {[...Array(3)].map((_, i) => (
                              <motion.div 
-                               key={i}
-                               animate={{ opacity: [0.2, 1, 0.2] }}
-                               transition={{ repeat: Infinity, duration: 2, delay: i * 0.3 }}
-                               className="w-1.5 h-1.5 rounded-full bg-cyan-400"
+                                key={i}
+                                animate={{ opacity: [0.2, 1, 0.2] }}
+                                transition={{ repeat: Infinity, duration: 2, delay: i * 0.3 }}
+                                className="w-1.5 h-1.5 rounded-full bg-cyan-400"
                              />
                            ))}
                          </div>
-                         <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.6em] italic animate-pulse">Tap card or space to unlock neural map</span>
+                         <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.6em] italic animate-pulse">Tap card or space to decode rune</span>
                       </div>
                     </motion.div>
                   ) : (
@@ -198,7 +198,7 @@ export function StudySession() {
                       className="w-full h-full"
                     >
                       <div className="flex flex-col items-center gap-6">
-                         <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic pr-1">Verify Recognition Depth</span>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic pr-1">Assess Rune Mastery</span>
                          <RatingBar onRate={handleRate} />
                       </div>
                     </motion.div>
@@ -212,7 +212,7 @@ export function StudySession() {
                  <Zap className="animate-pulse text-cyan-400" size={64} />
                  <div className="absolute inset-0 bg-cyan-400/20 blur-2xl animate-pulse" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Initializing Pulse Stream...</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Initializing Mana Stream...</p>
             </div>
           )}
         </AnimatePresence>
@@ -249,8 +249,8 @@ export function StudySession() {
       </div>
       
       <div className="fixed bottom-12 right-12 opacity-10 pointer-events-none text-right">
-        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">CORE STATUS</div>
-        <div className="text-xs font-black text-white italic tracking-widest">STABLE / SYNCED</div>
+        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">GATE STATUS</div>
+        <div className="text-xs font-black text-white italic tracking-widest">STABLE / CLEARED</div>
       </div>
     </div>
   );
@@ -258,10 +258,10 @@ export function StudySession() {
 
 function RatingBar({ onRate }: { onRate: (rating: Rating) => void }) {
   const ratings: { value: Rating; label: string; color: string; glow: string }[] = [
-    { value: 0, label: 'VOID', color: 'hover:bg-red-500', glow: 'group-hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]' },
-    { value: 1, label: 'HAZY', color: 'hover:bg-orange-500', glow: 'group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]' },
+    { value: 0, label: 'FAILED', color: 'hover:bg-red-500', glow: 'group-hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]' },
+    { value: 1, label: 'VAGUE', color: 'hover:bg-orange-500', glow: 'group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]' },
     { value: 2, label: 'STABLE', color: 'hover:bg-cyan-500', glow: 'group-hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]' },
-    { value: 3, label: 'PERFECT', color: 'hover:bg-emerald-500', glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]' },
+    { value: 3, label: 'FLAWLESS', color: 'hover:bg-emerald-500', glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]' },
   ];
 
   return (

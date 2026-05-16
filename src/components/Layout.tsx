@@ -48,7 +48,7 @@ export function Layout() {
                     </div>
                   </div>
                   <div>
-                    <h2 className="text-[10px] font-black text-white/40 italic tracking-widest uppercase leading-none mb-1">Cortex Rank</h2>
+                    <h2 className="text-[10px] font-black text-white/40 italic tracking-widest uppercase leading-none mb-1">Hunter Rank</h2>
                     <h2 className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">
                       {rank.split(' ')[0]} <span className="text-cyan-400">CLASS</span>
                     </h2>
