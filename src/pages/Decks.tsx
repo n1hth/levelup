@@ -49,29 +49,28 @@ export function Decks() {
         className="max-w-6xl mx-auto space-y-12 pb-24 px-4"
       >
         {/* Refined Header */}
-        <header className="flex items-center justify-between pt-12 border-b border-white/5 pb-8">
+        <header className="flex items-center justify-between pt-12 border-b border-white/5 pb-8 px-2 sm:px-0">
            <div>
              <div className="flex items-center gap-3 mb-2 text-white/20">
                 <LayoutGrid size={14} className="hidden sm:block" />
-                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.4em] italic">Knowledge Repository</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Knowledge Repository</span>
              </div>
-             <h1 className="text-3xl sm:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
+             <h1 className="text-2xl sm:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
                Neural Archives
              </h1>
            </div>
            
            <button
              onClick={() => setShowCreate(true)}
-             className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group font-black italic text-[9px] sm:text-[10px] uppercase tracking-widest shrink-0"
+             className="flex items-center justify-center w-12 h-12 sm:w-auto sm:h-auto sm:px-6 sm:py-3 bg-white text-black rounded-full sm:rounded-full hover:bg-cyan-400 transition-all active:scale-95 group font-black italic text-[10px] uppercase tracking-widest shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)] sm:shadow-none"
            >
-             <Plus size={16} className="stroke-[3]" />
-             <span className="hidden sm:inline">Initialize Deck</span>
-             <span className="sm:hidden">New</span>
+             <Plus size={20} className="sm:size-4 stroke-[3]" />
+             <span className="hidden sm:inline sm:ml-3">Initialize Deck</span>
            </button>
         </header>
 
         {/* Search & Intelligence Controls */}
-        <section className="flex flex-col sm:flex-row gap-4">
+        <section className="flex flex-col sm:flex-row gap-4 px-2 sm:px-0">
           <div className="relative flex-1 group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" size={14} />
             <input
@@ -79,7 +78,7 @@ export function Decks() {
               placeholder="Query neural patterns..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-[10px] sm:text-[11px] font-black outline-none focus:border-white/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 italic uppercase tracking-widest"
+              className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-[11px] font-black outline-none focus:border-white/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 italic uppercase tracking-widest"
             />
           </div>
           
@@ -104,7 +103,7 @@ export function Decks() {
         </section>
 
         {/* Result Grid */}
-        <section>
+        <section className="px-2 sm:px-0">
           {state.decks.length === 0 ? (
             <motion.div variants={itemVariants}>
               <EmptyState onCreate={() => setShowCreate(true)} />
@@ -115,12 +114,12 @@ export function Decks() {
               <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic">Zero synchronization patterns matched</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pb-20">
+            <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pb-20">
               {filtered.map((deck, i) => (
                 <motion.div
                   variants={itemVariants}
                   key={deck.id}
-                  className="h-full"
+                  className="w-full sm:h-full"
                 >
                   <DeckCard
                     key={deck.id}
