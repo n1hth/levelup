@@ -53,10 +53,10 @@ export function Decks() {
            <div>
              <div className="flex items-center gap-3 mb-2 text-white/20">
                 <LayoutGrid size={14} className="hidden sm:block" />
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">System Storage</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Storage</span>
              </div>
              <h1 className="text-2xl sm:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
-               Memory Gates
+               Decks
              </h1>
            </div>
            
@@ -74,7 +74,7 @@ export function Decks() {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-cyan-400 transition-colors" size={14} />
             <input
               type="text"
-              placeholder="Search memory gates..."
+              placeholder="Search decks..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-[11px] font-black outline-none focus:border-white/20 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/5 italic uppercase tracking-widest"
@@ -92,7 +92,7 @@ export function Decks() {
                     filterSubject ? "text-cyan-400" : "text-white/40"
                   )}
                 >
-                  <option value="" className="bg-[#050608]">All Classes</option>
+                  <option value="" className="bg-[#050608]">All Subjects</option>
                   {subjects.map(s => <option key={s} value={s} className="bg-[#050608]">{s.toUpperCase()}</option>)}
                 </select>
                 <Filter size={12} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none" />
@@ -161,15 +161,15 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
           <div className="absolute inset-0 bg-cyan-400/5 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           <BookOpen size={40} className="text-white/5 group-hover:text-cyan-400/40 transition-colors relative z-10" />
         </motion.div>
-        <h2 className="text-3xl font-black text-white tracking-tighter mb-4 uppercase italic leading-none">Vault <span className="text-white/20">Empty</span></h2>
+        <h2 className="text-3xl font-black text-white tracking-tighter mb-4 uppercase italic leading-none">No <span className="text-white/20">Decks</span></h2>
         <p className="text-[11px] font-black text-white/20 leading-relaxed uppercase tracking-[0.2em] italic mb-12 max-w-sm">
-          No memory gates have been opened yet. Create your first gate to begin your progression.
+          You haven't created any study decks yet. Start your journey by creating your first deck.
         </p>
         <button 
           onClick={onCreate} 
           className="px-10 py-5 bg-white text-black rounded-full hover:bg-cyan-400 transition-all font-black italic tracking-widest text-[10px] uppercase shadow-2xl active:scale-95 flex items-center gap-4"
         >
-          <Sparkles size={16} fill="currentColor" /> Open New Gate
+          <Sparkles size={16} fill="currentColor" /> Create New Deck
         </button>
       </motion.div>
   );

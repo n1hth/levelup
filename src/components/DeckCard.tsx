@@ -71,7 +71,7 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
 
           <div className="space-y-3 bg-black/40 p-5 rounded-[1.75rem] border border-white/5 shadow-inner mb-8">
             <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.4em] italic mb-1">
-              <span className="text-white/20">Clear Progress</span>
+              <span className="text-white/20">Mastery</span>
               <span className="text-cyan-400">{stats.mastery}%</span>
             </div>
             <div className="h-1.5 w-full bg-white/[0.03] rounded-full overflow-hidden border border-white/5 p-[1px]">
@@ -84,7 +84,7 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
           <div className="flex items-center justify-between pt-6 border-t border-white/5">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic">
-                <BookOpen size={12} className="text-cyan-400/50" /> {stats.total} Cores
+                <BookOpen size={12} className="text-cyan-400/50" /> {stats.total} Cards
               </div>
             </div>
             <div className="w-9 h-9 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center text-white/10 shadow-inner">
@@ -108,17 +108,17 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
              {stats.due > 0 ? (
                <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-400/10 border border-cyan-400/20 rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest italic">{stats.due} Cores</span>
+                  <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest italic">{stats.due} Due</span>
                </div>
              ) : (
                <div className="px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-full">
-                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">Cleared</span>
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">Mastered</span>
                </div>
              )}
           </div>
 
           <div className="space-y-2 mb-8">
-             <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic block">{deck.subject || 'GENERAL CLASS'}</span>
+             <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic block">{deck.subject || 'GENERAL SUBJECT'}</span>
              <h3 className="font-black text-2xl text-white tracking-tighter uppercase leading-none truncate italic group-hover:text-cyan-400 transition-colors">
                {deck.title}
              </h3>
@@ -140,7 +140,7 @@ export function DeckCard({ deck, stats, onClick, index = 0 }: DeckCardProps) {
            <div className="flex items-center justify-between pt-4 border-t border-white/5">
               <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2 text-[8px] font-black text-white/20 uppercase tracking-widest italic">
-                    <BookOpen size={12} className="opacity-40" /> {stats.total} CORES
+                    <BookOpen size={12} className="opacity-40" /> {stats.total} CARDS
                  </div>
                  {deck.lastStudiedAt && (
                    <div className="flex items-center gap-2 text-[8px] font-black text-white/10 uppercase tracking-widest italic">

@@ -46,13 +46,13 @@ export function DeckDetail() {
             onClick={() => navigate('/decks')}
             className="flex items-center gap-3 text-[9px] font-black text-white/30 uppercase tracking-[0.4em] hover:text-white transition-colors italic"
           >
-            <ArrowLeft size={14} /> Back to Vault
+            <ArrowLeft size={14} /> Back to Decks
           </button>
           
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
-                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-widest italic">Gate Active</span>
+                <span className="text-[8px] font-black text-cyan-400/80 uppercase tracking-widest italic">Live Feed</span>
              </div>
           </div>
         </nav>
@@ -63,10 +63,10 @@ export function DeckDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-4">
                 <div className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest italic border bg-white/5 border-white/10 text-white")}>
-                  {deck.subject || 'General Class'}
+                  {deck.subject || 'General Subject'}
                 </div>
                 <div className="h-px w-8 bg-white/10" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Knowledge Cores</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Cards</span>
               </div>
               
               <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tighter italic uppercase leading-none mb-6">
@@ -97,17 +97,17 @@ export function DeckDetail() {
         {/* Diagnostics Grid */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-6">
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cores</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cards</p>
              <p className="text-2xl font-black text-white tracking-tighter italic">{stats.total}</p>
            </div>
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Runes Due</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Due Today</p>
              <p className={cn("text-2xl font-black tracking-tighter italic", stats.due > 0 ? "text-cyan-400" : "text-white/40")}>
                {stats.due}
              </p>
            </div>
            <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Clear Progress</p>
+             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Mastery</p>
              <p className="text-2xl font-black text-white tracking-tighter italic">{stats.mastery}%</p>
            </div>
            <div className="flex items-end pb-1">
@@ -131,12 +131,12 @@ export function DeckDetail() {
                className="w-full h-16 rounded-2xl bg-white text-black font-black text-[11px] uppercase tracking-[0.5em] italic flex items-center justify-center gap-4 shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-cyan-400 transition-colors"
              >
                <Zap size={18} fill="currentColor" />
-               Enter Gate Run
+               Start Study Raid
              </motion.button>
            ) : (
              <div className="w-full h-16 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-center gap-4 group">
                 <div className="w-2 h-2 rounded-full bg-cyan-400/20 group-hover:bg-cyan-400 transition-colors" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">Gate Cleared</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">Deck Mastered</span>
              </div>
            )}
         </section>
@@ -145,21 +145,21 @@ export function DeckDetail() {
         <section className="space-y-6 pt-12">
           <div className="flex items-center justify-between">
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic flex items-center gap-3">
-              <BookOpen size={14} className="opacity-40" /> Rune Explorer
+              <BookOpen size={14} className="opacity-40" /> Card Explorer
             </h2>
             <button
               onClick={() => setShowAddCard(true)}
               className="flex items-center gap-3 px-5 py-2.5 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group"
             >
               <Plus size={14} className="stroke-[3px]" />
-              <span className="text-[9px] font-black tracking-[0.1em] uppercase italic">Add Rune</span>
+              <span className="text-[9px] font-black tracking-[0.1em] uppercase italic">Add Card</span>
             </button>
           </div>
 
           <div className="grid gap-3">
             {cards.length === 0 ? (
               <div className="py-20 text-center border border-dashed border-white/10 rounded-3xl">
-                <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic">Awaiting first rune infusion</p>
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] italic">No cards added to this deck</p>
               </div>
             ) : (
               cards.map((card, i) => (
@@ -179,7 +179,7 @@ export function DeckDetail() {
                        </span>
                        {card.lastReviewedAt && (
                          <span className="text-[8px] text-white/10 font-black uppercase tracking-[0.1em] italic">
-                           Last Active {getRelativeTime(card.lastReviewedAt)}
+                           Reviewed {getRelativeTime(card.lastReviewedAt)}
                          </span>
                        )}
                     </div>
@@ -204,7 +204,7 @@ export function DeckDetail() {
            <div className="flex items-center justify-between opacity-40 hover:opacity-100 transition-opacity">
               <div className="flex items-center gap-4 text-red-500/80">
                  <Settings2 size={16} />
-                 <span className="text-[9px] font-black uppercase tracking-[0.3em] italic">Void Protocol</span>
+                 <span className="text-[9px] font-black uppercase tracking-[0.3em] italic">Danger Zone</span>
               </div>
               
               {!confirmDelete ? (
@@ -212,13 +212,13 @@ export function DeckDetail() {
                   onClick={() => setConfirmDelete(true)}
                   className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] hover:text-red-500 transition-colors italic underline underline-offset-4 decoration-white/5"
                 >
-                  Initiate Expunge
+                  Delete Deck
                 </button>
               ) : (
                 <div className="flex items-center gap-4">
-                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest italic animate-pulse">Execute?</span>
+                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest italic animate-pulse">Confirm?</span>
                   <button onClick={() => setConfirmDelete(false)} className="text-[8px] font-black text-white/40 uppercase italic">Abort</button>
-                  <button onClick={handleDeleteDeck} className="px-4 py-1.5 rounded-full bg-red-600 text-white text-[8px] font-black uppercase italic shadow-lg shadow-red-600/20">Confirm Void</button>
+                  <button onClick={handleDeleteDeck} className="px-4 py-1.5 rounded-full bg-red-600 text-white text-[8px] font-black uppercase italic shadow-lg shadow-red-600/20">Confirm Delete</button>
                 </div>
               )}
            </div>

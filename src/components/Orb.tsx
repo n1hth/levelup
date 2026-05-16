@@ -27,11 +27,11 @@ export type OrbState = 'dormant' | 'idle' | 'active' | 'peaked' | 'depleted' | '
 const ARC_RADIUS = 65; 
 const ARC_THICKNESS = 4;
 const SEGMENTS = [
-  { path: '/home', label: 'SYSTEM', icon: <Diamond size={16} />, angle: 210 },
-  { path: '/focus', label: 'MANA', icon: <Circle size={16} className="stroke-[1.5]" />, angle: 240 },
-  { path: '/decks', label: 'VAULT', icon: <Layers size={16} />, angle: 270 },
+  { path: '/home', label: 'HOME', icon: <Diamond size={16} />, angle: 210 },
+  { path: '/focus', label: 'FOCUS', icon: <Circle size={16} className="stroke-[1.5]" />, angle: 240 },
+  { path: '/decks', label: 'DECKS', icon: <Layers size={16} />, angle: 270 },
   { path: '/battle', label: 'ARENA', icon: <Swords size={16} />, angle: 300 },
-  { path: '/social', label: 'GUILD', icon: <Share2 size={16} />, angle: 330 },
+  { path: '/social', label: 'SOCIAL', icon: <Share2 size={16} />, angle: 330 },
 ];
 
 export interface OrbProps {

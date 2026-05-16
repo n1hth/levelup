@@ -110,14 +110,14 @@ export function StudySession() {
           <div className="h-12 w-[1px] bg-white/10" />
 
           <div>
-             <div className="text-[10px] font-black uppercase tracking-[0.6em] text-cyan-400 italic mb-2 pr-1 text-shadow-glow">Gate Clearing</div>
-             <h1 className="text-3xl font-black italic tracking-tighter leading-none uppercase truncate max-w-[300px]">{deck?.title || 'MEMORY GATE'}</h1>
+             <div className="text-[10px] font-black uppercase tracking-[0.6em] text-cyan-400 italic mb-2 pr-1 text-shadow-glow">Study Raid</div>
+             <h1 className="text-3xl font-black italic tracking-tighter leading-none uppercase truncate max-w-[300px]">{deck?.title || 'STUDY DECK'}</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-12">
           <div className="flex flex-col items-end">
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-3 pr-1">Clearing Progress</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-3 pr-1">Raid Progress</div>
              <div className="flex items-center gap-6">
                 <div className="w-64 h-2.5 rounded-full bg-white/[0.02] border border-white/5 p-0.5 overflow-hidden">
                   <motion.div
@@ -133,7 +133,7 @@ export function StudySession() {
           <div className="h-12 w-[1px] bg-white/10" />
 
           <div className="flex flex-col items-end">
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 pr-1 text-shadow-glow">Mana Yield</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 pr-1 text-shadow-glow">XP Earned</div>
             <div className="text-3xl font-black italic text-white tracking-widest tabular-nums">+{sessionXp} <span className="text-white/20">XP</span></div>
           </div>
         </div>
@@ -186,7 +186,7 @@ export function StudySession() {
                              />
                            ))}
                          </div>
-                         <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.6em] italic animate-pulse">Tap card or space to decode rune</span>
+                         <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.6em] italic animate-pulse">Tap card or space to flip card</span>
                       </div>
                     </motion.div>
                   ) : (
@@ -198,7 +198,7 @@ export function StudySession() {
                       className="w-full h-full"
                     >
                       <div className="flex flex-col items-center gap-6">
-                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic pr-1">Assess Rune Mastery</span>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] italic pr-1">Rate Your Mastery</span>
                          <RatingBar onRate={handleRate} />
                       </div>
                     </motion.div>
@@ -212,7 +212,7 @@ export function StudySession() {
                  <Zap className="animate-pulse text-cyan-400" size={64} />
                  <div className="absolute inset-0 bg-cyan-400/20 blur-2xl animate-pulse" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Initializing Mana Stream...</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Initializing Raid...</p>
             </div>
           )}
         </AnimatePresence>
@@ -235,7 +235,7 @@ export function StudySession() {
 
       {/* Decorative HUD Elements */}
       <div className="fixed bottom-12 left-12 opacity-10 pointer-events-none">
-        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">NEURAL LOAD</div>
+        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">SYSTEM LOAD</div>
         <div className="flex gap-1 h-4 items-end">
            {[...Array(24)].map((_, i) => (
              <motion.div 
@@ -249,8 +249,8 @@ export function StudySession() {
       </div>
       
       <div className="fixed bottom-12 right-12 opacity-10 pointer-events-none text-right">
-        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">GATE STATUS</div>
-        <div className="text-xs font-black text-white italic tracking-widest">STABLE / CLEARED</div>
+        <div className="text-[8px] font-black text-white uppercase tracking-[0.5em] mb-2 italic">RAID STATUS</div>
+        <div className="text-xs font-black text-white italic tracking-widest">STABLE / ACTIVE</div>
       </div>
     </div>
   );
@@ -258,10 +258,10 @@ export function StudySession() {
 
 function RatingBar({ onRate }: { onRate: (rating: Rating) => void }) {
   const ratings: { value: Rating; label: string; color: string; glow: string }[] = [
-    { value: 0, label: 'FAILED', color: 'hover:bg-red-500', glow: 'group-hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]' },
-    { value: 1, label: 'VAGUE', color: 'hover:bg-orange-500', glow: 'group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]' },
-    { value: 2, label: 'STABLE', color: 'hover:bg-cyan-500', glow: 'group-hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]' },
-    { value: 3, label: 'FLAWLESS', color: 'hover:bg-emerald-500', glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]' },
+    { value: 0, label: 'AGAIN', color: 'hover:bg-red-500', glow: 'group-hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]' },
+    { value: 1, label: 'HARD', color: 'hover:bg-orange-500', glow: 'group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]' },
+    { value: 2, label: 'GOOD', color: 'hover:bg-cyan-500', glow: 'group-hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]' },
+    { value: 3, label: 'EASY', color: 'hover:bg-emerald-500', glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]' },
   ];
 
   return (

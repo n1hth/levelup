@@ -117,7 +117,7 @@ export function Dashboard() {
           </div>
 
           <div className="w-full max-w-[240px] text-center">
-            <h3 className="text-sm font-black text-white italic tracking-widest uppercase mb-1">Neural Integration</h3>
+            <h3 className="text-sm font-black text-white italic tracking-widest uppercase mb-1">Daily Progress</h3>
             <div className="flex items-center justify-center gap-2">
               <div className="h-px flex-1 bg-white/[0.05]" />
               <span className="text-[10px] font-black italic text-cyan-400 tabular-nums">{Math.round(ringProgress * 100)}% Complete</span>
@@ -126,12 +126,12 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Protocols — MOVED TO SECOND POSITION */}
+        {/* Quests — MOVED TO SECOND POSITION */}
         <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01]">
           <div className="flex items-center justify-between mb-4 px-1">
              <div className="flex items-center gap-2">
                <Target size={14} className="text-cyan-400" />
-               <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">Daily Protocols</h3>
+               <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">Daily Quests</h3>
              </div>
              <span className="text-[9px] font-black text-cyan-400 tabular-nums">[{missionsComplete}/3]</span>
           </div>
@@ -172,7 +172,7 @@ export function Dashboard() {
             </div>
             <div>
               <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Focus</h3>
-              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">Pulse active</p>
+              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">Study sessions</p>
             </div>
           </button>
         </motion.div>
@@ -186,7 +186,7 @@ export function Dashboard() {
               <BookOpen size={20} className="text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Cores</h3>
+              <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Decks</h3>
               <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">{allDue} Due</p>
             </div>
           </button>
@@ -195,9 +195,9 @@ export function Dashboard() {
         {/* Stats Row */}
         <motion.div variants={itemVariants} className="col-span-12 system-panel p-5 modular-card bg-white/[0.01] flex justify-between items-center">
           {[
-            { value: todaySessions, label: 'RUNS', icon: <Activity className="text-cyan-400" size={14} /> },
+            { value: todaySessions, label: 'SESSIONS', icon: <Activity className="text-cyan-400" size={14} /> },
             { value: todayFocusMin, label: 'MINS', icon: <Clock className="text-blue-400" size={14} /> },
-            { value: todayCards, label: 'SYNC', icon: <BookOpen className="text-emerald-400" size={14} /> },
+            { value: todayCards, label: 'CARDS', icon: <BookOpen className="text-emerald-400" size={14} /> },
             { value: todayXp, label: 'XP', icon: <Zap className="text-yellow-400" size={14} /> },
           ].map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-1">
