@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, Send, Trash2, AtSign } from 'lucide-react';
+import { ChevronRight, Send, Trash2, AtSign, Check, CheckCheck } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';
@@ -43,8 +43,8 @@ function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number
 export function Chat() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { state, getMessages, sendMessage, setOrbHidden, getFriends } = useApp();
-  const [messages, setMessages] = useState<{ id: string; sender_id: string; content: string; created_at: string }[]>([]);
+  const { state, getMessages, sendMessage, setOrbHidden, getFriends, markMessagesAsRead } = useApp();
+  const [messages, setMessages] = useState<{ id: string; sender_id: string; receiver_id: string; content: string; created_at: string; is_read: boolean }[]>([]);
   const [dmInput, setDmInput] = useState('');
   const [friend, setFriend] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -69,19 +69,28 @@ export function Chat() {
 
       getMessages(userId).then(data => {
         setMessages(data || []);
+        markMessagesAsRead(userId);
       });
 
       const channel = supabase
         .channel(`messages:${userId}`)
         .on('postgres_changes', { 
-          event: 'INSERT', 
+          event: '*', 
           schema: 'public', 
           table: 'messages'
         }, (payload) => {
-          const newMsg = payload.new as any;
-          if ((newMsg.sender_id === userId && newMsg.receiver_id === state.user?.id) || 
-              (newMsg.sender_id === state.user?.id && newMsg.receiver_id === userId)) {
-            setMessages(prev => [...prev, newMsg]);
+          if (payload.eventType === 'INSERT') {
+            const newMsg = payload.new as any;
+            if ((newMsg.sender_id === userId && newMsg.receiver_id === state.user?.id) || 
+                (newMsg.sender_id === state.user?.id && newMsg.receiver_id === userId)) {
+              setMessages(prev => [...prev, newMsg]);
+              if (newMsg.sender_id === userId) {
+                markMessagesAsRead(userId);
+              }
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMsg = payload.new as any;
+            setMessages(prev => prev.map(msg => msg.id === updatedMsg.id ? updatedMsg : msg));
           }
         })
         .subscribe();
@@ -161,9 +170,18 @@ export function Chat() {
               )}>
                 {msg.content}
               </div>
-              <span className="mt-1.5 text-[7px] font-black text-white/10 uppercase tracking-widest italic">
-                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <div className={cn("mt-1.5 flex items-center gap-1.5", isMe ? "justify-end" : "justify-start")}>
+                <span className="text-[7px] font-black text-white/10 uppercase tracking-widest italic">
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                {isMe && (
+                  msg.is_read ? (
+                    <CheckCheck size={10} className="text-cyan-400" />
+                  ) : (
+                    <Check size={10} className="text-white/20" />
+                  )
+                )}
+              </div>
             </motion.div>
           );
         })}

@@ -1398,16 +1398,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (profError) throw profError;
 
+      // Fetch last messages for these friends
+      const messagePromises = friendIds.map(friendId => 
+        supabase
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${state.user!.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${state.user!.id})`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+      );
+      
+      const messageResults = await Promise.allSettled(messagePromises);
+      const lastMessages = messageResults.map(r => r.status === 'fulfilled' ? r.value.data : null).filter(Boolean);
+
       return friendships.map(f => {
         const friendId = f.user_id === state.user!.id ? f.friend_id : f.user_id;
         const profile = friendProfiles?.find(p => p.id === friendId);
+        const lastMessage = lastMessages.find(m => m && (m.sender_id === friendId || m.receiver_id === friendId));
+
         return {
           friendshipId: f.id,
           id: friendId,
           name: profile?.name || 'Unknown User',
           status: f.status,
           total_xp: profile?.total_xp || 0,
-          isIncoming: f.friend_id === state.user!.id
+          isIncoming: f.friend_id === state.user!.id,
+          last_message: lastMessage || null
         };
       });
     } catch (err) {
@@ -1483,6 +1500,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Fetch messages failed:", err);
       return [];
+    }
+  }, [state.user]);
+
+  const markMessagesAsRead = useCallback(async (senderId: string) => {
+    if (!state.user) return;
+    try {
+      // Mark messages where I am the receiver and they are the sender
+      await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('receiver_id', state.user.id)
+        .eq('sender_id', senderId)
+        .eq('is_read', false);
+    } catch (err) {
+      console.error("Failed to mark messages as read:", err);
     }
   }, [state.user]);
 

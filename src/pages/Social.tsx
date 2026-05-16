@@ -18,6 +18,20 @@ import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
+const formatTimeAgo = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'now';
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
+};
+
 type Tab = 'friends' | 'leaderboard' | 'community';
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
@@ -314,7 +328,10 @@ export function Social() {
               <h3 className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] italic">Direct Signals</h3>
               {friends.filter(f => f.status === 'accepted').length > 0 ? (
                 <div className="space-y-1">
-                  {friends.filter(f => f.status === 'accepted').map((friend) => (
+                  {friends.filter(f => f.status === 'accepted').map((friend) => {
+                    const isUnread = friend.last_message && friend.last_message.receiver_id === state.user?.id && !friend.last_message.is_read;
+                    
+                    return (
                     <motion.button 
                       key={friend.id}
                       onClick={() => navigate(`/social/chat/${friend.id}`)}
@@ -328,21 +345,23 @@ export function Social() {
                           <span className="text-sm font-black text-white uppercase italic tracking-tight group-hover:text-cyan-400 transition-colors">
                             {friend.name}
                           </span>
+                          {friend.last_message && (
+                            <span className="text-[9px] font-black text-white/40 uppercase italic">
+                              {formatTimeAgo(friend.last_message.created_at)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-black text-white/30 uppercase italic truncate pr-4">
-                            SECURE CONNECTION
+                          <p className={cn("text-[10px] font-black uppercase italic truncate pr-4", isUnread ? "text-white" : "text-white/30")}>
+                            {friend.last_message ? friend.last_message.content : "Tap to start conversation..."}
                           </p>
-                          {friend.streak && friend.streak > 0 && (
-                            <div className="flex items-center gap-1 text-orange-500/50">
-                              <Flame size={10} fill="currentColor" />
-                              <span className="text-[9px] font-black">{friend.streak}</span>
-                            </div>
+                          {isUnread && (
+                            <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
                           )}
                         </div>
                       </div>
                     </motion.button>
-                  ))}
+                  )})}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center opacity-20">
