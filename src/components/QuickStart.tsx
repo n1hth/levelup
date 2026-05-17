@@ -60,8 +60,8 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   // Phase 7: Auto-redirect after grand finale
   useEffect(() => {
     if (phase === 7) {
-      // Faster bypass availability
-      const bypassTimer = setTimeout(() => setCanBypass(true), 2000);
+      // Let bypass appear after 3.5s
+      const bypassTimer = setTimeout(() => setCanBypass(true), 3500);
 
       const finalize = async () => {
         try {
@@ -110,8 +110,8 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
         }
       };
 
-      // Faster auto-finalize
-      const timer = setTimeout(finalize, 2000);
+      // Cinematic slow-read timeout (6.5 seconds)
+      const timer = setTimeout(finalize, 6500);
       return () => {
         clearTimeout(timer);
         clearTimeout(bypassTimer);
@@ -759,17 +759,17 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             key="phase7"
             initial={{ backgroundColor: '#000' }}
             animate={{ backgroundColor: '#000' }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full relative"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-8 overflow-y-auto"
           >
             {/* Particle Explosion Mockup (Radiating Rings) */}
-            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
                 {[...Array(5)].map((_, i) => (
                   <motion.div
                     key={i}
                     initial={{ width: 0, height: 0, opacity: 0.8 }}
                     animate={{ width: '200vw', height: '200vw', opacity: 0 }}
-                    transition={{ duration: 3, delay: i * 0.2, ease: "easeOut" }}
-                    className="absolute rounded-full border border-blue-400/50"
+                    transition={{ duration: 4, delay: i * 0.25, ease: "easeOut" }}
+                    className="absolute rounded-full border border-blue-400/30"
                   />
                 ))}
             </div>
@@ -777,18 +777,20 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             <motion.h1
               initial={{ scale: 0.5, opacity: 0, filter: 'blur(20px)' }}
               animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="text-7xl font-black italic tracking-tighter text-white mb-6 text-center px-8"
+              transition={{ duration: 1.2, delay: 0.5 }}
+              className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter text-white mb-4 md:mb-6 text-center px-4"
             >
               HUNTER <br />
-              <span className="text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.5)]">{formData.name || 'OPERATOR'}</span>
+              <span className="text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.5)] block break-words max-w-full">
+                {formData.name || 'OPERATOR'}
+              </span>
             </motion.h1>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.5 }}
-              className="flex items-center gap-4 text-xs font-black tracking-[0.4em] text-cyan-400/50 uppercase italic"
+              transition={{ delay: 1.8 }}
+              className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] text-cyan-400/50 uppercase italic px-4 text-center"
             >
               <span>RANK E</span>
               <div className="w-1 h-1 rounded-full bg-cyan-400" />
@@ -800,12 +802,12 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             <motion.div 
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
-               transition={{ delay: 2.5 }}
-               className="mt-20 flex flex-col items-center gap-6"
+               transition={{ delay: 2.8 }}
+               className="mt-10 md:mt-20 flex flex-col items-center gap-6 px-4"
             >
-               <div className="flex items-center gap-4">
-                 <div className="w-6 h-6 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
-                 <span className="text-[10px] font-black tracking-[0.5em] text-cyan-400/30 uppercase italic">Synchronizing Neural Interface...</span>
+               <div className="flex items-center gap-3 sm:gap-4 text-center">
+                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin shrink-0" />
+                 <span className="text-[9px] sm:text-[10px] font-black tracking-[0.4em] sm:tracking-[0.5em] text-cyan-400/30 uppercase italic">Synchronizing Neural Interface...</span>
                </div>
 
                {canBypass && (
@@ -814,7 +816,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                    animate={{ opacity: 1, scale: 1 }}
                    whileHover={{ scale: 1.05, color: '#fff' }}
                    onClick={forceBypass}
-                   className="px-6 py-3 border border-white/5 bg-white/[0.02] rounded-xl text-[9px] font-black tracking-[0.3em] text-white/20 hover:border-cyan-400/30 transition-all uppercase italic"
+                   className="px-5 py-2.5 sm:px-6 sm:py-3 border border-white/5 bg-white/[0.02] rounded-xl text-[8px] sm:text-[9px] font-black tracking-[0.3em] text-white/20 hover:border-cyan-400/30 transition-all uppercase italic"
                  >
                    System Override &gt;&gt;
                  </motion.button>
