@@ -51,13 +51,14 @@ function oklch(l: number, c: number, h: number, a: number = 1): string {
  */
 export function getOrbColors(hue: number, state: OrbState): OrbColorPalette {
   // State-dependent lightness and chroma modifiers
+  // Increased lightness (l) and chroma (c) for higher saturation and self-luminous glow
   const stateParams: Record<OrbState, { l: number; c: number; glowOpacity: number }> = {
-    dormant:  { l: 0.45, c: 0.08, glowOpacity: 0.15 },
-    idle:     { l: 0.70, c: 0.18, glowOpacity: 0.40 },
-    active:   { l: 0.78, c: 0.22, glowOpacity: 0.65 },
-    peaked:   { l: 0.85, c: 0.25, glowOpacity: 0.85 },
-    depleted: { l: 0.35, c: 0.04, glowOpacity: 0.08 },
-    evolving: { l: 0.90, c: 0.28, glowOpacity: 1.00 },
+    dormant:  { l: 0.50, c: 0.10, glowOpacity: 0.15 },
+    idle:     { l: 0.76, c: 0.24, glowOpacity: 0.50 },
+    active:   { l: 0.82, c: 0.28, glowOpacity: 0.75 },
+    peaked:   { l: 0.88, c: 0.28, glowOpacity: 0.90 },
+    depleted: { l: 0.40, c: 0.06, glowOpacity: 0.08 },
+    evolving: { l: 0.92, c: 0.28, glowOpacity: 1.00 },
   };
 
   const { l, c, glowOpacity } = stateParams[state];
@@ -65,19 +66,19 @@ export function getOrbColors(hue: number, state: OrbState): OrbColorPalette {
   return {
     primary:   oklch(l, c, hue),
     glow:      oklch(l, c, hue, glowOpacity),
-    highlight: oklch(Math.min(l + 0.25, 0.97), c * 0.6, hue),
-    shadow:    oklch(Math.max(l - 0.3, 0.15), c * 0.5, hue),
-    muted:     oklch(0.45, 0.04, hue),
-    accent:    oklch(0.72, 0.20, hue),
+    highlight: oklch(Math.min(l + 0.25, 0.98), c * 0.4, hue),
+    shadow:    oklch(Math.max(l - 0.2, 0.25), c * 0.6, hue),
+    muted:     oklch(0.50, 0.06, hue),
+    accent:    oklch(0.76, 0.25, hue),
     gradient:  buildOrbGradient(hue, l, c),
   };
 }
 
 function buildOrbGradient(hue: number, l: number, c: number): string {
-  const highlight = oklch(Math.min(l + 0.28, 0.98), c * 0.4, hue);
+  const highlight = oklch(0.98, c * 0.3, hue);
   const mid       = oklch(l, c, hue);
-  const deep      = oklch(Math.max(l - 0.2, 0.2), c * 0.8, hue);
-  const core      = oklch(Math.max(l - 0.35, 0.1), c * 0.6, hue);
+  const deep      = oklch(Math.max(l - 0.15, 0.35), c * 0.9, hue);
+  const core      = oklch(Math.max(l - 0.25, 0.25), c * 0.7, hue);
 
   return `radial-gradient(circle at 30% 30%, ${highlight} 0%, ${mid} 35%, ${deep} 65%, ${core} 100%)`;
 }
@@ -125,14 +126,8 @@ export function getRankEvolution(rankTier: string): RankEvolution {
  * Get CSS filter string for rank-based blur/sharpness.
  */
 export function getRankBlur(evolution: RankEvolution): string {
-  switch (evolution) {
-    case 'formless':          return 'blur(2px)';
-    case 'smooth':            return 'blur(0px)';
-    case 'flowing':           return 'blur(0px)';
-    case 'crystalline-hints': return 'blur(0px) contrast(1.05)';
-    case 'crystalline':       return 'blur(0px) contrast(1.1) brightness(1.05)';
-    case 'transcendent':      return 'blur(0px) contrast(1.15) brightness(1.1)';
-  }
+  // Always return sharp blur(0px) to prevent the orb from looking low-res or blurry to users
+  return 'blur(0px)';
 }
 
 /**

@@ -176,8 +176,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
   const momentum = 1 + state.momentum * 0.1;
   const xp = getXpProgress();
 
-  // Heavenly Blue nav orb
-  const orbHue = 200;
+  // Heavenly Sea Blue nav orb
+  const orbHue = 220;
   const palette = useMemo(() => getOrbColors(orbHue, orbState), [orbHue, orbState]);
   const evolution = useMemo(() => getRankEvolution(rankTier), [rankTier]);
   const orbGradient = useMemo(() => getOrbGradient(orbHue, orbState, rankTier), [orbHue, orbState, rankTier]);
