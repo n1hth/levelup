@@ -48,7 +48,6 @@ export function Dashboard() {
     state, getLevel, getRank, getXpProgress,
     getTodayFocusTime, getTodaySessionCount, getTodayXp,
     getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards, getWeeklyInsights,
-    triggerRankUpCinematic,
   } = useApp();
 
   const level = getLevel();
@@ -109,16 +108,6 @@ export function Dashboard() {
             <p className="text-[7px] font-black text-white/30 tracking-[0.4em] uppercase italic mt-1">{motivation}</p>
           </div>
         </div>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={triggerRankUpCinematic}
-          className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black text-white hover:bg-white/10 transition-all uppercase tracking-[0.3em] flex items-center gap-3 active:scale-95"
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_cyan]" />
-          Initiate Rank Up Cinematic
-        </motion.button>
       </motion.div>
       {/* ═══ Main HUD (Rank & Progress) ═══ */}
       <div className="grid grid-cols-12 gap-8">
