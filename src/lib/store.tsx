@@ -255,12 +255,45 @@ function loadState(): AppState {
   } catch (e) {
     console.error('Failed to load state:', e);
   }
+
+  // Cookie-backed fallback for iOS Safari / Private Tabs
+  try {
+    const name = "levelup_backup_user=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    let userVal = null;
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1);
+      if (c.indexOf(name) === 0) {
+        userVal = c.substring(name.length, c.length);
+        break;
+      }
+    }
+    if (userVal) {
+      const parsedUser = JSON.parse(userVal);
+      return { ...defaultState, user: parsedUser };
+    }
+  } catch (e) {
+    console.error('Failed to load state cookie fallback:', e);
+  }
+
   return defaultState;
 }
 
 function saveState(state: AppState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    
+    // Cookie backup for critical onboarding state
+    if (state.user) {
+      const d = new Date();
+      d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = `levelup_backup_user=${encodeURIComponent(JSON.stringify(state.user))};${expires};path=/;SameSite=Lax;Secure`;
+    } else {
+      document.cookie = "levelup_backup_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;SameSite=Lax;Secure";
+    }
   } catch (e) {
     console.error('Failed to save state:', e);
   }
