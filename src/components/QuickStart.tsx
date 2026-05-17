@@ -180,9 +180,9 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   );
 
   return (
-    <div className="h-screen w-screen bg-black text-white overflow-hidden relative font-sans">
+    <div className="min-h-screen w-screen bg-black text-white overflow-y-auto overflow-x-hidden relative font-sans flex flex-col">
       {/* Background Ambience - MOVED TO TOP */}
-      <div className="absolute inset-0 pointer-events-none z-0">
+      <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-1/4 -left-1/4 w-full h-full bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-1/4 -right-1/4 w-full h-full bg-cyan-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
       </div>
@@ -207,7 +207,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             <motion.div 
               initial={{ width: 0 }}
@@ -248,7 +248,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8 text-center"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             {/* Pulsing Orb */}
             <div className="relative mb-20">
@@ -311,7 +311,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12"
           >
             <div className="w-full max-w-sm">
               <div className="text-center mb-12">
@@ -589,7 +589,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 overflow-y-auto"
           >
             <div className="w-full max-w-sm relative">
               <div className="text-center mb-12">
@@ -664,7 +664,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 overflow-y-auto"
           >
             <div className="w-full max-w-sm space-y-4">
               <div className="text-center mb-8">
@@ -718,7 +718,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-12 text-center"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
@@ -741,7 +741,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 2 }}
               onClick={() => setPhase(7)}
-              className="mt-20 group relative px-12 py-5 bg-white text-black font-black text-xs tracking-[0.3em] uppercase rounded-full hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] overflow-hidden"
+              className="mt-10 md:mt-20 group relative px-8 py-4 md:px-12 md:py-5 bg-white text-black font-black text-xs tracking-[0.3em] uppercase rounded-full hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] overflow-hidden"
             >
               <motion.div 
                 animate={{ opacity: [0.1, 0.4, 0.1] }}
