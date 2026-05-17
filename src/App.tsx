@@ -60,7 +60,7 @@ function AppContent() {
   }
 
   if (!state.user || !state.user.onboardingCompleted) {
-    const initialPhase = (session || state.user) ? 2.5 : 0;
+    const initialPhase = (session || state.user) ? 0 : 2;
     return <QuickStart initialPhase={initialPhase} />;
   }
 

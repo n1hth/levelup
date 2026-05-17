@@ -132,24 +132,47 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      if (authMode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              full_name: formData.name,
+      // 1. Try to sign in first
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) {
+        // If signIn fails with credentials mismatch or user not found, try to automatically sign them up!
+        const errMsg = signInError.message.toLowerCase();
+        if (errMsg.includes('invalid login credentials') || errMsg.includes('user not found') || errMsg.includes('does not exist')) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+          });
+          
+          if (signUpError) {
+            if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
+              throw new Error("Invalid access cipher for this Neural ID.");
             }
+            throw signUpError;
           }
-        });
-        if (error) throw error;
-        setPhase(2.5); // Go to Name Entry
+          
+          // Successful SignUp of a new user -> go to SYSTEM DETECTED (Phase 0)!
+          setPhase(0);
+        } else {
+          throw signInError;
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-        if (error) throw error;
+        // Successful SignIn of an existing user!
+        if (signInData?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', signInData.user.id)
+            .single();
+
+          if (!profile || !profile.onboarding_completed) {
+            // New user who registered but didn't finish onboarding -> start them at Phase 0!
+            setPhase(0);
+          }
+        }
       }
     } catch (err: any) {
       alert(err.message || "Authentication failed");
@@ -233,7 +256,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2 }}
-              onClick={() => setPhase(2)}
+              onClick={() => setPhase(2.5)}
               className="mt-12 text-[8px] font-black tracking-widest text-white/20 hover:text-white transition-colors"
             >
               SKIP INTRO
@@ -295,7 +318,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1 }}
-              onClick={() => setPhase(2)}
+              onClick={() => setPhase(2.5)}
               className="group relative px-10 py-5 overflow-hidden rounded-2xl bg-blue-600 text-white font-black text-xs tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -323,7 +346,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   <Hexagon size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
                 </motion.div>
                 <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                  {authMode === 'signup' ? 'Neural Core Registration' : 'Re-establish Link'}
+                  ESTABLISH NEURAL LINK
                 </h2>
                 <div className="h-1 w-12 bg-cyan-400 mx-auto" />
               </div>
@@ -367,7 +390,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   }}
                   className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
                 >
-                  {authMode === 'signup' ? 'FORGE NEURAL LINK' : 'RE-ESTABLISH LINK'}
+                  ESTABLISH NEURAL LINK
                 </motion.button>
 
                 <div className="flex items-center gap-4 my-6">
@@ -387,12 +410,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               </div>
 
               <div className="mt-8 text-center text-[9px] font-black tracking-widest text-blue-400/60 transition-all">
-                {authMode === 'signup' ? (
-                  <p>Returning Operator? <button onClick={() => setAuthMode('login')} className="text-blue-400 hover:text-white underline">Re-establish link</button></p>
-                ) : (
-                  <p>New candidate? <button onClick={() => setAuthMode('signup')} className="text-blue-400 hover:text-white underline">Initiate training</button></p>
-                )}
-                <div className="mt-4 pt-4 border-t border-white/5">
+                <div className="pt-4 border-t border-white/5">
                   <button onClick={() => setPhase(2.5)} className="text-white/20 hover:text-white/40 uppercase tracking-widest">
                     Continue as Guest (Offline Mode)
                   </button>
