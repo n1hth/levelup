@@ -488,7 +488,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               <motion.div 
                 animate={{ scale: [1, 1.5, 1], opacity: [0.05, 0.15, 0.05] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute inset-0 rounded-full blur-[120px]"
+                className="absolute inset-0 rounded-full blur-[120px] pointer-events-none -z-10"
                 style={{ background: palette.primary }}
               />
 
@@ -510,7 +510,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: [0, 2, 1.5], opacity: [0, 0.6, 0.3] }}
                   transition={{ duration: 2, delay: 1.5 }}
-                  className="absolute inset-0 rounded-full blur-[40px]"
+                  className="absolute inset-0 rounded-full blur-[40px] pointer-events-none"
                   style={{ background: palette.glow, width: 200, height: 200, left: -36, top: -36 }}
                 />
 
@@ -542,7 +542,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                     initial={{ width: 128, height: 128, opacity: 0 }}
                     animate={{ width: 300, height: 300, opacity: [0, 0.4, 0] }}
                     transition={{ duration: 2.5, delay: 2 + i * 0.4, repeat: Infinity, repeatDelay: 1 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border pointer-events-none"
                     style={{ borderColor: palette.accent }}
                   />
                 ))}
@@ -573,7 +573,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 3.5 }}
                 onClick={() => setPhase(4)}
-                className="px-10 py-5 rounded-2xl font-black text-xs tracking-widest uppercase text-white transition-all hover:scale-105 active:scale-95"
+                className="px-10 py-5 rounded-2xl font-black text-xs tracking-widest uppercase text-white transition-all hover:scale-105 active:scale-95 relative z-20"
                 style={{ background: palette.primary, boxShadow: `0 0 30px ${palette.glow}` }}
               >
                 BIND TO CORE
