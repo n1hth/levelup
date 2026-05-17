@@ -78,7 +78,7 @@ export function Social() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote } = useApp();
+  const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote, createDuel, getDeckCards } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as any) || 'friends');
 
   useEffect(() => {
@@ -259,7 +259,6 @@ export function Social() {
               className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md"
             />
             <motion.div
-              layout
               initial={{ 
                 opacity: 0, 
                 y: 100,
@@ -414,18 +413,37 @@ export function Social() {
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             onClick={async () => {
                               setIsSendingDuel(true);
-                              // Simulate network delay
-                              await new Promise(resolve => setTimeout(resolve, 1500));
-                              setIsSendingDuel(false);
-                              setIsDuelSent(true);
-                              // Show success state for 1.5s
-                              await new Promise(resolve => setTimeout(resolve, 1500));
-                              
-                              navigate(`/battle`);
-                              setSelectedFriend(null);
-                              setOrbRect(null);
-                              setDuelView('actions');
-                              setIsDuelSent(false);
+                              try {
+                                const eligibleDecks = state.decks.filter((d: any) => getDeckCards(d.id).length >= 5);
+                                const deckId = selectedMode === 'deck' ? eligibleDecks[0]?.id : undefined;
+
+                                if (selectedMode === 'deck' && !deckId) {
+                                  alert("Create a deck with at least 5 cards before initiating a Deck Duel.");
+                                  setIsSendingDuel(false);
+                                  return;
+                                }
+
+                                const duelId = await createDuel(selectedMode as any, selectedFriend.id, deckId);
+                                if (!duelId) {
+                                  alert("System Error: Failed to initialize combat link.");
+                                  setIsSendingDuel(false);
+                                  return;
+                                }
+
+                                setIsSendingDuel(false);
+                                setIsDuelSent(true);
+                                // Show success state briefly before transitioning
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                
+                                navigate(`/duels/${duelId}`);
+                                setSelectedFriend(null);
+                                setOrbRect(null);
+                                setDuelView('actions');
+                                setIsDuelSent(false);
+                              } catch (err: any) {
+                                alert(err.message || "Failed to initialize combat link.");
+                                setIsSendingDuel(false);
+                              }
                             }}
                             className="flex items-center justify-center gap-3 bg-white text-black h-14 rounded-2xl font-black italic uppercase tracking-widest text-[10px] w-full shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95"
                           >
