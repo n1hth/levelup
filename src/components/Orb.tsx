@@ -52,6 +52,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
   
   const [notifications, setNotifications] = useState<any[]>([]);
   const notificationsRef = useRef<any[]>([]);
+  const shownBubblesRef = useRef<Set<string>>(new Set());
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,10 +81,15 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
       // Check specifically for duel events to show bubble
       const newDuel = newItems.find(n => n.type === 'duel' || n.type === 'duel_cancelled');
-      if (newDuel) {
-        setLatestDuelNotif(newDuel);
-        setShowBubble(true);
-        setTimeout(() => setShowBubble(false), 8000);
+      if (newDuel && !shownBubblesRef.current.has(newDuel.id)) {
+        // Only show bubble if notification was created/updated in the last 45 seconds
+        const isRecent = Date.now() - new Date(newDuel.timestamp).getTime() < 45 * 1000;
+        if (isRecent) {
+          shownBubblesRef.current.add(newDuel.id);
+          setLatestDuelNotif(newDuel);
+          setShowBubble(true);
+          setTimeout(() => setShowBubble(false), 8000);
+        }
       }
     }
     
@@ -394,8 +400,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
               {/* Scrollable notification list */}
               <div className="px-4 pb-4 space-y-2.5 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(45vh - 80px)' }}>
                 <AnimatePresence mode="popLayout">
-                  {notifications.filter(n => n.type !== 'duel_cancelled').length > 0 ? (
-                    notifications.filter(n => n.type !== 'duel_cancelled').map(notif => (
+                  {notifications.length > 0 ? (
+                    notifications.map(notif => (
                       <motion.div 
                         key={notif.id}
                         layout
