@@ -172,6 +172,7 @@ interface AppContextType {
   getLeaderboard: () => Promise<{ id: string; name: string; total_xp: number; rank: string }[]>;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
   getMessages: (otherId: string) => Promise<{ id: string; sender_id: string; content: string; created_at: string }[]>;
+  markMessagesAsRead: (otherUserId: string) => Promise<void>;
   // Battle
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
@@ -1343,7 +1344,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       return notifications
         .filter(n => {
-           const isDismissed = dismissedIds.includes(n.id) || dismissedIds.includes(n.duel_id);
+           const isDismissed = dismissedIds.includes(n.id) || dismissedIds.includes((n as any).duel_id);
            const isBeforeClear = new Date(n.timestamp).getTime() <= clearedAt;
            return !isDismissed && !isBeforeClear;
         })

@@ -296,13 +296,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
     peaked: { opacity: 1, scale: 1.8 },
     tapping: {
       scale: [1, 1.3, 1], 
-      opacity: [null, 1, null],
+      opacity: [1, 1, 1],
       transition: {
         duration: 0.45,
         times: [0, 0.33, 1],
         ease: ["easeOut", "easeIn"] as any[]
       }
-    }
+    } as any
   };
 
   return (

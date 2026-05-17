@@ -31,7 +31,7 @@ export function Chat() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { state, getMessages, sendMessage, setOrbHidden, getFriends, markMessagesAsRead, getOrbHue } = useApp();
-  const [messages, setMessages] = useState<{ id: string; sender_id: string; receiver_id: string; content: string; created_at: string; is_read: boolean }[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [dmInput, setDmInput] = useState('');
   const [friend, setFriend] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

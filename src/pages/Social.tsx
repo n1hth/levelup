@@ -68,7 +68,7 @@ export function Social() {
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number; orb_hue?: number }[]>([]);
-  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean; activity?: string; streak?: number; orb_hue?: number }[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string; orb_hue?: number }[]>([]);
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
