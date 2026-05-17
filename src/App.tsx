@@ -22,7 +22,7 @@ function AppContent() {
   const { state, isLoading, session } = useApp();
   const location = useLocation();
 
-  if (isLoading) {
+  if (isLoading || (session && !state.user)) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-black overflow-hidden relative">
         {/* Background Gradients */}
