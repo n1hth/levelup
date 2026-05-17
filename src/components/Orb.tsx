@@ -967,17 +967,17 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {showRankUpCinematic && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            animate={{ opacity: 1, backdropFilter: 'blur(24px)' }}
+            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto bg-black/40"
           >
             {/* Hyperspace Background */}
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: [1, 2, 4], opacity: [0, 1, 0] }}
               transition={{ duration: 4, ease: "easeOut" }}
-              className="absolute inset-0 bg-black overflow-hidden"
+              className="absolute inset-0 bg-transparent overflow-hidden"
             >
               {/* Heavenly Beams */}
               {Array.from({ length: 12 }).map((_, i) => (
