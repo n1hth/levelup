@@ -409,40 +409,40 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-8 overflow-y-auto"
           >
             <div className="w-full max-w-sm text-center">
-              <div className="mb-10">
-                <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                  <UserIcon size={32} className="text-blue-400" />
+              <div className="mb-6 md:mb-10">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <UserIcon size={24} className="text-blue-400" />
                 </div>
-                <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Operator Designation</h2>
-                <p className="text-[10px] font-black tracking-widest text-blue-400/60 uppercase">How should the system address you?</p>
+                <h2 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase mb-1.5 md:mb-2">Operator Designation</h2>
+                <p className="text-[9px] md:text-[10px] font-black tracking-widest text-blue-400/60 uppercase">How should the system address you?</p>
               </div>
 
-              <div className="relative mb-4">
+              <div className="relative mb-3 md:mb-4">
                 <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
-                  <UserIcon size={18} />
+                  <UserIcon size={16} />
                 </div>
                 <input
                   autoFocus
                   type="text"
                   placeholder="FULL NAME"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 md:py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
               </div>
 
-              <div className="relative mb-8">
+              <div className="relative mb-6 md:mb-8">
                 <div className="absolute inset-y-0 left-4 flex items-center text-blue-400">
-                  <AtSign size={18} />
+                  <AtSign size={16} />
                 </div>
                 <input
                   type="text"
                   placeholder="USERNAME"
                   className={cn(
-                    "w-full bg-white/5 border rounded-2xl py-5 pl-12 pr-4 outline-none transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase",
+                    "w-full bg-white/5 border rounded-2xl py-4 md:py-5 pl-12 pr-4 outline-none transition-all text-white placeholder:text-blue-200/30 font-black text-xs tracking-[0.2em] uppercase",
                     usernameStatus === 'available' ? "border-emerald-500/50 focus:border-emerald-500" : 
                     usernameStatus === 'taken' ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-blue-500"
                   )}
@@ -464,7 +464,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   setGeneratedHue(hue);
                   setPhase(3.5);
                 }}
-                className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
+                className="w-full btn-system py-4 md:py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
               >
                 CONFIRM IDENTITY
               </button>
@@ -482,7 +482,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+              className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-6 overflow-hidden"
             >
               {/* Background pulse in user's color */}
               <motion.div 
@@ -497,21 +497,21 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 1, 0, 1] }}
                 transition={{ duration: 0.5, repeat: 3 }}
-                className="text-[10px] font-black tracking-[0.5em] uppercase mb-16"
+                className="text-[9px] font-black tracking-[0.4em] uppercase mb-8 md:mb-16"
                 style={{ color: palette.accent }}
               >
                 CRYSTALLIZING NEURAL CORE...
               </motion.div>
 
               {/* The Orb materializes */}
-              <div className="relative mb-16">
+              <div className="relative mb-8 md:mb-16 flex items-center justify-center w-48 h-48">
                 {/* Outer glow ring */}
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: [0, 2, 1.5], opacity: [0, 0.6, 0.3] }}
-                  transition={{ duration: 2, delay: 1.5 }}
-                  className="absolute inset-0 rounded-full blur-[40px] pointer-events-none"
-                  style={{ background: palette.glow, width: 200, height: 200, left: -36, top: -36 }}
+                  animate={{ scale: [0, 2.2, 1.8], opacity: [0, 0.7, 0.35] }}
+                  transition={{ duration: 2.2, delay: 1.5 }}
+                  className="absolute inset-0 rounded-full blur-[40px] pointer-events-none z-0"
+                  style={{ background: palette.glow, width: 160, height: 160, left: 16, top: 16 }}
                 />
 
                 {/* The orb itself */}
@@ -519,7 +519,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   initial={{ scale: 0, opacity: 0, filter: 'blur(20px)' }}
                   animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
                   transition={{ duration: 1.5, delay: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-32 h-32 rounded-full relative overflow-hidden shadow-2xl"
+                  className="w-28 h-28 md:w-32 md:h-32 rounded-full relative overflow-hidden shadow-2xl z-10"
                   style={{ background: gradient }}
                 >
                   {/* Inner highlight */}
@@ -535,14 +535,14 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   />
                 </motion.div>
 
-                {/* Radiating rings */}
+                {/* Radiating rings - MUCH LARGER & SMOOTHER DECAY */}
                 {[...Array(3)].map((_, i) => (
                   <motion.div
                     key={i}
-                    initial={{ width: 128, height: 128, opacity: 0 }}
-                    animate={{ width: 300, height: 300, opacity: [0, 0.4, 0] }}
-                    transition={{ duration: 2.5, delay: 2 + i * 0.4, repeat: Infinity, repeatDelay: 1 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border pointer-events-none"
+                    initial={{ width: 112, height: 112, opacity: 0 }}
+                    animate={{ width: [112, 480], height: [112, 480], opacity: [0, 0.5, 0] }}
+                    transition={{ duration: 3.5, delay: 2 + i * 0.6, repeat: Infinity, repeatDelay: 0.5, ease: "easeOut" }}
+                    className="absolute rounded-full border pointer-events-none z-0"
                     style={{ borderColor: palette.accent }}
                   />
                 ))}
@@ -553,7 +553,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 2.5 }}
-                className="text-2xl font-black italic tracking-tighter uppercase mb-3 text-white text-center"
+                className="text-lg md:text-2xl font-black italic tracking-tighter uppercase mb-2 text-white text-center px-4"
               >
                 YOUR CORE HAS BEEN FORGED
               </motion.h2>
@@ -562,7 +562,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 3 }}
-                className="text-[9px] font-black tracking-[0.3em] uppercase mb-12"
+                className="text-[8px] md:text-[9px] font-black tracking-[0.25em] uppercase mb-8 md:mb-12 text-center"
                 style={{ color: palette.accent }}
               >
                 THIS COLOR IS YOUR PERMANENT IDENTITY
@@ -573,7 +573,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 3.5 }}
                 onClick={() => setPhase(4)}
-                className="px-10 py-5 rounded-2xl font-black text-xs tracking-widest uppercase text-white transition-all hover:scale-105 active:scale-95 relative z-20"
+                className="px-8 py-4 md:px-10 md:py-5 rounded-2xl font-black text-xs tracking-widest uppercase text-white transition-all hover:scale-105 active:scale-95 relative z-20"
                 style={{ background: palette.primary, boxShadow: `0 0 30px ${palette.glow}` }}
               >
                 BIND TO CORE
