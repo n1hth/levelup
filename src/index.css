@@ -38,6 +38,10 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
+html, body {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   padding: 0;

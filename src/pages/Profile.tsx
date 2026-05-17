@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Flame, BookOpen, Clock, ChevronRight, AlertTriangle, Trophy, Lock, Shield, Activity } from 'lucide-react';
+import { Zap, Flame, BookOpen, Clock, ChevronRight, AlertTriangle, Trophy, Lock, Shield, Activity, Orbit } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
@@ -320,6 +320,26 @@ export function Profile() {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* ═══ Help & System Support ═══ */}
+      <motion.div variants={itemVariants} className="system-panel p-8 border-white/5 bg-white/[0.01]">
+        <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-4 flex items-center gap-3 italic">
+          <Orbit size={16} className="text-cyan-400" /> Neural Support
+        </h3>
+        <p className="text-[10px] font-black text-white/20 mb-6 leading-relaxed uppercase tracking-widest italic">
+          Re-initialize the neural synchronization tour to understand all system capabilities.
+        </p>
+        <button
+          onClick={() => {
+            localStorage.removeItem('levelup_tour_seen');
+            window.location.href = '/home';
+          }}
+          className="w-full py-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 font-black text-[10px] uppercase tracking-[0.2em] italic hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all flex items-center justify-center gap-3 shadow-2xl"
+        >
+          <Orbit size={16} />
+          START SYSTEM TOUR
+        </button>
       </motion.div>
 
       {/* ═══ Danger Zone ═══ */}

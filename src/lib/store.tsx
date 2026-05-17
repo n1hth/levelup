@@ -143,6 +143,8 @@ interface AppContextType {
   
   // Orb Identity
   getOrbHue: () => number;
+  rankUpTrigger: number;
+  triggerRankUpCinematic: () => void;
   // UI Control
   isOrbHidden: boolean;
   setOrbHidden: (hidden: boolean) => void;
@@ -352,6 +354,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOrbHidden, setOrbHidden] = useState(false);
+  const [rankUpTrigger, setRankUpTrigger] = useState(0);
+
+  const triggerRankUpCinematic = useCallback(() => {
+    setRankUpTrigger(prev => prev + 1);
+  }, []);
   const backfilledUserId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -1702,6 +1709,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addArenaSession, getArenaStats, getDeckArenaHistory,
     getWeeklyInsights, getMilestones,
     getOrbHue,
+    rankUpTrigger, triggerRankUpCinematic,
     isOrbHidden, setOrbHidden,
     searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
@@ -1712,7 +1720,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addDeck, updateDeck, deleteDeck, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
     addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
     getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
-    addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, getOrbHue, isOrbHidden, setOrbHidden,
+    addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, getOrbHue, 
+    rankUpTrigger, triggerRankUpCinematic,
+    isOrbHidden, setOrbHidden,
     searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
     joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote

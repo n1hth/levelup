@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { useNavigate, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { Users, Trophy, 
   Plus, 
   Zap, 
@@ -11,7 +11,13 @@ import { Users, Trophy,
   Crown,
   Globe,
   Flame,
-  Search
+  Search,
+  Swords,
+  ChevronLeft,
+  BookOpen,
+  Send,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
@@ -61,11 +67,26 @@ function SmallOrb({ hue = 200, state = 'idle', size = 36 }: { hue?: number; stat
   );
 }
 
+const DUMMY_FRIENDS = [
+  { id: 'dummy-1', name: 'Orion Pax', orb_hue: 200, activity: 'In Focus', status: 'accepted', last_message: { content: 'Synchronizing neural link...', created_at: new Date().toISOString(), receiver_id: 'me', is_read: false } },
+  { id: 'dummy-2', name: 'Lyra Heart', orb_hue: 320, activity: 'Idle', status: 'accepted', last_message: { content: 'GG on that duel earlier!', created_at: new Date(Date.now() - 3600000).toISOString(), receiver_id: 'me', is_read: true } },
+  { id: 'dummy-3', name: 'Nova Prime', orb_hue: 45, activity: 'In Battle', status: 'accepted', last_message: { content: 'Awaiting challenge...', created_at: new Date(Date.now() - 7200000).toISOString(), receiver_id: 'other', is_read: true } },
+  { id: 'dummy-4', name: 'Echo 7', orb_hue: 160, activity: 'Idle', status: 'accepted' },
+];
+
 export function Social() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote } = useApp();
-  const [activeTab, setActiveTab] = useState<Tab>('friends');
+  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as any) || 'friends');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'friends' || tab === 'leaderboard' || tab === 'community') {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number; orb_hue?: number }[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
@@ -74,6 +95,12 @@ export function Social() {
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
   const [votingKey, setVotingKey] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
+  const [orbRect, setOrbRect] = useState<DOMRect | null>(null);
+  const [duelView, setDuelView] = useState<'actions' | 'modes'>('actions');
+  const [selectedMode, setSelectedMode] = useState<'deck' | 'writing' | null>(null);
+  const [isSendingDuel, setIsSendingDuel] = useState(false);
+  const [isDuelSent, setIsDuelSent] = useState(false);
   const level = getLevel();
   const rank = getRank();
   const rankColor = getRankColor(rank);
@@ -97,10 +124,10 @@ export function Social() {
   useEffect(() => {
     if (activeTab === 'friends') {
       getFriends().then((data) => {
-        if (!data) return;
-        let enriched = data.map((f: any) => ({
+        const baseData = (data && data.length > 0) ? data : DUMMY_FRIENDS;
+        let enriched = baseData.map((f: any) => ({
           ...f,
-          activity: 'Idle',
+          activity: f.activity || 'Idle',
           streak: f.streak || 0
         }));
         setFriends(enriched);
@@ -216,6 +243,215 @@ export function Social() {
       animate="show"
       className="w-full max-w-2xl space-y-4 pb-24 overflow-x-hidden"
     >
+      <AnimatePresence>
+        {selectedFriend && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setSelectedFriend(null);
+                setOrbRect(null);
+                setDuelView('actions');
+                setSelectedMode(null);
+              }}
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md"
+            />
+            <motion.div
+              layout
+              initial={{ 
+                opacity: 0, 
+                y: 100,
+                scale: 0.8,
+                x: '-50%',
+                rotateX: -15
+              }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                scale: 1,
+                x: '-50%',
+                rotateX: 0
+              }}
+              exit={{ 
+                opacity: 0, 
+                y: 60,
+                scale: 0.9,
+                x: '-50%',
+                rotateX: -10
+              }}
+              style={{
+                position: 'fixed',
+                left: '50%',
+                bottom: '140px',
+                perspective: '1000px',
+                transformOrigin: 'bottom center'
+              }}
+              transition={{ 
+                type: 'spring', 
+                damping: 25, 
+                stiffness: 400,
+                mass: 0.8
+              }}
+              className="z-[101] w-[280px] bg-[#080A0E]/98 backdrop-blur-3xl border border-white/20 rounded-[2rem] p-5 shadow-[0_40px_80px_-20px_rgba(0,0,0,1)]"
+            >
+              <div className="flex flex-col items-center gap-5">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="relative shrink-0">
+                    <SmallOrb hue={selectedFriend.orb_hue} state="active" size={48} />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0A0C10] shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-black text-white italic uppercase tracking-widest line-clamp-1">
+                      {selectedFriend.name}
+                    </span>
+                    <span className="text-[8px] font-bold text-cyan-400/60 uppercase italic tracking-tighter">
+                      {duelView === 'actions' ? 'Syndicate Member' : 'Select Challenge'}
+                    </span>
+                  </div>
+                </div>
+                
+                <AnimatePresence mode="wait">
+                  {isDuelSent ? (
+                    <motion.div
+                      key="sent"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center py-8 gap-4"
+                    >
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+                        className="w-16 h-16 rounded-full bg-cyan-500 flex items-center justify-center text-black shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+                      >
+                        <Check size={32} strokeWidth={4} />
+                      </motion.div>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-sm font-black text-white italic uppercase tracking-wider">Duel Sent!</span>
+                        <span className="text-[9px] font-bold text-white/40 uppercase italic">Awaiting Response...</span>
+                      </div>
+                    </motion.div>
+                  ) : duelView === 'actions' ? (
+                    <motion.div 
+                      key="actions"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex gap-3 w-full"
+                    >
+                      <button 
+                        onClick={() => setDuelView('modes')}
+                        className="flex-1 flex items-center justify-center gap-2.5 bg-red-600 text-white h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-red-500 transition-all active:scale-95 shadow-lg shadow-red-600/20"
+                      >
+                        <Swords size={14} />
+                        Duel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate(`/social/chat/${selectedFriend.id}`);
+                          setSelectedFriend(null);
+                          setOrbRect(null);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2.5 bg-cyan-500 text-black h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-cyan-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20"
+                      >
+                        <MessageSquare size={14} />
+                        Chat
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="modes"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="flex flex-col gap-3 w-full"
+                    >
+                      <div className="grid grid-cols-2 gap-2">
+                        <button 
+                          onClick={() => setSelectedMode('deck')}
+                          className={`flex flex-col items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
+                            selectedMode === 'deck' 
+                              ? 'bg-cyan-500 border-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.3)]' 
+                              : 'bg-white/5 border-white/10 text-white/60'
+                          }`}
+                        >
+                          <BookOpen size={16} />
+                          <span className="text-[8px] font-black uppercase italic tracking-tighter">Deck Duel</span>
+                        </button>
+                        <button 
+                          onClick={() => setSelectedMode('writing')}
+                          className={`flex flex-col items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
+                            selectedMode === 'writing' 
+                              ? 'bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]' 
+                              : 'bg-white/5 border-white/10 text-white/60'
+                          }`}
+                        >
+                          <Zap size={16} />
+                          <span className="text-[8px] font-black uppercase italic tracking-tighter">Writing Duel</span>
+                        </button>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setDuelView('actions');
+                            setSelectedMode(null);
+                          }}
+                          className="flex-1 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white h-12 rounded-2xl transition-all font-black italic uppercase tracking-widest text-[9px]"
+                        >
+                          <ChevronLeft size={16} className="mr-1" />
+                          Back
+                        </button>
+                      </div>
+
+                      <AnimatePresence>
+                        {selectedMode && !isSendingDuel && (
+                          <motion.button 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            onClick={async () => {
+                              setIsSendingDuel(true);
+                              // Simulate network delay
+                              await new Promise(resolve => setTimeout(resolve, 1500));
+                              setIsSendingDuel(false);
+                              setIsDuelSent(true);
+                              // Show success state for 1.5s
+                              await new Promise(resolve => setTimeout(resolve, 1500));
+                              
+                              navigate(`/battle`);
+                              setSelectedFriend(null);
+                              setOrbRect(null);
+                              setDuelView('actions');
+                              setIsDuelSent(false);
+                            }}
+                            className="flex items-center justify-center gap-3 bg-white text-black h-14 rounded-2xl font-black italic uppercase tracking-widest text-[10px] w-full shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95"
+                          >
+                            <Send size={14} />
+                            Send Duel Challenge
+                          </motion.button>
+                        )}
+                        {isSendingDuel && (
+                          <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex flex-col items-center py-4 gap-3"
+                          >
+                            <Loader2 className="animate-spin text-white/40" size={20} />
+                            <span className="text-[8px] font-black text-white/20 uppercase italic tracking-widest">Encrypting Challenge...</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       <div className="pt-8 px-6 flex items-center justify-between">
          <div className="text-left">
            <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
@@ -272,39 +508,33 @@ export function Social() {
 
             {/* Instagram style Orbs Row */}
             <div className="px-4 overflow-hidden">
+               <div className="px-2 mb-2">
+                 <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Syndicate Friends</span>
+               </div>
                <div className="flex gap-4 overflow-x-auto pb-4 px-2 no-scrollbar scroll-smooth">
-                 {/* Your Story */}
-                 <div className="flex flex-col items-center gap-2 shrink-0">
-                   <div className="relative p-1 rounded-full border-2 border-white/5">
-                     <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
-                        <Plus size={20} className="text-white/20" />
-                     </div>
-                   </div>
-                   <span className="text-[9px] font-black text-white/20 uppercase italic pb-1">Your Link</span>
-                 </div>
-
                  {friends.filter(f => f.status === 'accepted').slice(0, 10).map((friend) => (
-                   <button 
-                     key={friend.id} 
-                     onClick={() => navigate(`/social/chat/${friend.id}`)}
-                     className="flex flex-col items-center gap-2 shrink-0 group"
-                   >
-                     <div className={cn(
-                       "relative p-1 rounded-full border-2 transition-colors",
-                       friend.activity === 'In Focus' ? 'border-cyan-400' : 'border-white/5'
-                     )}>
-                       <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={56} />
-                       {(friend.activity === 'In Focus' || friend.activity === 'In Battle') && (
-                         <div className={cn(
-                           "absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#030406]",
-                           friend.activity === 'In Battle' ? 'bg-red-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-                         )} />
-                       )}
-                     </div>
+                   <div key={friend.id} className="relative flex flex-col items-center gap-2 shrink-0">
+                     <button 
+                       onClick={(e) => {
+                         setOrbRect(e.currentTarget.getBoundingClientRect());
+                         setSelectedFriend(friend);
+                       }}
+                       className="group"
+                     >
+                       <div className="relative group-hover:scale-110 transition-transform duration-300">
+                         <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={56} />
+                         {(friend.activity === 'In Focus' || friend.activity === 'In Battle') && (
+                           <div className={cn(
+                             "absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#030406]",
+                             friend.activity === 'In Battle' ? 'bg-red-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+                           )} />
+                         )}
+                       </div>
+                     </button>
                      <span className="text-[9px] font-black text-white/40 uppercase italic tracking-tighter max-w-[64px] truncate pb-1">
                        {friend.name.split(' ')[0]}
                      </span>
-                   </button>
+                   </div>
                  ))}
                </div>
             </div>
@@ -349,35 +579,39 @@ export function Social() {
                     const isUnread = friend.last_message && friend.last_message.receiver_id === state.user?.id && !friend.last_message.is_read;
                     
                     return (
-                    <motion.button 
-                      key={friend.id}
-                      onClick={() => navigate(`/social/chat/${friend.id}`)}
-                      className="w-full group flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5"
-                    >
-                      <div className="relative shrink-0">
-                        <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={44} />
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-black text-white uppercase italic tracking-tight group-hover:text-cyan-400 transition-colors">
-                            {friend.name}
-                          </span>
-                          {friend.last_message && (
-                            <span className="text-[9px] font-black text-white/40 uppercase italic">
-                              {formatTimeAgo(friend.last_message.created_at)}
+                    <div key={friend.id} className="relative">
+                      <motion.button 
+                        onClick={(e) => {
+                          setOrbRect(e.currentTarget.getBoundingClientRect());
+                          setSelectedFriend(friend);
+                        }}
+                        className="w-full group flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5"
+                      >
+                        <div className="relative shrink-0">
+                          <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={44} />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-black text-white uppercase italic tracking-tight group-hover:text-cyan-400 transition-colors">
+                              {friend.name}
                             </span>
-                          )}
+                            {friend.last_message && (
+                              <span className="text-[9px] font-black text-white/40 uppercase italic">
+                                {formatTimeAgo(friend.last_message.created_at)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className={cn("text-[10px] font-black uppercase italic truncate pr-4", isUnread ? "text-white" : "text-white/30")}>
+                              {friend.last_message ? friend.last_message.content : "Tap to start conversation..."}
+                            </p>
+                            {isUnread && (
+                              <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <p className={cn("text-[10px] font-black uppercase italic truncate pr-4", isUnread ? "text-white" : "text-white/30")}>
-                            {friend.last_message ? friend.last_message.content : "Tap to start conversation..."}
-                          </p>
-                          {isUnread && (
-                            <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
-                          )}
-                        </div>
-                      </div>
-                    </motion.button>
+                      </motion.button>
+                    </div>
                   )})}
                 </div>
               ) : (
@@ -678,7 +912,7 @@ export function Social() {
 
       {/* Nested slide-over views (e.g. Chat) */}
       <AnimatePresence mode="wait">
-        <Outlet key={location.pathname} />
+        <Outlet />
       </AnimatePresence>
     </motion.div>
   );

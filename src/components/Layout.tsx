@@ -62,6 +62,7 @@ export function Layout() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <button 
+                    id="profile-orb"
                     onClick={() => navigate('/profile')}
                     className="relative hover:scale-105 active:scale-95 transition-transform"
                   >

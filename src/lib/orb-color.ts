@@ -108,6 +108,15 @@ export function getOrbGradient(hue: number, state: OrbState, rankTier: string): 
 
 export type RankEvolution = 'formless' | 'smooth' | 'flowing' | 'crystalline-hints' | 'crystalline' | 'transcendent';
 
+export interface RankStyles {
+  gradient: string;
+  shadow: string;
+  glowIntensity: number;
+  particleDensity: number;
+  refraction: number;
+  rotationSpeed: number;
+}
+
 /**
  * Map a rank tier letter to its evolution stage.
  */
@@ -123,6 +132,69 @@ export function getRankEvolution(rankTier: string): RankEvolution {
 }
 
 /**
+ * Get the full set of visual characteristics for a specific rank evolution.
+ * Uses high-vibrancy OKLCH parameters for electric glowing effects.
+ */
+export function getRankStyles(evolution: RankEvolution, hue: number): RankStyles {
+  switch (evolution) {
+    case 'formless':
+      return {
+        gradient: `radial-gradient(circle at 50% 50%, ${oklch(0.8, 0.05, hue)} 0%, ${oklch(0.4, 0.1, hue)} 100%)`,
+        shadow: oklch(0.2, 0.05, hue, 0.5),
+        glowIntensity: 0.2,
+        particleDensity: 0,
+        refraction: 0,
+        rotationSpeed: 0
+      };
+    case 'smooth':
+      return {
+        gradient: `radial-gradient(circle at 35% 35%, ${oklch(0.92, 0.20, hue)} 0%, ${oklch(0.76, 0.24, hue)} 50%, ${oklch(0.45, 0.25, hue)} 100%)`,
+        shadow: oklch(0.3, 0.1, hue, 0.6),
+        glowIntensity: 0.5,
+        particleDensity: 4,
+        refraction: 2,
+        rotationSpeed: 15
+      };
+    case 'flowing':
+      return {
+        gradient: `radial-gradient(circle at 30% 30%, ${oklch(0.96, 0.15, hue)} 0%, ${oklch(0.80, 0.28, hue)} 40%, ${oklch(0.35, 0.35, hue)} 100%)`,
+        shadow: oklch(0.2, 0.2, hue, 0.8),
+        glowIntensity: 0.7,
+        particleDensity: 12,
+        refraction: 4,
+        rotationSpeed: 8
+      };
+    case 'crystalline-hints':
+      return {
+        gradient: `radial-gradient(circle at 30% 30%, ${oklch(0.98, 0.10, hue)} 0%, ${oklch(0.82, 0.32, hue)} 45%, ${oklch(0.25, 0.4, hue)} 100%)`,
+        shadow: oklch(0.1, 0.3, hue, 0.9),
+        glowIntensity: 0.9,
+        particleDensity: 24,
+        refraction: 8,
+        rotationSpeed: 12
+      };
+    case 'crystalline':
+      return {
+        gradient: `radial-gradient(circle at 25% 25%, ${oklch(0.99, 0.05, hue)} 0%, ${oklch(0.84, 0.36, hue)} 30%, ${oklch(0.15, 0.5, hue)} 100%)`,
+        shadow: oklch(0.05, 0.4, hue, 1),
+        glowIntensity: 1.2,
+        particleDensity: 40,
+        refraction: 15,
+        rotationSpeed: 20
+      };
+    case 'transcendent':
+      return {
+        gradient: `radial-gradient(circle at 35% 35%, white 0%, ${oklch(0.98, 0.05, hue)} 30%, ${oklch(0.86, 0.4, hue)} 60%, ${oklch(0.1, 0.6, hue)} 100%)`,
+        shadow: oklch(0, 0.6, hue, 1),
+        glowIntensity: 2.2,
+        particleDensity: 100,
+        refraction: 25,
+        rotationSpeed: 30
+      };
+  }
+}
+
+/**
  * Get CSS filter string for rank-based blur/sharpness.
  */
 export function getRankBlur(evolution: RankEvolution): string {
@@ -132,21 +204,17 @@ export function getRankBlur(evolution: RankEvolution): string {
 
 /**
  * Number of crystalline facet lines to render on the orb.
+ * Set to 0 as user requested removal of these lines.
  */
 export function getFacetCount(evolution: RankEvolution): number {
-  switch (evolution) {
-    case 'crystalline-hints': return 3;
-    case 'crystalline':       return 6;
-    case 'transcendent':      return 8;
-    default:                  return 0;
-  }
+  return 0;
 }
 
 /**
  * Whether the orb should show orbiting particle dots.
  */
 export function hasParticleField(evolution: RankEvolution): boolean {
-  return evolution === 'transcendent';
+  return evolution === 'transcendent' || evolution === 'crystalline';
 }
 
 /**

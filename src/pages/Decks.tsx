@@ -93,7 +93,7 @@ export function Decks() {
                   )}
                 >
                   <option value="" className="bg-[#050608]">All Subjects</option>
-                  {subjects.map(s => <option key={s} value={s} className="bg-[#050608]">{s.toUpperCase()}</option>)}
+                  {subjects.map(s => <option key={s as string} value={s as string} className="bg-[#050608]">{(s as string).toUpperCase()}</option>)}
                 </select>
                 <Filter size={12} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none" />
               </div>
@@ -115,19 +115,14 @@ export function Decks() {
           ) : (
             <div className="flex flex-col    gap-6  pb-20">
               {filtered.map((deck, i) => (
-                <motion.div
-                  variants={itemVariants}
-                  key={deck.id}
-                  className="w-full "
-                >
-                  <DeckCard
-                    key={deck.id}
-                    deck={deck}
-                    stats={getDeckStats(deck.id)}
-                    index={i}
-                    onClick={() => navigate(`/decks/${deck.id}`)}
-                  />
-                </motion.div>
+                  <div key={deck.id} className="w-full">
+                    <DeckCard
+                      deck={deck}
+                      stats={getDeckStats(deck.id)}
+                      index={i}
+                      onClick={() => navigate(`/decks/${deck.id}`)}
+                    />
+                  </div>
               ))}
             </div>
           )}

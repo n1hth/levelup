@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Swords, Target, Trophy, Search, ChevronRight, Zap, Crown, MessageCircle, Users, Swords as DuelIcon, Shield } from 'lucide-react';
 import { useApp, type Deck } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
@@ -10,7 +10,16 @@ const MIN_CARDS = 4;
 
 export function Battle() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'practice' | 'duels'>('practice');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'practice' | 'duels'>((searchParams.get('tab') as any) || 'practice');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'practice' || tab === 'duels') {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
+
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
 
   // Duel Setup State
