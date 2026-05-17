@@ -17,6 +17,7 @@ import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
+import { getOrbGradient, getOrbColors } from '@/src/lib/orb-color';
 
 const formatTimeAgo = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -40,22 +41,9 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: 'community', label: 'GUILD', icon: Globe },
 ];
 
-function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number }) {
-  const getGlowColor = () => {
-    switch(state) {
-      case 'active': return 'rgba(34,211,238,0.5)';
-      case 'battle': return 'rgba(239, 68, 68, 0.5)';
-      default: return 'rgba(34,211,238,0.2)';
-    }
-  };
-
-  const getOrbGradient = () => {
-    switch(state) {
-      case 'active': return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #a5f3fc 20%, #06b6d4 50%, #0891b2 100%)';
-      case 'battle': return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #fecaca 20%, #ef4444 50%, #b91c1c 100%)';
-      default: return 'radial-gradient(circle at 30% 30%, #ffffff 0%, #e2e8f0 20%, #94a3b8 50%, #475569 100%)';
-    }
-  };
+function SmallOrb({ hue = 200, state = 'idle', size = 36 }: { hue?: number; state?: string; size?: number }) {
+  const palette = getOrbColors(hue, 'idle');
+  const gradient = getOrbGradient(hue, 'idle', 'E');
 
   return (
     <div 
@@ -63,8 +51,8 @@ function SmallOrb({ state = 'idle', size = 36 }: { state?: string; size?: number
       style={{ 
         width: size, 
         height: size, 
-        boxShadow: `0 0 15px ${getGlowColor()}`,
-        background: getOrbGradient()
+        boxShadow: `0 0 15px ${palette.glow}`,
+        background: gradient
       }}
     >
       <div className="absolute inset-0 shadow-[inset_0_-4px_8px_rgba(0,0,0,0.3)] rounded-full pointer-events-none" />
@@ -79,10 +67,10 @@ export function Social() {
   const { state, getLevel, getRank, searchUsers, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, getPublicDuels, submitCommunityHonourVote } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('friends');
   const [friendSearch, setFriendSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number }[]>([]);
-  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean; activity?: string; streak?: number }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; username?: string; total_xp: number; orb_hue?: number }[]>([]);
+  const [friends, setFriends] = useState<{ friendshipId: string; id: string; name: string; username?: string; status: string; total_xp: number; isIncoming: boolean; activity?: string; streak?: number; orb_hue?: number }[]>([]);
   const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
-  const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string }[]>([]);
+  const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string; orb_hue?: number }[]>([]);
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
   const [votingKey, setVotingKey] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -305,7 +293,7 @@ export function Social() {
                        "relative p-1 rounded-full border-2 transition-colors",
                        friend.activity === 'In Focus' ? 'border-cyan-400' : 'border-white/5'
                      )}>
-                       <SmallOrb state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={56} />
+                       <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={56} />
                        {(friend.activity === 'In Focus' || friend.activity === 'In Battle') && (
                          <div className={cn(
                            "absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#030406]",
@@ -332,7 +320,7 @@ export function Social() {
                   {searchResults.map(user => (
                     <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <SmallOrb state="active" size={32} />
+                        <SmallOrb hue={user.orb_hue} state="active" size={32} />
                         <div>
                           <div className="text-sm font-black text-white uppercase italic leading-none">{user.name}</div>
                           <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 italic">
@@ -367,7 +355,7 @@ export function Social() {
                       className="w-full group flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5"
                     >
                       <div className="relative shrink-0">
-                        <SmallOrb state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={44} />
+                        <SmallOrb hue={friend.orb_hue} state={friend.activity === 'In Battle' ? 'battle' : friend.activity === 'In Focus' ? 'active' : 'idle'} size={44} />
                       </div>
                       <div className="flex-1 text-left min-w-0">
                         <div className="flex items-center justify-between mb-1">
@@ -611,6 +599,7 @@ export function Social() {
                 >
                   <div className="relative">
                     <SmallOrb 
+                      hue={player.orb_hue}
                       state={i === 0 ? "active" : "idle"} 
                       size={48} 
                     />
@@ -649,7 +638,7 @@ export function Social() {
                     className="flex flex-col items-center gap-2 shrink-0 group active:scale-95 transition-transform"
                   >
                     <div className="relative bg-white/[0.02] border border-white/5 p-2 rounded-2xl group-hover:border-white/10 transition-colors">
-                      <SmallOrb size={40} />
+                      <SmallOrb hue={user.orb_hue} size={40} />
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-black border border-white/10 flex items-center justify-center text-[8px] font-black text-white/20 italic">
                         #{index + 4}
                       </div>

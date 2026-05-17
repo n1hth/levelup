@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { generateId } from './utils';
 import { getLevelFromXp, getRankFromLevel, getXpProgress } from './xp';
 import { applyReview, defaultSM2, isDue, RATING_XP, type Rating, type CardSM2, type MasteryState } from './sm2';
+import { generateOrbHue } from './orb-color';
 import { supabase } from './supabase';
 import { type Session } from '@supabase/supabase-js';
 
@@ -13,6 +14,7 @@ export interface User {
   id: string;
   name: string;
   school?: string;
+  orbHue?: number;
   onboardingCompleted?: boolean;
   createdAt: string;
 }
@@ -139,6 +141,8 @@ interface AppContextType {
   getArenaStats: () => { totalArenas: number; bestStreak: number; avgAccuracy: number; totalArenaXp: number };
   getDeckArenaHistory: (deckId: string) => ArenaSession[];
   
+  // Orb Identity
+  getOrbHue: () => number;
   // UI Control
   isOrbHidden: boolean;
   setOrbHidden: (hidden: boolean) => void;
@@ -386,12 +390,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // If no profile, create one (Initial Signup)
       if (!profile) {
+        const orbHue = generateOrbHue(session.user.id);
         const newProfile = {
           id: session.user.id,
           name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Operator',
           total_xp: 0,
           streak: 0,
           momentum: 0,
+          orb_hue: orbHue,
           created_at: new Date().toISOString(),
         };
         await supabase.from('profiles').insert(newProfile);
@@ -401,6 +407,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           user: {
             id: newProfile.id,
             name: newProfile.name,
+            orbHue,
             createdAt: newProfile.created_at,
           },
           totalXp: 0,
@@ -420,12 +427,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const remoteDecks = (decksRes.data || []).map(mapDeckFromDb);
         const remoteCards = (cardsRes.data || []).map(mapCardFromDb);
 
+        // Auto-generate orbHue for existing users who don't have one
+        let orbHue = profile.orb_hue;
+        if (orbHue == null) {
+          orbHue = generateOrbHue(profile.id);
+          supabase.from('profiles').update({ orb_hue: orbHue }).eq('id', profile.id).then(() => {});
+        }
+
         setState(prev => ({
           ...prev,
           user: {
             id: profile.id,
             name: profile.name,
             school: profile.school,
+            orbHue,
             onboardingCompleted: profile.onboarding_completed,
             createdAt: profile.created_at,
           },
@@ -526,6 +541,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getLevel = useCallback(() => getLevelFromXp(state.totalXp), [state.totalXp]);
   const getRank = useCallback(() => getRankFromLevel(getLevelFromXp(state.totalXp)), [state.totalXp]);
   const getXpProgressData = useCallback(() => getXpProgress(state.totalXp), [state.totalXp]);
+
+  // ── Orb Identity ──────────────────────────────
+  const getOrbHue = useCallback(() => {
+    if (state.user?.orbHue != null) return state.user.orbHue;
+    if (state.user?.id) return generateOrbHue(state.user.id);
+    return 200; // Default cyan-ish hue as fallback
+  }, [state.user?.orbHue, state.user?.id]);
 
   // ── Focus ─────────────────────────────────────
 
@@ -1678,6 +1700,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
     addArenaSession, getArenaStats, getDeckArenaHistory,
     getWeeklyInsights, getMilestones,
+    getOrbHue,
     isOrbHidden, setOrbHidden,
     searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
@@ -1688,7 +1711,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addDeck, updateDeck, deleteDeck, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
     addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
     getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
-    addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, isOrbHidden, setOrbHidden,
+    addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, getOrbHue, isOrbHidden, setOrbHidden,
     searchUsers, isUsernameAvailable, sendFriendRequest, acceptFriendRequest, removeFriend, getFriends, getLeaderboard, sendMessage, getMessages, markMessagesAsRead,
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
     joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote

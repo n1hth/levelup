@@ -14,36 +14,23 @@ import {
   Brain,
   Flame,
   CheckCircle2,
-  Search,
-  Plus,
-  School,
   AtSign,
   User
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
-
-const MOCK_SCHOOLS = [
-  "Dragon Academy of Arts",
-  "Shadow Realm Institute",
-  "Techno-Magic University",
-  "Starlight Academy",
-  "Void Runners College",
-  "Celestial Sanctum",
-];
+import { generateOrbHue, getOrbColors, getOrbGradient } from '@/src/lib/orb-color';
 
 export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
   const [phase, setPhase] = useState(initialPhase);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
-  const [schoolSearch, setSchoolSearch] = useState('');
-  const [isAddingCustomSchool, setIsAddingCustomSchool] = useState(false);
+  const [generatedHue, setGeneratedHue] = useState<number | null>(null);
   const [formData, setFormData] = useState({ 
     email: '', 
     password: '', 
     name: '', 
     username: '',
-    school: '' 
   });
   const { state, setUser, isUsernameAvailable } = useApp();
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
@@ -85,19 +72,19 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
           if (user) {
             const finalName = formData.name || user.user_metadata.full_name || user.email?.split('@')[0] || 'Operator';
             const finalUsername = formData.username || finalName.toLowerCase().replace(/\s/g, '_');
+            const orbHue = generatedHue ?? generateOrbHue(user.id);
 
-            // Try to update profile, but don't block if it fails
             await supabase.from('profiles').update({ 
               onboarding_completed: true, 
-              school: formData.school,
               name: finalName,
-              username: finalUsername
+              username: finalUsername,
+              orb_hue: orbHue
             }).eq('id', user.id).select().single();
 
             setUser({
               id: user.id,
               name: finalName,
-              school: formData.school,
+              orbHue,
               onboardingCompleted: true,
               createdAt: user.created_at
             });
@@ -106,7 +93,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
             setUser({
               id: 'local-operator',
               name: formData.name || 'Hunter',
-              school: formData.school,
+              orbHue: generatedHue ?? 200,
               onboardingCompleted: true,
               createdAt: new Date().toISOString()
             });
@@ -116,7 +103,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
           setUser({
             id: 'local-operator',
             name: formData.name || 'Hunter',
-            school: formData.school,
+            orbHue: generatedHue ?? 200,
             onboardingCompleted: true,
             createdAt: new Date().toISOString()
           });
@@ -136,7 +123,7 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
     setUser({
       id: 'debug-user',
       name: formData.name || 'Hunter',
-      school: formData.school,
+      orbHue: generatedHue ?? 200,
       onboardingCompleted: true,
       createdAt: new Date().toISOString()
     });
@@ -471,7 +458,12 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
 
               <button
                 disabled={!formData.name || !formData.username || usernameStatus !== 'available'}
-                onClick={() => setPhase(3)}
+                onClick={() => {
+                  // Generate the user's unique orb hue
+                  const hue = generateOrbHue(formData.username + formData.name + Date.now());
+                  setGeneratedHue(hue);
+                  setPhase(3.5);
+                }}
                 className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
               >
                 CONFIRM IDENTITY
@@ -480,85 +472,115 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
           </motion.div>
         )}
 
-        {/* Phase 3: School Selection */}
-        {phase === 3 && (
-          <motion.div
-            key="phase3"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
-          >
-            <div className="w-full max-w-sm">
-              <div className="text-center mb-10">
-                <School size={40} className="text-blue-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Locate Your Sanctum</h2>
-                <p className="text-[10px] font-black tracking-widest text-blue-400/60 uppercase">Select your educational institution</p>
-              </div>
+        {/* Phase 3.5: Core Crystallization (Orb Birth) */}
+        {phase === 3.5 && generatedHue != null && (() => {
+          const palette = getOrbColors(generatedHue, 'idle');
+          const gradient = getOrbGradient(generatedHue, 'idle', 'E');
+          return (
+            <motion.div
+              key="phase3.5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="relative z-10 flex flex-col items-center justify-center h-full w-full px-8"
+            >
+              {/* Background pulse in user's color */}
+              <motion.div 
+                animate={{ scale: [1, 1.5, 1], opacity: [0.05, 0.15, 0.05] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute inset-0 rounded-full blur-[120px]"
+                style={{ background: palette.primary }}
+              />
 
-              <div className="relative mb-6">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
-                <input
-                  type="text"
-                  placeholder="SEARCH FOR SCHOOL..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white/10 transition-all text-white placeholder:text-blue-200/30 font-black text-[10px] tracking-widest uppercase"
-                  value={schoolSearch}
-                  onChange={(e) => {
-                    setSchoolSearch(e.target.value);
-                    setIsAddingCustomSchool(false);
-                  }}
-                />
-              </div>
+              {/* Scanning text */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 0, 1] }}
+                transition={{ duration: 0.5, repeat: 3 }}
+                className="text-[10px] font-black tracking-[0.5em] uppercase mb-16"
+                style={{ color: palette.accent }}
+              >
+                CRYSTALLIZING NEURAL CORE...
+              </motion.div>
 
-              <div className="space-y-2 max-h-[300px] overflow-y-auto mb-6 pr-2 scrollbar-hide">
-                {MOCK_SCHOOLS.filter(s => s.toLowerCase().includes(schoolSearch.toLowerCase())).map((school) => (
-                  <button
-                    key={school}
-                    onClick={() => {
-                      setFormData({ ...formData, school });
-                      setPhase(4);
-                    }}
-                    className={cn(
-                      "w-full p-4 rounded-xl text-left font-black text-[10px] tracking-widest uppercase transition-all border border-white/5 hover:border-blue-500/50 hover:bg-blue-500/10",
-                      formData.school === school ? "border-blue-500 bg-blue-500/20 text-white" : "text-white/40"
-                    )}
-                  >
-                    {school}
-                  </button>
-                ))}
-                
-                {schoolSearch.length > 0 && !MOCK_SCHOOLS.some(s => s.toLowerCase() === schoolSearch.toLowerCase()) && (
-                  <button
-                    onClick={() => setIsAddingCustomSchool(true)}
-                    className="w-full p-4 rounded-xl text-left font-black text-[10px] tracking-widest uppercase text-blue-400 flex items-center gap-2 hover:bg-blue-500/5"
-                  >
-                    <Plus size={16} />
-                    ADD "{schoolSearch.toUpperCase()}"
-                  </button>
-                )}
-              </div>
-
-              {isAddingCustomSchool && (
+              {/* The Orb materializes */}
+              <div className="relative mb-16">
+                {/* Outer glow ring */}
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 border border-blue-500/30 bg-blue-500/5 rounded-2xl mb-6 text-center"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: [0, 2, 1.5], opacity: [0, 0.6, 0.3] }}
+                  transition={{ duration: 2, delay: 1.5 }}
+                  className="absolute inset-0 rounded-full blur-[40px]"
+                  style={{ background: palette.glow, width: 200, height: 200, left: -36, top: -36 }}
+                />
+
+                {/* The orb itself */}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0, filter: 'blur(20px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                  transition={{ duration: 1.5, delay: 1, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-32 h-32 rounded-full relative overflow-hidden shadow-2xl"
+                  style={{ background: gradient }}
                 >
-                  <p className="text-[9px] font-black text-blue-300 mb-4 tracking-widest">NO SYSTEM RECORD FOR THIS SANCTUM. INITIALIZING NEW ENTRY?</p>
-                  <button
-                    onClick={() => {
-                      setFormData({ ...formData, school: schoolSearch });
-                      setPhase(4);
-                    }}
-                    className="btn-system py-3 px-6 text-[9px]"
-                  >
-                    CONFIRM NEW SANCTUM
-                  </button>
+                  {/* Inner highlight */}
+                  <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/50 blur-[3px] -rotate-[35deg]" />
+                  <div className="absolute inset-0 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.3)]" />
+                  
+                  {/* Breathing animation */}
+                  <motion.div
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: `radial-gradient(circle at 40% 40%, ${palette.highlight} 0%, transparent 60%)` }}
+                  />
                 </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
+
+                {/* Radiating rings */}
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ width: 128, height: 128, opacity: 0 }}
+                    animate={{ width: 300, height: 300, opacity: [0, 0.4, 0] }}
+                    transition={{ duration: 2.5, delay: 2 + i * 0.4, repeat: Infinity, repeatDelay: 1 }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                    style={{ borderColor: palette.accent }}
+                  />
+                ))}
+              </div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 2.5 }}
+                className="text-2xl font-black italic tracking-tighter uppercase mb-3 text-white text-center"
+              >
+                YOUR CORE HAS BEEN FORGED
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 3 }}
+                className="text-[9px] font-black tracking-[0.3em] uppercase mb-12"
+                style={{ color: palette.accent }}
+              >
+                THIS COLOR IS YOUR PERMANENT IDENTITY
+              </motion.p>
+
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 3.5 }}
+                onClick={() => setPhase(4)}
+                className="px-10 py-5 rounded-2xl font-black text-xs tracking-widest uppercase text-white transition-all hover:scale-105 active:scale-95"
+                style={{ background: palette.primary, boxShadow: `0 0 30px ${palette.glow}` }}
+              >
+                BIND TO CORE
+              </motion.button>
+            </motion.div>
+          );
+        })()}
 
         {/* Phase 4: The Scan (Operator Profile) */}
         {phase === 4 && (
@@ -591,10 +613,18 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
                   <CheckCircle2 className="text-green-500" size={20} />
                 </div>
                 
-                <div className="mb-8">
-                  <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Operator ID</div>
-                  <div className="text-2xl font-black italic tracking-tighter text-white">{formData.name || 'HUNTER'}</div>
-                  <div className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">{formData.school || 'INDEPENDENT'}</div>
+                <div className="mb-8 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg shrink-0" 
+                    style={{ background: generatedHue != null ? getOrbGradient(generatedHue, 'idle', 'E') : 'radial-gradient(circle, #fff 0%, #94a3b8 100%)' }}>
+                    <div className="w-full h-full relative">
+                      <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/50 blur-[2px] -rotate-[35deg]" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Operator ID</div>
+                    <div className="text-2xl font-black italic tracking-tighter text-white">{formData.name || 'HUNTER'}</div>
+                    <div className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">@{formData.username || 'operator'}</div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">

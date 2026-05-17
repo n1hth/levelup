@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';
 import { cn } from '@/src/lib/utils.ts';
+import { type OrbState, getOrbColors, getOrbGradient, getRankEvolution, getRankBlur, getFacetCount, hasParticleField, getInternalRotationSpeed } from '@/src/lib/orb-color';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Layout as Diamond, 
@@ -22,7 +23,7 @@ import {
   X
 } from 'lucide-react';
 
-export type OrbState = 'dormant' | 'idle' | 'active' | 'peaked' | 'depleted' | 'evolving';
+
 
 const ARC_RADIUS = 65; 
 const ARC_THICKNESS = 4;
@@ -39,7 +40,7 @@ export interface OrbProps {
 }
 
 export function Orb({ onInteractionChange }: OrbProps) {
-  const { state, getTodayFocusTime, getXpProgress, getRank, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite, dismissNotification, clearNotifications } = useApp();
+  const { state, getTodayFocusTime, getXpProgress, getRank, getOrbHue, isOrbHidden, getNotifications, acceptFriendRequest, acceptDuelInvite, dismissNotification, clearNotifications } = useApp();
   const [orbState, setOrbState] = useState<OrbState>('dormant');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -174,6 +175,14 @@ export function Orb({ onInteractionChange }: OrbProps) {
   const focusStreak = state.streak;
   const momentum = 1 + state.momentum * 0.1;
   const xp = getXpProgress();
+
+  // Dynamic orb identity
+  const orbHue = getOrbHue();
+  const palette = useMemo(() => getOrbColors(orbHue, orbState), [orbHue, orbState]);
+  const evolution = useMemo(() => getRankEvolution(rankTier), [rankTier]);
+  const orbGradient = useMemo(() => getOrbGradient(orbHue, orbState, rankTier), [orbHue, orbState, rankTier]);
+  const facetCount = useMemo(() => getFacetCount(evolution), [evolution]);
+  const rotationSpeed = useMemo(() => getInternalRotationSpeed(evolution), [evolution]);
 
   useEffect(() => {
     // Session Active Check
@@ -311,20 +320,20 @@ export function Orb({ onInteractionChange }: OrbProps) {
             className="fixed top-[60px] left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-[380px] z-[110] pointer-events-auto"
           >
             {/* Outer Glow */}
-            <div className="absolute -inset-3 bg-cyan-500/10 rounded-[3.5rem] blur-[30px] pointer-events-none" />
+            <div className="absolute -inset-3 rounded-[3.5rem] blur-[30px] pointer-events-none" style={{ background: `${palette.glow}` }} />
             
             {/* Bento Box */}
-            <div className="relative bg-[#0a1520]/80 backdrop-blur-3xl border border-cyan-500/25 rounded-[2rem] shadow-[0_0_80px_rgba(0,229,255,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] flex flex-col overflow-hidden">
+            <div className="relative bg-[#0a1520]/80 backdrop-blur-3xl rounded-[2rem] flex flex-col overflow-hidden" style={{ border: `1px solid ${palette.muted}`, boxShadow: `0 0 80px ${palette.glow}, inset 0 1px 0 rgba(255,255,255,0.05)` }}>
               {/* Gradient shimmer line */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+              <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(to right, transparent, ${palette.accent}, transparent)` }} />
               
               {/* Header — always pinned */}
               <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg bg-cyan-500/15 flex items-center justify-center">
-                    <Bell size={11} className="text-cyan-400" />
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${palette.muted}` }}>
+                    <Bell size={11} style={{ color: palette.accent }} />
                   </div>
-                  <span className="text-[10px] font-black text-cyan-400/90 uppercase tracking-[0.25em]">Neural Alerts</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: palette.accent }}>Neural Alerts</span>
                 </div>
                 <button 
                   onClick={handleClearAll}
@@ -440,7 +449,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
             }}
             className="fixed bottom-[40px] left-1/2 -translate-x-1/2 w-[120px] h-[120px] rounded-full z-[85] pointer-events-none blur-[90px]"
             style={{ 
-              background: 'radial-gradient(circle, rgba(0,229,255,0.45) 0%, transparent 75%)',
+              background: `radial-gradient(circle, ${palette.glow} 0%, transparent 75%)`,
               willChange: 'transform, opacity'
             }}
           />
@@ -473,9 +482,10 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                           d={`M ${ARC_RADIUS * Math.cos(200 * (Math.PI / 180))} ${ARC_RADIUS * Math.sin(200 * (Math.PI / 180))} A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 1 ${ARC_RADIUS * Math.cos(340 * (Math.PI / 180))} ${ARC_RADIUS * Math.sin(340 * (Math.PI / 180))}`}
                           fill="none"
-                          stroke="#00E5FF"
+                          stroke={palette.accent}
                           strokeWidth="2"
                           strokeLinecap="round"
+                          strokeOpacity={0.25}
                         />
 
                         {SEGMENTS.map((seg, i) => {
@@ -501,10 +511,9 @@ export function Orb({ onInteractionChange }: OrbProps) {
                                   transition={{ duration: 0.3, delay: 0.05 }}
                                   d={`M ${x1} ${y1} A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 1 ${x2} ${y2}`}
                                   fill="none"
-                                  stroke="#00E5FF"
+                                  stroke={palette.accent}
                                   strokeWidth="5"
                                   strokeLinecap="round"
-                                  className="drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]"
                                 />
                               )}
 
@@ -533,8 +542,9 @@ export function Orb({ onInteractionChange }: OrbProps) {
                                   }}
                                   className={cn(
                                     "w-full h-full flex flex-col items-center justify-center pointer-events-auto",
-                                    isActive ? "text-cyan-400" : "text-[#3d526b] hover:text-[#4d6682]"
+                                    isActive ? "" : "text-[#3d526b] hover:text-[#4d6682]"
                                   )}
+                                  style={isActive ? { color: palette.accent } : undefined}
                                 >
                                   <div className={cn(
                                     "transition-transform duration-300",
@@ -576,7 +586,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                       { label: 'NEXT RANK', value: `${xp.nextLevelXp - xp.currentLevelXp} XP` }
                     ].map(item => (
                       <div key={item.label} className="flex justify-between items-end">
-                        <span className="text-[10px] font-black text-[#3A6070] tracking-[0.2em] mb-1">{item.label}</span>
+                        <span className="text-[10px] font-black tracking-[0.2em] mb-1" style={{ color: palette.accent }}>{item.label}</span>
                         <span className="text-[22px] font-bold text-white leading-none italic">{item.value}</span>
                       </div>
                     ))}
@@ -593,7 +603,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                   exit={{ y: 200, opacity: 0 }}
                   className="fixed left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-[#0C1922] border border-[#1A3050] rounded-20 shadow-2xl z-[140] flex flex-col items-center p-8 rounded-[20px]"
                 >
-                  <Activity size={24} className="text-cyan-400 opacity-20 mb-4" />
+                  <Activity size={24} className="opacity-20 mb-4" style={{ color: palette.accent }} />
                   <p className="text-white text-lg text-center font-medium leading-relaxed">
                      Neural stability maintained. {xp.nextLevelXp - xp.currentLevelXp} XP until evolution.
                   </p>
@@ -604,8 +614,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
             <motion.div 
               animate={isTapping ? "tapping" : orbState}
               variants={glowVariants}
-              className="absolute inset-0 blur-[20px] rounded-full bg-[#00E5FF] -z-10"
-              style={{ willChange: 'transform, opacity' }}
+              className="absolute inset-0 blur-[20px] rounded-full -z-10"
+              style={{ background: palette.primary, willChange: 'transform, opacity' }}
             />
 
             <motion.div
@@ -622,58 +632,72 @@ export function Orb({ onInteractionChange }: OrbProps) {
                 ease: [0.16, 1, 0.3, 1]
               }}
               className={cn(
-                "w-[80px] h-[80px] rounded-full relative overflow-hidden shadow-[0_0_50px_rgba(34,211,238,0.4)] cursor-pointer pointer-events-auto will-change-transform",
-                "bg-cyan-500", // Fallback
-                orbState === 'dormant' && "brightness-[0.9] saturate-[0.9]"
+                "w-[80px] h-[80px] rounded-full relative overflow-hidden cursor-pointer pointer-events-auto will-change-transform",
+                orbState === 'dormant' && "brightness-[0.7] saturate-[0.5]",
+                orbState === 'depleted' && "brightness-[0.4] saturate-[0.2]"
               )}
+              style={{ 
+                background: orbGradient,
+                boxShadow: `0 0 50px ${palette.glow}`,
+                filter: getRankBlur(evolution)
+              }}
             >
-              {/* Base Vibrant Gradient Layer */}
-              <motion.div 
-                animate={{ 
-                  background: [
-                    'radial-gradient(circle at 30% 30%, #ffffff 0%, #a5f3fc 20%, #06b6d4 50%, #0891b2 100%)',
-                    'radial-gradient(circle at 70% 30%, #ffffff 0%, #a5f3fc 20%, #0891b2 50%, #06b6d4 100%)',
-                    'radial-gradient(circle at 30% 70%, #ffffff 0%, #a5f3fc 20%, #06b6d4 50%, #0891b2 100%)',
-                    'radial-gradient(circle at 30% 30%, #ffffff 0%, #a5f3fc 20%, #06b6d4 50%, #0891b2 100%)',
-                  ]
-                }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 pointer-events-none" 
-              />
-              
-              <motion.div 
-                animate={{ 
-                  background: [
-                    'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)',
-                    'radial-gradient(circle at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 60%)',
-                    'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)',
-                  ]
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 pointer-events-none opacity-60" 
-              />
+              {/* Animated internal light movement */}
+              {rotationSpeed > 0 && (
+                <motion.div 
+                  animate={{ 
+                    background: [
+                      `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)`,
+                      `radial-gradient(circle at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 60%)`,
+                      `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)`,
+                    ]
+                  }}
+                  transition={{ duration: rotationSpeed, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 pointer-events-none opacity-60" 
+                />
+              )}
+
+              {/* 3D depth effects */}
               <div className="absolute inset-0 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.3)] pointer-events-none" />
               <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/60 blur-[3px] -rotate-[35deg]" />
               
-              {['C', 'B', 'A', 'S'].includes(rankTier) && (
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-                  style={{ willChange: 'transform' }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                >
-                  <div className="w-[110%] h-[1px] bg-white/15" />
-                </motion.div>
+              {/* Crystalline facet lines — appear at B rank and above */}
+              {facetCount > 0 && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {Array.from({ length: facetCount }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 120 + i * 20, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ transform: `rotate(${(360 / facetCount) * i}deg)` }}
+                    >
+                      <div className="w-[110%] h-[1px] bg-white/15" />
+                    </motion.div>
+                  ))}
+                </div>
               )}
               
+              {/* Peaked state — inner ring */}
               {orbState === 'peaked' && (
                  <div className="absolute inset-0 flex items-center justify-center">
                      <div className="w-[60%] h-[60%] rounded-full border-[1.5px] border-white/30" />
                   </div>
                )}
 
+               {/* Depleted state — crack overlay */}
+               {orbState === 'depleted' && (
+                 <div className="absolute inset-0 pointer-events-none opacity-40">
+                   <div className="absolute top-[30%] left-[20%] w-[60%] h-[1px] bg-black/60 rotate-[25deg]" />
+                   <div className="absolute top-[50%] left-[30%] w-[40%] h-[1px] bg-black/40 -rotate-[15deg]" />
+                 </div>
+               )}
+
+               {/* Notification indicator — uses user's accent color */}
                {notifications.length > 0 && (
-                 <div className="absolute top-4 right-4 w-3 h-3 bg-cyan-400 rounded-full border-2 border-[#00E5FF] shadow-[0_0_10px_rgba(0,229,255,0.8)] z-20" />
+                 <div className="absolute top-4 right-4 w-3 h-3 rounded-full border-2 z-20"
+                   style={{ background: palette.accent, borderColor: palette.primary, boxShadow: `0 0 10px ${palette.glow}` }}
+                 />
                )}
             </motion.div>
 
@@ -683,7 +707,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
                   initial={{ scale: 1, opacity: 0.3 }}
                   animate={{ scale: 1.8, opacity: 0 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-                  className="absolute w-[72px] h-[72px] rounded-full border border-white/30 pointer-events-none"
+                  className="absolute w-[72px] h-[72px] rounded-full border pointer-events-none"
+                  style={{ borderColor: palette.accent }}
                 />
               )}
             </AnimatePresence>
