@@ -182,22 +182,26 @@ export function AppTour() {
           <>
             {/* Content Card with Intelligent Positioning (Smaller & Subtler) */}
             <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
+              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)', y: 10, x: '-50%' }}
               animate={{ 
                 opacity: isTransitioning ? 0 : 1, 
-                top: step?.position === 'bottom' ? 'auto' : 
-                     !targetRect ? '30%' : 
-                     (targetRect.top + targetRect.height / 2 > window.innerHeight / 2) ? 'auto' : targetRect.bottom + 20,
-                bottom: step?.position === 'bottom' ? 32 :
-                        targetRect && (targetRect.top + targetRect.height / 2 > window.innerHeight / 2) ? (window.innerHeight - targetRect.top) + 20 : 'auto',
-                scale: isTransitioning ? 0.98 : 1,
+                scale: isTransitioning ? 0.95 : 1,
                 filter: isTransitioning ? 'blur(10px)' : 'blur(0px)',
-                y: (step?.position === 'bottom') ? 0 : (!targetRect ? '-50%' : 0)
+                y: isTransitioning ? 10 : 0,
+                x: '-50%'
               }}
-              exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-64px)] max-w-[280px] bg-[#0A0C10]/98 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_40px_100px_rgba(0,0,0,0.9),0_0_40px_rgba(34,211,238,0.2)] pointer-events-auto z-[210]"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: step?.position === 'bottom' ? 'auto' : 
+                     !targetRect ? '35%' : 
+                     (targetRect.top + targetRect.height / 2 > window.innerHeight / 2) ? 'auto' : `${targetRect.bottom + 20}px`,
+                bottom: step?.position === 'bottom' ? '32px' :
+                        targetRect && (targetRect.top + targetRect.height / 2 > window.innerHeight / 2) ? `${(window.innerHeight - targetRect.top) + 20}px` : 'auto',
+                transformOrigin: 'center center'
+              }}
+              className="w-[calc(100%-64px)] max-w-[280px] bg-[#0A0C10]/98 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_40px_100px_rgba(0,0,0,0.9),0_0_40px_rgba(34,211,238,0.2)] pointer-events-auto z-[210]"
             >
               <button 
                 onClick={completeTour}
