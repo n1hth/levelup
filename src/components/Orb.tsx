@@ -491,20 +491,22 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {showPulseWave && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.8, opacity: 0, x: '-50%' }}
             animate={{ 
               scale: [0.8, 1.4, 1.8, 3.5], 
-              opacity: [0, 0.4, 0.4, 0] 
+              opacity: [0, 0.4, 0.4, 0],
+              x: '-50%'
             }}
+            exit={{ opacity: 0, x: '-50%' }}
             transition={{ 
               duration: 2.2, 
               times: [0, 0.15, 0.6, 1],
               ease: "linear"
             }}
-            className="fixed bottom-[40px] left-1/2 -translate-x-1/2 w-[120px] h-[120px] rounded-full z-[85] pointer-events-none blur-[90px]"
+            className="fixed bottom-[40px] left-1/2 w-[120px] h-[120px] rounded-full z-[85] pointer-events-none blur-[90px]"
             style={{ 
               background: `radial-gradient(circle, ${palette.glow} 0%, transparent 75%)`,
-              willChange: 'transform, opacity'
+              willChange: 'transform'
             }}
           />
         )}
@@ -513,10 +515,11 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {!isOrbHidden && (
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.5 } }}
-            className="fixed bottom-[40px] left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center pointer-events-none"
+            initial={{ opacity: 0, y: 20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, scale: 0.8, x: '-50%', transition: { duration: 0.5 } }}
+            style={{ willChange: 'transform' }}
+            className="fixed bottom-[40px] left-1/2 z-[100] flex flex-col items-center pointer-events-none"
           >
             <AnimatePresence>
               {isNavOpen && (
@@ -945,9 +948,10 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {showBubble && latestDuelNotif && !isNavOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, x: -50, scale: 0.8 }}
-            animate={{ opacity: 1, y: -110, x: -50, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, y: -130 }}
+            initial={{ opacity: 0, y: 20, x: '-50%', scale: 0.8 }}
+            animate={{ opacity: 1, y: -110, x: '-50%', scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5, y: -130, x: '-50%' }}
+            style={{ willChange: 'transform' }}
             className="fixed bottom-0 left-1/2 z-[100] cursor-pointer"
             onClick={() => setIsNavOpen(true)}
           >
@@ -973,9 +977,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
       <AnimatePresence>
         {showRankUpCinematic && (
           <motion.div 
-            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-            animate={{ opacity: 1, backdropFilter: 'blur(24px)' }}
-            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)'
+            }}
             className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto bg-black/40"
           >
             {/* Hyperspace Background */}

@@ -379,7 +379,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthChange = async (session: Session | null) => {
     if (!session) {
-      setState(prev => ({ ...prev, user: null }));
+      setState(prev => {
+        if (prev.user?.id === 'local-operator' || prev.user?.id === 'debug-user') {
+          return prev;
+        }
+        return { ...prev, user: null };
+      });
       setIsLoading(false);
       return;
     }
