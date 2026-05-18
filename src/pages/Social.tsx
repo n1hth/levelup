@@ -355,13 +355,13 @@ export function Social() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      className="flex gap-3 w-full"
+                      className="flex gap-2 w-full"
                     >
                       <button 
                         onClick={() => setDuelView('modes')}
-                        className="flex-1 flex items-center justify-center gap-2.5 bg-red-600 text-white h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-red-500 transition-all active:scale-95 shadow-lg shadow-red-600/20"
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-red-600 text-white h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-red-500 transition-all active:scale-95 shadow-lg shadow-red-600/20"
                       >
-                        <Swords size={14} />
+                        <Swords size={12} />
                         Duel
                       </button>
                       <button 
@@ -370,10 +370,21 @@ export function Social() {
                           setSelectedFriend(null);
                           setOrbRect(null);
                         }}
-                        className="flex-1 flex items-center justify-center gap-2.5 bg-cyan-500 text-black h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-cyan-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20"
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-cyan-500 text-black h-12 rounded-2xl font-black italic uppercase tracking-widest text-[9px] hover:bg-cyan-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20"
                       >
-                        <MessageSquare size={14} />
+                        <MessageSquare size={12} />
                         Chat
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate(`/profile/${selectedFriend.id}`);
+                          setSelectedFriend(null);
+                          setOrbRect(null);
+                        }}
+                        className="w-12 h-12 shrink-0 flex items-center justify-center bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-white/80 rounded-2xl transition-all active:scale-95 shadow-lg"
+                        title="View Profile"
+                      >
+                        <Users size={14} />
                       </button>
                     </motion.div>
                   ) : (
