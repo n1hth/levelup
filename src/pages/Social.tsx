@@ -575,11 +575,11 @@ export function Social() {
                       </div>
                       
                       <button
-                        onClick={() => handleAcceptFriend(req.id)}
-                        disabled={acceptingIds.has(req.id)}
+                        onClick={() => handleAcceptFriend(req.friendshipId)}
+                        disabled={acceptingIds.has(req.friendshipId)}
                         className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black text-[8px] font-black uppercase tracking-wider hover:bg-cyan-400 transition-colors shrink-0 disabled:opacity-50"
                       >
-                        {acceptingIds.has(req.id) ? 'LINKING...' : 'ACCEPT'}
+                        {acceptingIds.has(req.friendshipId) ? 'LINKING...' : 'ACCEPT'}
                       </button>
                     </div>
                   ))
