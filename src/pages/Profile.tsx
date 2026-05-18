@@ -45,7 +45,7 @@ export function Profile() {
   const navigate = useNavigate();
   
   const {
-    state, getLevel, getRank, getXpProgress: getMyXpProgress, resetUser, signOut,
+    state, getLevel, getRank, getXpProgress: getMyXpProgress, resetUser, deleteAccount, signOut,
     getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered,
     getStudyHeatmap, getAchievements, sendFriendRequest, acceptFriendRequest, removeFriend
   } = useApp();
@@ -67,6 +67,7 @@ export function Profile() {
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSeverConfirm, setShowSeverConfirm] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   
   // Custom system toast notification states
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -769,10 +770,29 @@ export function Profile() {
               </div>
               <div className="flex flex-col gap-2 relative z-10">
                 <button
-                  onClick={() => { resetUser(); setShowResetConfirm(false); }}
-                  className="w-full py-4 rounded-xl bg-red-500 text-black font-black text-[10px] uppercase tracking-[0.3em] italic hover:bg-red-400 transition-all shadow-[0_0_30px_rgba(239,68,68,0.5)]"
+                  disabled={isPurging}
+                  onClick={async () => {
+                    setIsPurging(true);
+                    try {
+                      await deleteAccount();
+                      showToast("System Reset Successful. Core memory purged.", "success");
+                    } catch (err) {
+                      showToast("Purge failed. Network interference detected.", "error");
+                    } finally {
+                      setIsPurging(false);
+                      setShowResetConfirm(false);
+                    }
+                  }}
+                  className="w-full py-4 rounded-xl bg-red-500 text-black font-black text-[10px] uppercase tracking-[0.3em] italic hover:bg-red-400 transition-all shadow-[0_0_30px_rgba(239,68,68,0.5)] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  CONFIRM PURGE
+                  {isPurging ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                      className="w-4 h-4 border-2 border-black border-t-transparent rounded-full"
+                    />
+                  ) : null}
+                  <span>{isPurging ? 'PURGING MATRIX...' : 'CONFIRM PURGE'}</span>
                 </button>
                 <button
                   onClick={() => setShowResetConfirm(false)}

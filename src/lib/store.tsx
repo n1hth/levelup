@@ -96,6 +96,7 @@ interface AppContextType {
   // User
   setUser: (user: User | null) => void;
   resetUser: () => void;
+  deleteAccount: () => Promise<void>;
   // XP
   addXp: (amount: number) => Promise<{ newLevel: number; oldLevel: number; leveledUp: boolean; newRank: string; oldRank: string; rankChanged: boolean }>;
   getLevel: () => number;
@@ -549,6 +550,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState(defaultState);
     setSession(null);
   }, []);
+
+  const deleteAccount = useCallback(async () => {
+    if (!state.user) return;
+    try {
+      const userId = state.user.id;
+      
+      // Delete user dependent tables
+      await supabase.from('cards').delete().eq('user_id', userId);
+      await supabase.from('decks').delete().eq('user_id', userId);
+      await supabase.from('messages').delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
+      await supabase.from('duels').delete().or(`player1_id.eq.${userId},player2_id.eq.${userId}`);
+      await supabase.from('friends').delete().or(`user_id.eq.${userId},friend_id.eq.${userId}`);
+      await supabase.from('profiles').delete().eq('id', userId);
+      
+      // Clean local storage and sign out
+      await signOut();
+    } catch (err) {
+      console.error("[store] Failed to delete user account data:", err);
+      throw err;
+    }
+  }, [state.user, signOut]);
 
   // ── XP ───────────────────────────────────────
 
@@ -1755,7 +1777,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const contextValue = useMemo(() => ({
     state, isLoading, session,
-    setUser, resetUser, signOut,
+    setUser, resetUser, deleteAccount, signOut,
     addXp, getLevel, getRank, getXpProgress: getXpProgressData,
     addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
     addDeck, updateDeck, deleteDeck,
@@ -1772,7 +1794,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     sendDuelInvite, acceptDuelInvite, cancelDuel, dismissNotification, getNotifications, clearNotifications,
     joinMatchmaking, leaveMatchmaking, getMatch, createDuel, updateDuel, getDuel, getPublicDuels, submitCommunityHonourVote
   }), [
-    state, isLoading, session, setUser, resetUser, signOut, addXp, getLevel, getRank, getXpProgressData,
+    state, isLoading, session, setUser, resetUser, deleteAccount, signOut, addXp, getLevel, getRank, getXpProgressData,
     addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
     addDeck, updateDeck, deleteDeck, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
     addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
