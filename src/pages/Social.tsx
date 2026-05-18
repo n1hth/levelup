@@ -771,9 +771,8 @@ export function Social() {
                     return (
                     <div key={friend.id} className="relative">
                       <motion.button 
-                        onClick={(e) => {
-                          setOrbRect(e.currentTarget.getBoundingClientRect());
-                          setSelectedFriend(friend);
+                        onClick={() => {
+                          navigate(`/social/chat/${friend.id}`);
                         }}
                         className="w-full group flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5"
                       >
