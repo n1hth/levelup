@@ -888,27 +888,27 @@ export function ArenaDuel() {
                   if (!hasReviewed && !duel[myRatingField]) {
                     return (
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                        className="bg-white/[0.03] border border-white/10 rounded-3xl p-10 space-y-8 shadow-2xl relative overflow-hidden"
+                        className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-10 space-y-5 md:space-y-8 shadow-2xl relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
                         
                         <div className="text-center">
-                          <h3 className="text-sm font-black uppercase tracking-[0.6em] text-cyan-400 italic">Honour Verification</h3>
-                          <p className="text-[10px] text-white/20 mt-3 uppercase font-black italic tracking-[0.2em]">Evaluate peer performance for XP release</p>
+                          <h3 className="text-xs md:text-sm font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-cyan-400 italic">Honour Verification</h3>
+                          <p className="text-[9px] md:text-[10px] text-white/20 mt-2 md:mt-3 uppercase font-black italic tracking-[0.15em] md:tracking-[0.2em]">Evaluate peer performance for XP release</p>
                         </div>
                         
-                        <div className="flex justify-center gap-4">
+                        <div className="flex justify-center gap-2 md:gap-4">
                           {[1, 2, 3, 4, 5].map(star => (
                             <button
                               key={star}
                               type="button"
                               onClick={() => setRating(star)}
                               className={cn(
-                                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all relative group",
+                                "w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all relative group",
                                 rating >= star ? "bg-cyan-500 text-black shadow-[0_0_30px_rgba(34,211,238,0.4)]" : "bg-white/[0.03] text-white/10 border border-white/5 hover:border-white/20"
                               )}
                             >
-                              <Zap size={22} fill={rating >= star ? "currentColor" : "none"} className={cn("transition-transform group-hover:scale-110", rating >= star && "rotate-12")} />
+                              <Zap className={cn("w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110", rating >= star && "rotate-12")} fill={rating >= star ? "currentColor" : "none"} />
                               {rating >= star && (
                                  <motion.div layoutId="star-glow" className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-full" />
                               )}
@@ -921,7 +921,7 @@ export function ArenaDuel() {
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder="Neural feedback regarding peer node performance (Optional)..."
-                            className="w-full bg-black border border-white/10 rounded-3xl p-6 text-xs font-medium italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none h-28"
+                            className="w-full bg-black border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 text-[10px] md:text-xs font-medium italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none h-20 md:h-28"
                           />
                         </div>
 
@@ -929,7 +929,7 @@ export function ArenaDuel() {
                           type="button"
                           onClick={handleSubmitReview}
                           disabled={isSyncing || rating === 0}
-                          className="w-full py-6 rounded-2xl bg-cyan-600 text-white font-black uppercase tracking-[0.5em] text-[11px] shadow-[0_10px_40px_rgba(6,182,212,0.3)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
+                          className="w-full py-4 md:py-6 rounded-xl md:rounded-2xl bg-cyan-600 text-white font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-[10px] md:text-[11px] shadow-[0_10px_40px_rgba(6,182,212,0.3)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
                         >
                           <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'Verify Honour & Release Fragments'}</span>
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -938,13 +938,13 @@ export function ArenaDuel() {
                     );
                   } else {
                     return (
-                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-12 text-center relative overflow-hidden group">
+                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
                         <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }}>
-                           <Shield size={48} className="text-emerald-500 mx-auto mb-6 opacity-80" />
+                           <Shield className="w-8 h-8 md:w-12 md:h-12 text-emerald-500 mx-auto mb-4 md:mb-6 opacity-80" />
                         </motion.div>
-                        <div className="text-xl font-black uppercase italic tracking-widest text-emerald-500">Signal Verified</div>
-                        <p className="text-[10px] text-emerald-500/40 mt-4 font-black uppercase italic tracking-[0.3em] leading-relaxed">XP tokens are being released across the network.<br/>Combat cycle complete.</p>
+                        <div className="text-base md:text-xl font-black uppercase italic tracking-widest text-emerald-500">Signal Verified</div>
+                        <p className="text-[9px] md:text-[10px] text-emerald-500/40 mt-3 md:mt-4 font-black uppercase italic tracking-[0.2em] md:tracking-[0.3em] leading-relaxed">XP tokens are being released across the network.<br/>Combat cycle complete.</p>
                       </div>
                     );
                   }
