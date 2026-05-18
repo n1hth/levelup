@@ -481,6 +481,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('profiles').update({ orb_hue: orbHue }).eq('id', profile.id).then(() => {});
         }
 
+        // Self-healing Onboarding completed check: if user already has decks or cards, they completed onboarding!
+        let onboardingCompleted = profile.onboarding_completed || remoteDecks.length > 0 || remoteCards.length > 0;
+        if (onboardingCompleted && !profile.onboarding_completed) {
+          // Sync it back to the profile table in the background
+          supabase.from('profiles').update({ onboarding_completed: true }).eq('id', profile.id).then(() => {});
+        }
+
         setState(prev => ({
           ...prev,
           user: {
@@ -488,7 +495,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             name: profile.name,
             school: profile.school,
             orbHue,
-            onboardingCompleted: profile.onboarding_completed,
+            onboardingCompleted: onboardingCompleted,
             createdAt: profile.created_at,
           },
           totalXp: profile.total_xp,
