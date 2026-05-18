@@ -1223,7 +1223,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, username, total_xp')
+        .select('id, name, username, total_xp, orb_hue')
         .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
         .limit(10);
       
@@ -1387,7 +1387,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ]));
 
       const { data: senderProfiles } = senderIds.length > 0 
-        ? await supabase.from('profiles').select('id, name, username').in('id', senderIds)
+        ? await supabase.from('profiles').select('id, name, username, orb_hue').in('id', senderIds)
         : { data: [] };
 
       const notifications = [
@@ -1398,6 +1398,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             type: 'friend',
             sender: profile?.name || 'Unknown',
             username: profile?.username || 'unknown',
+            orb_hue: profile?.orb_hue || 200,
             timestamp: r.created_at
           };
         }),
@@ -1520,7 +1521,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Fetch profiles for those IDs
       const { data: friendProfiles, error: profError } = await supabase
         .from('profiles')
-        .select('id, name, total_xp')
+        .select('id, name, total_xp, orb_hue')
         .in('id', friendIds);
 
       if (profError) {
@@ -1555,6 +1556,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           name: profile?.name || 'Unknown User',
           status: f.status,
           total_xp: profile?.total_xp || 0,
+          orb_hue: profile?.orb_hue || 200,
           isIncoming: f.friend_id === state.user!.id,
           last_message: lastMessage || null
         };
@@ -1584,7 +1586,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getLeaderboard = useCallback(async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, name, total_xp')
+      .select('id, name, total_xp, orb_hue')
       .order('total_xp', { ascending: false })
       .limit(50);
     
