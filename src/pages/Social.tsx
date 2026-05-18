@@ -100,6 +100,7 @@ export function Social() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
   const [orbRect, setOrbRect] = useState<DOMRect | null>(null);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [duelView, setDuelView] = useState<'actions' | 'modes'>('actions');
   const [selectedMode, setSelectedMode] = useState<'deck' | 'writing' | null>(null);
   const [isSendingDuel, setIsSendingDuel] = useState(false);
@@ -486,6 +487,105 @@ export function Social() {
           </>
         )}
       </AnimatePresence>
+      
+      <AnimatePresence>
+        {showRequestsModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowRequestsModal(false)}
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ 
+                opacity: 0, 
+                y: 100,
+                scale: 0.8,
+                x: '-50%',
+                rotateX: -15
+              }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                scale: 1,
+                x: '-50%',
+                rotateX: 0
+              }}
+              exit={{ 
+                opacity: 0, 
+                y: 60,
+                scale: 0.9,
+                x: '-50%',
+                rotateX: -10
+              }}
+              style={{
+                position: 'fixed',
+                left: '50%',
+                bottom: '140px',
+                perspective: '1000px',
+                transformOrigin: 'bottom center'
+              }}
+              transition={{ 
+                type: 'spring', 
+                damping: 25, 
+                stiffness: 400,
+                mass: 0.8
+              }}
+              className="z-[101] w-[300px] bg-[#080A0E]/98 backdrop-blur-3xl border border-white/20 rounded-[2rem] p-6 shadow-[0_40px_80px_-20px_rgba(0,0,0,1)] flex flex-col gap-4 animate-modal"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Syndicate Requests</span>
+                <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded-full text-[8px] font-black italic">
+                  {friends.filter(f => f.status === 'pending' && f.isIncoming).length} INCOMING
+                </span>
+              </div>
+              
+              <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                {friends.filter(f => f.status === 'pending' && f.isIncoming).length === 0 ? (
+                  <div className="py-8 text-center flex flex-col items-center gap-2">
+                    <Users size={20} className="text-white/10 animate-pulse" />
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">No pending requests</span>
+                  </div>
+                ) : (
+                  friends.filter(f => f.status === 'pending' && f.isIncoming).map((req) => (
+                    <div key={req.id} className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-2xl p-3 gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <SmallOrb hue={req.orb_hue || 200} state="active" size={28} />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[9px] font-black text-white italic uppercase tracking-wider truncate">
+                            {req.name}
+                          </span>
+                          <span className="text-[7px] font-bold text-white/30 uppercase italic tracking-tighter">
+                            Awaiting Link
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleAcceptFriend(req.id)}
+                        disabled={acceptingIds.has(req.id)}
+                        className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black text-[8px] font-black uppercase tracking-wider hover:bg-cyan-400 transition-colors shrink-0 disabled:opacity-50"
+                      >
+                        {acceptingIds.has(req.id) ? 'LINKING...' : 'ACCEPT'}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              <button
+                onClick={() => setShowRequestsModal(false)}
+                className="w-full py-2 bg-white/[0.03] hover:bg-white/[0.08] text-white/60 hover:text-white border border-white/5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all active:scale-[0.98] mt-1"
+              >
+                Close Portal
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <div className="pt-8 px-6 flex items-center justify-between">
          <div className="text-left">
            <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
@@ -542,8 +642,19 @@ export function Social() {
 
             {/* Instagram style Orbs Row */}
             <div className="px-4 overflow-hidden">
-               <div className="px-2 mb-2">
+               <div className="px-2 mb-2 flex items-center justify-between">
                  <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Syndicate Friends</span>
+                 
+                 {/* Requests Button */}
+                 <button
+                   onClick={() => setShowRequestsModal(true)}
+                   className="px-3 py-1 bg-cyan-400/10 hover:bg-cyan-400/25 border border-cyan-400/20 rounded-lg text-[8px] font-black uppercase tracking-widest text-cyan-400 transition-all active:scale-95 flex items-center gap-1.5 relative"
+                 >
+                   REQUESTS
+                   {friends.filter(f => f.status === 'pending' && f.isIncoming).length > 0 && (
+                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping absolute -top-0.5 -right-0.5" />
+                   )}
+                 </button>
                </div>
                <div className="flex gap-4 overflow-x-auto pb-4 px-2 no-scrollbar scroll-smooth">
                  {friends.filter(f => f.status === 'accepted').slice(0, 10).map((friend) => (
