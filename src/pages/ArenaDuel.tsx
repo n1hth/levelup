@@ -102,7 +102,7 @@ export function ArenaDuel() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [showMyTranscript, setShowMyTranscript] = useState(false);
   const [xpCredited, setXpCredited] = useState(false);
-  const [activeReviewTab, setActiveReviewTab] = useState<'me' | 'peer'>('me');
+  const [activeReviewTab, setActiveReviewTab] = useState<'me' | 'peer'>('peer');
 
   // Derived state
   const isPlayer1 = duel?.player1_id === state.user?.id;
@@ -931,7 +931,7 @@ export function ArenaDuel() {
                           disabled={isSyncing || rating === 0}
                           className="w-full py-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-[0.25em] text-[10px] shadow-[0_5px_20px_rgba(6,182,212,0.25)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
                         >
-                          <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'Verify Honour & Release Fragments'}</span>
+                          <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'SUBMIT HONOUR'}</span>
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                         </button>
                       </motion.div>
