@@ -1447,20 +1447,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.user]);
 
   const getFriends = useCallback(async () => {
-    if (!state.user) return [];
+    console.log("[store] getFriends CALLED. state.user:", state.user);
+    if (!state.user) {
+      console.log("[store] getFriends returning early: state.user is falsy");
+      return [];
+    }
     
     try {
       // Fetch both directions
+      console.log("[store] getFriends querying 'friends' table for user ID:", state.user.id);
       const { data: friendships, error } = await supabase
         .from('friends')
         .select('*')
         .or(`user_id.eq.${state.user.id},friend_id.eq.${state.user.id}`);
 
-      if (error) throw error;
-      if (!friendships || friendships.length === 0) return [];
+      if (error) {
+        console.error("[store] getFriends Supabase select error:", error);
+        throw error;
+      }
+      console.log("[store] getFriends friendships result:", friendships);
+      if (!friendships || friendships.length === 0) {
+        console.log("[store] getFriends returning empty array (no friendships found)");
+        return [];
+      }
 
       // Extract unique friend IDs
       const friendIds = friendships.map(f => f.user_id === state.user!.id ? f.friend_id : f.user_id);
+      console.log("[store] getFriends unique friendIds:", friendIds);
 
       // Fetch profiles for those IDs
       const { data: friendProfiles, error: profError } = await supabase
@@ -1468,7 +1481,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select('id, name, total_xp')
         .in('id', friendIds);
 
-      if (profError) throw profError;
+      if (profError) {
+        console.error("[store] getFriends profError:", profError);
+        throw profError;
+      }
+      console.log("[store] getFriends friendProfiles result:", friendProfiles);
 
       // Fetch recent messages for these friends in one go
       const { data: recentMessages } = await supabase
@@ -1485,7 +1502,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         );
       }).filter(Boolean);
 
-      return friendships.map(f => {
+      const result = friendships.map(f => {
         const friendId = f.user_id === state.user!.id ? f.friend_id : f.user_id;
         const profile = friendProfiles?.find(p => p.id === friendId);
         const lastMessage = lastMessages.find(m => m && (m.sender_id === friendId || m.receiver_id === friendId));
@@ -1500,8 +1517,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           last_message: lastMessage || null
         };
       });
+      console.log("[store] getFriends SUCCESS. Final output:", result);
+      return result;
     } catch (err) {
-      console.error("Fetch friends failed:", err);
+      console.error("[store] Fetch friends failed with exception:", err);
       return [];
     }
   }, [state.user]);
@@ -1701,7 +1720,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         *,
         p1:profiles!player1_id(name),
         p2:profiles!player2_id(name),
-        community_duel_votes(*)
+        community_duel_votes:duel_votes(*)
       `)
       .in('status', ['community_review', 'finished'])
       .order('created_at', { ascending: false })

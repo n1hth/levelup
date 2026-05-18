@@ -17,7 +17,9 @@ import { Users, Trophy,
   BookOpen,
   Send,
   Check,
-  Loader2
+  Loader2,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
@@ -94,6 +96,7 @@ export function Social() {
   const [leaderboard, setLeaderboard] = useState<{ id: string; name: string; total_xp: number; rank: string; orb_hue?: number }[]>([]);
   const [publicDuels, setPublicDuels] = useState<any[]>([]);
   const [votingKey, setVotingKey] = useState<string | null>(null);
+  const [flippedDuels, setFlippedDuels] = useState<Record<string, 'p1' | 'p2'>>({});
   const [isSearching, setIsSearching] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
   const [orbRect, setOrbRect] = useState<DOMRect | null>(null);
@@ -122,20 +125,33 @@ export function Social() {
   };
 
   useEffect(() => {
+    console.log("[Social] useEffect RUNNING. activeTab:", activeTab);
     if (activeTab === 'friends') {
+      console.log("[Social] Calling getFriends()...");
       getFriends().then((data) => {
+        console.log("[Social] getFriends resolved with data:", data);
         const baseData = (data && data.length > 0) ? data : DUMMY_FRIENDS;
+        console.log("[Social] baseData used (after empty check fallback):", baseData);
         let enriched = baseData.map((f: any) => ({
           ...f,
           activity: f.activity || 'Idle',
           streak: f.streak || 0
         }));
+        console.log("[Social] setting friends state with:", enriched);
         setFriends(enriched);
       });
     } else if (activeTab === 'leaderboard') {
-      getLeaderboard().then(setLeaderboard);
+      console.log("[Social] Calling getLeaderboard()...");
+      getLeaderboard().then((data) => {
+        console.log("[Social] getLeaderboard resolved with:", data);
+        setLeaderboard(data);
+      });
     } else if (activeTab === 'community') {
-      getPublicDuels().then(setPublicDuels);
+      console.log("[Social] Calling getPublicDuels()...");
+      getPublicDuels().then((data) => {
+        console.log("[Social] getPublicDuels resolved with:", data);
+        setPublicDuels(data);
+      });
     }
   }, [activeTab, getFriends, getLeaderboard, getPublicDuels]);
 
@@ -676,155 +692,210 @@ export function Social() {
                 </div>
              </motion.div>
 
-             {publicDuels.length > 0 ? (
-               <div className="grid gap-4">
-                 {publicDuels.map((duel) => {
-                  const p1Votes = getHonourVotes(duel, 'p1');
-                  const p2Votes = getHonourVotes(duel, 'p2');
+              {publicDuels.length > 0 ? (
+                <div className="grid gap-4">
+                  {publicDuels.map((duel) => {
+                    const activeSide = flippedDuels[duel.id] || 'p1';
+                    const opponentSide = activeSide === 'p1' ? 'p2' : 'p1';
+                    
+                    const p1Votes = getHonourVotes(duel, 'p1');
+                    const p2Votes = getHonourVotes(duel, 'p2');
+                    
+                    const votes = activeSide === 'p1' ? p1Votes : p2Votes;
+                    const targetName = activeSide === 'p1' ? duel.p1?.name : duel.p2?.name;
+                    const reviewerName = activeSide === 'p1' ? duel.p2?.name : duel.p1?.name;
+                    const rating = duel[`${activeSide}_review_rating`];
+                    const finalized = duel[`${activeSide}_honour_finalized`];
+                    const approved = duel[`${activeSide}_honour_approved`];
+                    const voteKey = `${duel.id}:${activeSide}`;
+                    
+                    const topicText = duel.mode === 'deck' 
+                      ? 'ARMAMENT DECK SYNC' 
+                      : (duel.p1_topic || duel.p2_topic || 'DECK CHALLENGE ACTIVE');
 
-                  return (
-                   <motion.div 
-                     key={duel.id}
-                     variants={itemVariants}
-                     className="bg-[#0A0C10] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] group/duel"
-                   >
-                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
-                     
-                     <div className="flex items-center justify-between mb-10">
-                       <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 rounded-[1.25rem] bg-black border border-white/10 flex items-center justify-center text-cyan-400 font-black italic shadow-inner group-hover/duel:border-cyan-400/30 transition-colors">
-                           {duel.mode === 'deck' ? <Trophy size={18} /> : <AtSign size={18} />}
-                         </div>
-                         <div>
-                           <span className="text-sm font-black uppercase text-white tracking-widest italic block leading-none mb-1.5">
-                             {duel.mode === 'deck' ? 'Fragment Duel' : 'Lexical Conflict'}
-                           </span>
-                           <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic opacity-50">Active Observation Required</span>
-                         </div>
-                       </div>
-                       <div className={cn(
-                         "text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border italic shadow-inner",
-                         duel.status === 'finished' ? "bg-emerald-500/5 border-emerald-500/10 text-emerald-500" : "bg-cyan-500/5 border-cyan-400/20 text-cyan-400"
-                       )}>
-                         {duel.status === 'community_review' ? 'Honour Review' : duel.status}
-                       </div>
-                     </div>
+                    const answerText = duel.mode === 'deck'
+                      ? (activeSide === 'p1'
+                          ? `${duel.p1?.name || 'Player 1'} score locked: ${duel.p1_score} out of 10 fragments successfully synchronized.`
+                          : `${duel.p2?.name || 'Player 2'} score locked: ${duel.p2_score !== null ? duel.p2_score : '...'} out of 10 fragments successfully synchronized.`
+                        )
+                      : (activeSide === 'p1' ? duel.p1_answer : duel.p2_answer);
 
-                     <div className="flex items-center justify-between gap-10 py-10 border-y border-white/[0.03]">
-                       <div className="flex-1 text-center">
-                         <div className="text-[10px] font-black text-white/15 uppercase mb-3 italic tracking-[0.3em] truncate">{duel.p1?.name}</div>
-                         <div className="text-4xl font-black italic text-white tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                           {duel.mode === 'deck' ? duel.p1_score : duel.p1_review_rating ? `${duel.p1_review_rating}` : '—'}
-                           {duel.mode !== 'deck' && <span className="text-lg opacity-20 ml-1.5">★</span>}
-                         </div>
-                       </div>
-                       <div className="text-white/5 font-black italic text-2xl tracking-[0.6em] select-none scale-90">VS</div>
-                       <div className="flex-1 text-center">
-                         <div className="text-[10px] font-black text-white/15 uppercase mb-3 italic tracking-[0.3em] truncate">{duel.p2?.name}</div>
-                         <div className="text-4xl font-black italic text-white tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                           {duel.mode === 'deck' ? duel.p2_score : duel.p2_review_rating ? `${duel.p2_review_rating}` : '—'}
-                           {duel.mode !== 'deck' && <span className="text-lg opacity-20 ml-1.5">★</span>}
-                         </div>
-                       </div>
-                     </div>
+                    const toggleFlip = (duelId: string) => {
+                      setFlippedDuels(prev => ({
+                        ...prev,
+                        [duelId]: prev[duelId] === 'p2' ? 'p1' : 'p2'
+                      }));
+                    };
 
-                     {duel.mode === 'writing' && (duel.p1_topic || duel.p2_topic) && (
-                       <div className="mt-8 p-6 bg-black rounded-[1.75rem] border border-white/5 shadow-inner">
-                         <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-3 text-center italic">Neural Prompt Objective</div>
-                         <p className="text-[12px] font-black text-cyan-400/70 text-center italic uppercase tracking-tighter leading-relaxed">"{duel.p1_topic || duel.p2_topic}"</p>
-                       </div>
-                     )}
+                    return (
+                      <motion.div 
+                        key={duel.id}
+                        variants={itemVariants}
+                        className="bg-[#0A0C10] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)] group/duel"
+                      >
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+                        
+                        {/* Header Panel */}
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-[1.25rem] bg-black border border-white/10 flex items-center justify-center text-cyan-400 font-black italic shadow-inner group-hover/duel:border-cyan-400/30 transition-colors">
+                              {duel.mode === 'deck' ? <Trophy size={18} /> : <AtSign size={18} />}
+                            </div>
+                            <div>
+                              <span className="text-sm font-black uppercase text-white tracking-widest italic block leading-none mb-1.5">
+                                {duel.mode === 'deck' ? 'Fragment Duel' : 'Lexical Conflict'}
+                              </span>
+                              <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic opacity-50">Active Observation Required</span>
+                            </div>
+                          </div>
 
-                     <div className="mt-10 space-y-4">
-                       {(['p1', 'p2'] as const).map(targetPlayer => {
-                         const targetName = targetPlayer === 'p1' ? duel.p1?.name : duel.p2?.name;
-                         const reviewerName = targetPlayer === 'p1' ? duel.p2?.name : duel.p1?.name;
-                         const votes = targetPlayer === 'p1' ? p1Votes : p2Votes;
-                         const rating = duel[`${targetPlayer}_review_rating`];
-                         const finalized = duel[`${targetPlayer}_honour_finalized`];
-                         const approved = duel[`${targetPlayer}_honour_approved`];
-                         const voteKey = `${duel.id}:${targetPlayer}`;
+                          {/* Flip Log Trigger */}
+                          <button
+                            onClick={() => toggleFlip(duel.id)}
+                            className="px-4 py-2.5 bg-white/5 hover:bg-cyan-500 hover:text-black border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-cyan-400 transition-all active:scale-95 flex items-center gap-2"
+                          >
+                            <RefreshCw size={10} />
+                            FLIP TO {activeSide === 'p1' ? (duel.p2?.name || 'PEER') : (duel.p1?.name || 'OPERATOR')}
+                          </button>
+                        </div>
 
-                         if (!rating) return null;
+                        {/* 3D Rotational Container */}
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={`${duel.id}-${activeSide}`}
+                            initial={{ rotateY: 90, opacity: 0 }}
+                            animate={{ rotateY: 0, opacity: 1 }}
+                            exit={{ rotateY: -90, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            className="w-full"
+                            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                          >
+                            {/* Unified Question & Answer Card */}
+                            <div className="bg-[#08090C]/80 border border-white/10 rounded-[2rem] p-6 space-y-5 shadow-3xl backdrop-blur-3xl relative overflow-hidden group hover:border-cyan-500/20 transition-all duration-300 mb-6">
+                              <div className="absolute top-0 left-0 w-full h-[3px] bg-cyan-500/20" />
+                              
+                              {/* Question Compartment */}
+                              <div>
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-400/40 mb-1.5 block italic">
+                                  {activeSide === 'p1' ? `${duel.p1?.name || 'Player 1'}'s Question` : `${duel.p2?.name || 'Player 2'}'s Question`}
+                                </span>
+                                <h3 className="text-xl font-black text-white italic uppercase tracking-tighter leading-tight">
+                                  {topicText}
+                                </h3>
+                              </div>
 
-                         return (
-                           <div key={targetPlayer} className="rounded-[1.75rem] bg-[#05070A] border border-white/5 p-6 hover:border-cyan-400/20 transition-all shadow-inner">
-                             <div className="flex items-start justify-between gap-6">
-                               <div>
-                                 <div className="text-[9px] font-black text-cyan-400/30 uppercase tracking-[0.4em] italic mb-2">Honour Verification Needed</div>
-                                 <div className="text-sm font-black text-white/80 uppercase italic tracking-tighter leading-tight">
-                                   {reviewerName} <span className="text-white/20 mx-1">rated</span> {targetName} <span className="text-cyan-400">{rating}★</span>
-                                 </div>
-                               </div>
-                               <div className={cn(
-                                 "text-[9px] font-black uppercase px-4 py-2 rounded-xl border shrink-0 italic tracking-widest leading-none",
-                                 finalized
-                                   ? approved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"
-                                   : "bg-white/[0.02] border-white/10 text-white/30"
-                               )}>
-                                 {finalized ? (approved ? `+${duel[`${targetPlayer}_honour_xp_awarded`] || 0} XP` : 'PENALIZED') : `${votes.total} / 3 LOGS`}
-                               </div>
-                             </div>
+                              {/* Neon custom divider line */}
+                              <div className="h-px w-full bg-gradient-to-r from-cyan-500/20 via-white/5 to-transparent" />
 
-                             {duel[`${targetPlayer}_review_comment`] && (
-                               <div className="mt-5 p-5 bg-black rounded-2xl border border-white/5 text-[10px] font-black text-white/40 italic leading-relaxed uppercase tracking-widest leading-none">
-                                 "{duel[`${targetPlayer}_review_comment`]}"
-                               </div>
-                             )}
-                             
-                             {!finalized && canVoteOnHonour(duel, targetPlayer) && !votes.hasVoted && (
-                               <div className="flex gap-3 mt-6">
-                                 <button 
-                                   disabled={votingKey === voteKey}
-                                   onClick={() => handleHonourVote(duel, targetPlayer, true)}
-                                   className="flex-1 py-4 bg-white/[0.03] hover:bg-emerald-500 hover:text-black border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg"
-                                 >
-                                   VERIFY
-                                 </button>
-                                 <button 
-                                   disabled={votingKey === voteKey}
-                                   onClick={() => handleHonourVote(duel, targetPlayer, false)}
-                                   className="flex-1 py-4 bg-white/[0.03] hover:bg-red-500 hover:text-white border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg"
-                                 >
-                                   VOID
-                                 </button>
-                               </div>
-                             )}
+                              {/* Answer Compartment */}
+                              <div>
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-400/40 mb-2 block italic">
+                                  {activeSide === 'p1' ? `${duel.p1?.name || 'Player 1'}'s Answer` : `${duel.p2?.name || 'Player 2'}'s Answer`}
+                                </span>
+                                <div className="text-xs text-white/80 font-medium italic leading-relaxed max-h-[200px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
+                                  {answerText || 'No transcript deployed across this conflict sector.'}
+                                </div>
+                              </div>
 
-                             {!finalized && votes.hasVoted && (
-                               <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 italic animate-pulse">Signature Authenticated</div>
-                             )}
-                             
-                             <div className="mt-6 pt-6 border-t border-white/[0.03] flex items-center justify-between">
-                               <div className="flex -space-x-2">
-                                 {[...Array(3)].map((_, i) => (
-                                   <div key={i} className="w-6 h-6 rounded-lg bg-black border border-white/10 flex items-center justify-center text-[8px] font-black text-white/20 italic">
-                                     {i + 1}
-                                   </div>
-                                 ))}
-                               </div>
-                               <div className="text-[9px] font-black text-white/10 uppercase italic tracking-widest">
-                                 {votes.total} Community Consensus Signals detected
-                               </div>
-                             </div>
-                           </div>
-                         );
-                       })}
-                     </div>
-                   </motion.div>
-                  );
-                 })}
-               </div>
-             ) : (
-               <div className="flex flex-col items-center justify-center py-24 text-center bg-[#07090D] border border-white/5 rounded-[2.5rem] shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
-                 <div className="w-24 h-24 rounded-[3rem] bg-black border border-white/5 flex items-center justify-center mb-8 shadow-2xl relative overflow-hidden group">
-                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                   <Globe size={40} className="text-white/5 relative z-10" />
-                 </div>
-                 <h4 className="text-[14px] font-black text-white/30 uppercase italic tracking-[0.5em] mb-4">Arena Quiescent</h4>
-                 <p className="text-[11px] font-black text-white/10 px-24 leading-relaxed uppercase tracking-widest italic opacity-60">Neural transmissions are currently synchronized. Awaiting next conflict signal.</p>
-               </div>
-             )}
+                              {/* Integrated Bottom telemetry indicator */}
+                              <div className="flex items-center gap-2 opacity-20 pt-1">
+                                 <span className="text-[8px] font-black uppercase tracking-widest italic">Neural Log Transcript</span>
+                                 <Zap size={10} fill="currentColor" className="text-cyan-400" />
+                              </div>
+                            </div>
+
+                            {/* Honour Ratings & Feedback */}
+                            {rating ? (
+                              <div className="rounded-[1.75rem] bg-[#05070A] border border-white/5 p-6 hover:border-cyan-400/20 transition-all shadow-inner">
+                                <div className="flex items-start justify-between gap-6">
+                                  <div>
+                                    <div className="text-[9px] font-black text-cyan-400/30 uppercase tracking-[0.4em] italic mb-2">Honour Verification Details</div>
+                                    <div className="text-sm font-black text-white/80 uppercase italic tracking-tighter leading-tight">
+                                      {reviewerName} <span className="text-white/20 mx-1">rated</span> {targetName} <span className="text-cyan-400">{rating}★</span>
+                                    </div>
+                                  </div>
+                                  <div className={cn(
+                                    "text-[9px] font-black uppercase px-4 py-2 rounded-xl border shrink-0 italic tracking-widest leading-none",
+                                    finalized
+                                      ? approved ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"
+                                      : "bg-white/[0.02] border-white/10 text-white/30"
+                                  )}>
+                                    {finalized ? (approved ? `+${duel[`${activeSide}_honour_xp_awarded`] || 0} XP` : 'PENALIZED') : `${votes.total} / 3 LOGS`}
+                                  </div>
+                                </div>
+
+                                {duel[`${activeSide}_review_comment`] && (
+                                  <div className="mt-5 p-5 bg-black rounded-2xl border border-white/5 text-[10px] font-black text-white/40 italic leading-relaxed uppercase tracking-widest leading-none">
+                                    "{duel[`${activeSide}_review_comment`]}"
+                                  </div>
+                                )}
+                                
+                                {/* Upvotes & Downvotes (Verify / Void) */}
+                                {!finalized && canVoteOnHonour(duel, activeSide) && !votes.hasVoted && (
+                                  <div className="flex gap-3 mt-6">
+                                    <button 
+                                      disabled={votingKey === voteKey}
+                                      onClick={() => handleHonourVote(duel, activeSide, true)}
+                                      className="flex-1 py-4 bg-white/[0.03] hover:bg-emerald-500 hover:text-black border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                      <Zap size={12} className="text-emerald-500" />
+                                      UPVOTE ({votes.fair})
+                                    </button>
+                                    <button 
+                                      disabled={votingKey === voteKey}
+                                      onClick={() => handleHonourVote(duel, activeSide, false)}
+                                      className="flex-1 py-4 bg-white/[0.03] hover:bg-red-500 hover:text-white border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all disabled:opacity-30 active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                      <AlertCircle size={12} className="text-red-500" />
+                                      DOWNVOTE ({votes.unfair})
+                                    </button>
+                                  </div>
+                                )}
+
+                                {!finalized && votes.hasVoted && (
+                                  <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 italic animate-pulse">Signature Authenticated</div>
+                                )}
+                                
+                                <div className="mt-6 pt-6 border-t border-white/[0.03] flex items-center justify-between">
+                                  <div className="flex -space-x-2">
+                                    {[...Array(3)].map((_, i) => (
+                                      <div 
+                                        key={i} 
+                                        className={cn(
+                                          "w-6 h-6 rounded-lg border flex items-center justify-center text-[8px] font-black italic",
+                                          i < votes.total ? "bg-cyan-500/10 border-cyan-400/30 text-cyan-400" : "bg-black border-white/10 text-white/20"
+                                        )}
+                                      >
+                                        {i + 1}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="text-[9px] font-black text-white/10 uppercase italic tracking-widest">
+                                    {votes.total} Community Consensus Signals detected
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-[1.75rem] bg-white/[0.01] border border-white/5 p-8 text-center text-[10px] font-black uppercase tracking-widest text-white/20 italic">
+                                Honour verification pending from reviewer node
+                              </div>
+                            )}
+                          </motion.div>
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-24 text-center bg-[#07090D] border border-white/5 rounded-[2.5rem] shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
+                  <div className="w-24 h-24 rounded-[3rem] bg-black border border-white/5 flex items-center justify-center mb-8 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Globe size={40} className="text-white/5 relative z-10" />
+                  </div>
+                  <h4 className="text-[14px] font-black text-white/30 uppercase italic tracking-[0.5em] mb-4">Arena Quiescent</h4>
+                  <p className="text-[11px] font-black text-white/10 px-24 leading-relaxed uppercase tracking-widest italic opacity-60">Neural transmissions are currently synchronized. Awaiting next conflict signal.</p>
+                </div>
+              )}
           </motion.div>
         )}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, Zap, Timer, Trophy, Shield, AlertCircle, Loader2, Search, ArrowLeft } from 'lucide-react';
+import { Swords, Zap, Timer, Trophy, Shield, AlertCircle, Loader2, Search, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
@@ -39,7 +39,7 @@ function mapCardFromDb(row: any) {
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards, cancelDuel } = useApp();
+  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards, cancelDuel, addXp } = useApp();
   
   useEffect(() => {
     console.log("ArenaDuel State Check:", {
@@ -100,6 +100,9 @@ export function ArenaDuel() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [showMyTranscript, setShowMyTranscript] = useState(false);
+  const [xpCredited, setXpCredited] = useState(false);
+  const [activeReviewTab, setActiveReviewTab] = useState<'me' | 'peer'>('peer');
 
   // Derived state
   const isPlayer1 = duel?.player1_id === state.user?.id;
@@ -364,6 +367,18 @@ export function ArenaDuel() {
     
     await updateDuel(duel.id, updates);
     setHasReviewed(true);
+
+    // Award dynamic Honour XP if opponent has already submitted our rating
+    const receivedRating = fresh?.[theirRatingField] || duel?.[theirRatingField];
+    if (receivedRating && !xpCredited) {
+      setXpCredited(true);
+      const ratingXpMap: Record<number, number> = { 1: 10, 2: 25, 3: 40, 4: 60, 5: 90 };
+      const earnedXp = ratingXpMap[receivedRating] || 0;
+      if (earnedXp > 0) {
+        await addXp(earnedXp);
+      }
+    }
+
     setIsSyncing(false);
 
     // Auto-navigate back to battlefront after review
@@ -371,6 +386,23 @@ export function ArenaDuel() {
       navigate('/battle');
     }, 2500);
   };
+
+  // Real-time listener for receiving opponent's honour rating to award dynamic XP
+  useEffect(() => {
+    if (phase === 'REVIEW' && duel && !xpCredited) {
+      const receivedRating = duel[theirRatingField];
+      if (receivedRating && receivedRating > 0) {
+        setXpCredited(true);
+        const ratingXpMap: Record<number, number> = { 1: 10, 2: 25, 3: 40, 4: 60, 5: 90 };
+        const earnedXp = ratingXpMap[receivedRating] || 0;
+        if (earnedXp > 0) {
+          addXp(earnedXp).then(() => {
+            console.log(`Dynamic Honour XP of +${earnedXp} successfully credited.`);
+          });
+        }
+      }
+    }
+  }, [phase, duel, theirRatingField, xpCredited, addXp]);
 
   // Load cards if in deck mode and trial phase
   useEffect(() => {
@@ -582,7 +614,10 @@ export function ArenaDuel() {
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 flex-1 overflow-y-auto p-6 max-w-2xl mx-auto w-full flex flex-col">
+      <main className={cn(
+        "relative z-10 flex-1 overflow-y-auto p-6 w-full flex flex-col mx-auto transition-all duration-300",
+        phase === 'REVIEW' ? "max-w-6xl" : "max-w-2xl"
+      )}>
         <AnimatePresence mode="wait">
 
           {/* ── EXCHANGE: Type your topic ── */}
@@ -839,102 +874,302 @@ export function ArenaDuel() {
           {/* ── REVIEW ── */}
           {phase === 'REVIEW' && (
             <motion.div key="review" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center h-full gap-10 py-10">
+              className="flex flex-col items-center h-full gap-6 py-6 w-full">
               
-              <div className="text-center relative">
-                <motion.div 
-                  initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', damping: 12, delay: 0.3 }}
-                  className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-[0_0_80px_rgba(168,85,247,0.3)] border border-white/20 mx-auto mb-6 relative z-10 overflow-hidden"
-                >
-                   <div className="absolute inset-0 bg-black/10" />
-                   <Trophy size={48} className="text-white relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
-                </motion.div>
-                <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white leading-none">Circuit <span className="text-cyan-400">Terminated</span></h2>
-                <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-4">Synchronization Logic Resolved</div>
+              {/* Header section (Terminated indicator) */}
+              <div className="text-center w-full mb-2">
+                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">Circuit <span className="text-cyan-400">Terminated</span></h2>
+                <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-2">Synchronization Logic Resolved</div>
               </div>
 
-              <div className="w-full space-y-6 flex-1 overflow-y-auto pr-3 custom-scrollbar pb-10">
-                {/* Result Comparison */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 relative group overflow-hidden">
-                    <div className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] italic mb-6">Neural Node (You)</div>
-                    {duel.mode === 'deck' ? (
-                      <div className="text-5xl font-black italic tracking-tighter text-white">{duel[myScoreField]} <span className="text-xs font-normal text-white/20 uppercase tracking-widest ml-1">pts</span></div>
-                    ) : (
-                      <p className="text-xs text-white/40 italic leading-relaxed line-clamp-6">{duel[myAnswerField]}</p>
-                    )}
-                    <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-cyan-400/5 blur-[40px] rounded-full" />
-                  </div>
-                  <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 relative group overflow-hidden">
-                    <div className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] italic mb-6">Peer Node ({opponent?.name || 'OPERATOR'})</div>
-                    {duel.mode === 'deck' ? (
-                      <div className="text-5xl font-black italic tracking-tighter text-white">{duel[theirScoreField] !== null ? duel[theirScoreField] : '...'} <span className="text-xs font-normal text-white/20 uppercase tracking-widest ml-1">pts</span></div>
-                    ) : (
-                      <p className="text-xs text-white/40 italic leading-relaxed line-clamp-6">{duel[theirAnswerField] || 'Transmitting neural data...'}</p>
-                    )}
-                    <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-red-500/5 blur-[40px] rounded-full" />
-                  </div>
-                </div>
+              {/* Reusable Review Form Helper */}
+              {(() => {
+                const renderPeerReviewForm = () => {
+                  if (!hasReviewed && !duel[myRatingField]) {
+                    return (
+                      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                        className="bg-white/[0.03] border border-white/10 rounded-3xl p-10 space-y-8 shadow-2xl relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+                        
+                        <div className="text-center">
+                          <h3 className="text-sm font-black uppercase tracking-[0.6em] text-cyan-400 italic">Honour Verification</h3>
+                          <p className="text-[10px] text-white/20 mt-3 uppercase font-black italic tracking-[0.2em]">Evaluate peer performance for XP release</p>
+                        </div>
+                        
+                        <div className="flex justify-center gap-4">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setRating(star)}
+                              className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center transition-all relative group",
+                                rating >= star ? "bg-cyan-500 text-black shadow-[0_0_30px_rgba(34,211,238,0.4)]" : "bg-white/[0.03] text-white/10 border border-white/5 hover:border-white/20"
+                              )}
+                            >
+                              <Zap size={22} fill={rating >= star ? "currentColor" : "none"} className={cn("transition-transform group-hover:scale-110", rating >= star && "rotate-12")} />
+                              {rating >= star && (
+                                 <motion.div layoutId="star-glow" className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-full" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="relative">
+                          <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Neural feedback regarding peer node performance (Optional)..."
+                            className="w-full bg-black border border-white/10 rounded-3xl p-6 text-xs font-medium italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none h-28"
+                          />
+                        </div>
 
-                {/* Peer Review Form */}
-                {!hasReviewed && !duel[myRatingField] ? (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-                    className="bg-white/[0.03] border border-white/10 rounded-3xl p-10 space-y-8 shadow-2xl relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
-                    
-                    <div className="text-center">
-                      <h3 className="text-sm font-black uppercase tracking-[0.6em] text-cyan-400 italic">Honour Verification</h3>
-                      <p className="text-[10px] text-white/20 mt-3 uppercase font-black italic tracking-[0.2em]">Evaluate peer performance for XP release</p>
-                    </div>
-                    
-                    <div className="flex justify-center gap-4">
-                      {[1, 2, 3, 4, 5].map(star => (
                         <button
-                          key={star}
-                          onClick={() => setRating(star)}
+                          type="button"
+                          onClick={handleSubmitReview}
+                          disabled={isSyncing || rating === 0}
+                          className="w-full py-6 rounded-2xl bg-cyan-600 text-white font-black uppercase tracking-[0.5em] text-[11px] shadow-[0_10px_40px_rgba(6,182,212,0.3)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
+                        >
+                          <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'Verify Honour & Release Fragments'}</span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        </button>
+                      </motion.div>
+                    );
+                  } else {
+                    return (
+                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-12 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+                        <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }}>
+                           <Shield size={48} className="text-emerald-500 mx-auto mb-6 opacity-80" />
+                        </motion.div>
+                        <div className="text-xl font-black uppercase italic tracking-widest text-emerald-500">Signal Verified</div>
+                        <p className="text-[10px] text-emerald-500/40 mt-4 font-black uppercase italic tracking-[0.3em] leading-relaxed">XP tokens are being released across the network.<br/>Combat cycle complete.</p>
+                      </div>
+                    );
+                  }
+                };
+
+                return (
+                  <div className="w-full flex-1 overflow-y-auto pr-3 custom-scrollbar pb-10">
+                    
+                    {/* ── Desktop Layout (md:grid) ── */}
+                    <div className="hidden md:grid md:grid-cols-2 md:gap-10 md:items-start w-full max-w-6xl mx-auto px-4 mt-6">
+                      {/* Column 1: YOUR PROTOCOL */}
+                      <div className="space-y-6 flex flex-col h-full">
+                        <div className="text-center md:text-left mb-2 px-1">
+                          <h3 className="text-xs font-black uppercase tracking-[0.4em] text-cyan-400 italic">Operator Sync Log</h3>
+                          <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">SECURE TRANSMISSION #001</span>
+                        </div>
+                        
+                        {/* Operator Unified Card */}
+                        <div className="bg-[#08090C]/80 border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-3xl backdrop-blur-3xl relative overflow-hidden group hover:border-cyan-500/20 transition-all duration-300">
+                          <div className="absolute top-0 left-0 w-full h-[3px] bg-cyan-500/20" />
+                          
+                          {/* Question Compartment */}
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/50 mb-2 block italic">Question</span>
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
+                              {duel.mode === 'deck' ? 'ARMAMENT DECK SYNC' : (duel[theirTopicField] || 'SIGNAL LOST')}
+                            </h2>
+                          </div>
+
+                          {/* Neon custom divider line */}
+                          <div className="h-px w-full bg-gradient-to-r from-cyan-500/20 via-white/5 to-transparent" />
+
+                          {/* Answer Compartment */}
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/50 mb-3 block italic">Answer</span>
+                            <div className="text-base font-medium italic text-white/80 leading-relaxed max-h-[300px] min-h-[160px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
+                              {duel.mode === 'deck' ? (
+                                `Operator score locked: ${duel[myScoreField]} out of 10 fragments successfully synchronized.`
+                              ) : (
+                                duel[myAnswerField] || 'No transcript deployed.'
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Integrated Bottom telemetry indicator */}
+                          <div className="flex items-center gap-2 opacity-20 pt-2">
+                             <span className="text-[9px] font-black uppercase tracking-widest italic">Encrypted Uplink Active</span>
+                             <Zap size={10} fill="currentColor" className="text-cyan-400" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Column 2: PEER PROTOCOL */}
+                      <div className="space-y-6 flex flex-col h-full">
+                        <div className="text-center md:text-left mb-2 px-1">
+                          <h3 className="text-xs font-black uppercase tracking-[0.4em] text-red-500 italic">{opponent?.name || 'PEER'}'S Sync Log</h3>
+                          <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">PEER TRANSMISSION #002</span>
+                        </div>
+
+                        {/* Peer Unified Card */}
+                        <div className="bg-[#08090C]/80 border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-3xl backdrop-blur-3xl relative overflow-hidden group hover:border-red-500/20 transition-all duration-300">
+                          <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500/20" />
+                          
+                          {/* Question Compartment */}
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/50 mb-2 block italic">Question</span>
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
+                              {duel.mode === 'deck' ? 'ARMAMENT DECK SYNC' : (duel[myTopicField] || 'SIGNAL LOST')}
+                            </h2>
+                          </div>
+
+                          {/* Neon custom divider line */}
+                          <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-white/5 to-transparent" />
+
+                          {/* Answer Compartment */}
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/50 mb-3 block italic">Answer</span>
+                            <div className="text-base font-medium italic text-white/80 leading-relaxed max-h-[300px] min-h-[160px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
+                              {duel.mode === 'deck' ? (
+                                `Opponent score locked: ${duel[theirScoreField] !== null ? duel[theirScoreField] : '...'} out of 10 fragments successfully synchronized.`
+                              ) : (
+                                duel[theirAnswerField] || 'Opponent neural logs resolving...'
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Integrated Bottom telemetry indicator */}
+                          <div className="flex items-center gap-2 opacity-20 pt-2">
+                             <span className="text-[9px] font-black uppercase tracking-widest italic">Peer Link Active</span>
+                             <Zap size={10} fill="currentColor" className="text-red-500" />
+                          </div>
+                        </div>
+
+                        {/* Peer Review Form directly below the Peer Transcript log */}
+                        <div className="mt-8 shrink-0">
+                          {renderPeerReviewForm()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Mobile Layout (md:hidden) ── */}
+                    <div className="block md:hidden w-full max-w-xl mx-auto space-y-6 px-1">
+                      {/* Tab Navigation */}
+                      <div className="flex bg-black/60 border border-white/5 rounded-2xl p-1.5 shadow-inner">
+                        <button
+                          type="button"
+                          onClick={() => setActiveReviewTab('me')}
                           className={cn(
-                            "w-14 h-14 rounded-2xl flex items-center justify-center transition-all relative group",
-                            rating >= star ? "bg-cyan-500 text-black shadow-[0_0_30px_rgba(34,211,238,0.4)]" : "bg-white/[0.03] text-white/10 border border-white/5 hover:border-white/20"
+                            "flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all italic",
+                            activeReviewTab === 'me'
+                              ? "bg-cyan-500 text-black shadow-lg"
+                              : "text-white/40 hover:text-white"
                           )}
                         >
-                          <Zap size={22} fill={rating >= star ? "currentColor" : "none"} className={cn("transition-transform group-hover:scale-110", rating >= star && "rotate-12")} />
-                          {rating >= star && (
-                             <motion.div layoutId="star-glow" className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-full" />
+                          YOUR LOG
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveReviewTab('peer')}
+                          className={cn(
+                            "flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all italic relative flex items-center justify-center gap-1.5",
+                            activeReviewTab === 'peer'
+                              ? "bg-red-500 text-white shadow-lg"
+                              : "text-white/40 hover:text-white"
+                          )}
+                        >
+                          PEER LOG
+                          {!hasReviewed && !duel[myRatingField] && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping absolute right-3 top-3" />
                           )}
                         </button>
-                      ))}
-                    </div>
-                    
-                    <div className="relative">
-                      <textarea
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="Neural feedback regarding peer node performance (Optional)..."
-                        className="w-full bg-black border border-white/10 rounded-3xl p-6 text-xs font-medium italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none h-28"
-                      />
+                      </div>
+
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={activeReviewTab}
+                          initial={{ opacity: 0, x: activeReviewTab === 'me' ? -15 : 15 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: activeReviewTab === 'me' ? 15 : -15 }}
+                          transition={{ duration: 0.25 }}
+                          className="space-y-6"
+                        >
+                          {activeReviewTab === 'me' ? (
+                            /* Operator Unified Card (Mobile) */
+                            <div className="bg-[#08090C]/80 border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-3xl backdrop-blur-3xl relative overflow-hidden group">
+                              <div className="absolute top-0 left-0 w-full h-[3px] bg-cyan-500/20" />
+                              
+                              {/* Question Compartment */}
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/50 mb-2 block italic">Question</span>
+                                <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
+                                  {duel.mode === 'deck' ? 'ARMAMENT DECK SYNC' : (duel[theirTopicField] || 'SIGNAL LOST')}
+                                </h2>
+                              </div>
+
+                              {/* Neon custom divider line */}
+                              <div className="h-px w-full bg-gradient-to-r from-cyan-500/20 via-white/5 to-transparent" />
+
+                              {/* Answer Compartment */}
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/50 mb-3 block italic">Answer</span>
+                                <div className="text-base font-medium italic text-white/80 leading-relaxed min-h-[160px] max-h-[300px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
+                                  {duel.mode === 'deck' ? (
+                                    `Operator score locked: ${duel[myScoreField]} out of 10 fragments successfully synchronized.`
+                                  ) : (
+                                    duel[myAnswerField] || 'No transcript deployed.'
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Integrated Bottom telemetry indicator */}
+                              <div className="flex items-center gap-2 opacity-20 pt-2">
+                                 <span className="text-[9px] font-black uppercase tracking-widest italic">Encrypted Uplink Active</span>
+                                 <Zap size={10} fill="currentColor" className="text-cyan-400" />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Peer Unified Card (Mobile) */}
+                              <div className="bg-[#08090C]/80 border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-3xl backdrop-blur-3xl relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500/20" />
+                                
+                                {/* Question Compartment */}
+                                <div>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/50 mb-2 block italic">Question</span>
+                                  <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
+                                    {duel.mode === 'deck' ? 'ARMAMENT DECK SYNC' : (duel[myTopicField] || 'SIGNAL LOST')}
+                                  </h2>
+                                </div>
+
+                                {/* Neon custom divider line */}
+                                <div className="h-px w-full bg-gradient-to-r from-red-500/20 via-white/5 to-transparent" />
+
+                                {/* Answer Compartment */}
+                                <div>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/50 mb-3 block italic">Answer</span>
+                                  <div className="text-base font-medium italic text-white/80 leading-relaxed min-h-[160px] max-h-[300px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
+                                    {duel.mode === 'deck' ? (
+                                      `Opponent score locked: ${duel[theirScoreField] !== null ? duel[theirScoreField] : '...'} out of 10 fragments successfully synchronized.`
+                                    ) : (
+                                      duel[theirAnswerField] || 'Opponent neural logs resolving...'
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Integrated Bottom telemetry indicator */}
+                                <div className="flex items-center gap-2 opacity-20 pt-2">
+                                   <span className="text-[9px] font-black uppercase tracking-widest italic">Peer Link Active</span>
+                                   <Zap size={10} fill="currentColor" className="text-red-500" />
+                                </div>
+                              </div>
+
+                              {/* Review form directly below the Peer Answer log on mobile */}
+                              <div className="mt-8">
+                                {renderPeerReviewForm()}
+                              </div>
+                            </>
+                          )}
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
 
-                    <button
-                      onClick={handleSubmitReview}
-                      disabled={isSyncing || rating === 0}
-                      className="w-full py-6 rounded-2xl bg-cyan-600 text-white font-black uppercase tracking-[0.5em] text-[11px] shadow-[0_10px_40px_rgba(6,182,212,0.3)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
-                    >
-                      <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'Verify Honour & Release Fragments'}</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    </button>
-                  </motion.div>
-                ) : (
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-12 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }}>
-                       <Shield size={48} className="text-emerald-500 mx-auto mb-6 opacity-80" />
-                    </motion.div>
-                    <div className="text-xl font-black uppercase italic tracking-widest text-emerald-500">Signal Verified</div>
-                    <p className="text-[10px] text-emerald-500/40 mt-4 font-black uppercase italic tracking-[0.3em] leading-relaxed">XP tokens are being released across the network.<br/>Combat cycle complete.</p>
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               <button onClick={() => navigate('/battle')}
                 className="w-full py-6 rounded-3xl bg-white/[0.02] border border-white/5 text-[11px] font-black uppercase tracking-[0.5em] hover:bg-white/[0.1] hover:text-white text-white/40 transition-all italic active:scale-95 mb-8"
