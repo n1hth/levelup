@@ -16,6 +16,8 @@ import { ArenaDuel } from './pages/ArenaDuel.tsx';
 import { Social } from './pages/Social.tsx';
 import { Chat } from './pages/Chat.tsx';
 
+import Landing from './pages/Landing.tsx';
+
 import { AppTour } from './components/AppTour.tsx';
 
 function AppContent() {
@@ -59,9 +61,12 @@ function AppContent() {
     );
   }
 
-  if (!state.user || !state.user.onboardingCompleted) {
-    const initialPhase = (session || state.user) ? 0 : 2;
-    return <QuickStart initialPhase={initialPhase} />;
+  if (!state.user) {
+    return <Landing />;
+  }
+
+  if (!state.user.onboardingCompleted) {
+    return <QuickStart initialPhase={0} />;
   }
 
   // Only trigger full page unmounts when entering/leaving full-screen isolated views
