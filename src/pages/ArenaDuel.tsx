@@ -39,7 +39,7 @@ function mapCardFromDb(row: any) {
 export function ArenaDuel() {
   const { duelId } = useParams();
   const navigate = useNavigate();
-  const { state, isLoading, getDuel, updateDuel, createDuel, getDeckCards, cancelDuel, addXp } = useApp();
+  const { state, isLoading, getDuel, updateDuel, createDuel, acceptDuelInvite, getDeckCards, cancelDuel, addXp } = useApp();
   
   useEffect(() => {
     console.log("ArenaDuel State Check:", {
@@ -136,7 +136,23 @@ export function ArenaDuel() {
     const fetchedMyDeckField = fetchedIsPlayer1 ? 'p1_deck_id' : 'p2_deck_id';
     
     if (d.status === 'invited') {
-      setPhase('WAITING');
+      if (fetchedIsPlayer2) {
+        console.log("[ArenaDuel] Automatically accepting duel invite for Player 2...");
+        await acceptDuelInvite(d.id);
+        const refreshed = await getDuel(id);
+        if (refreshed) {
+          setDuel(refreshed);
+          if (refreshed.status === 'setup') {
+            if (refreshed.mode === 'deck') {
+              setPhase(refreshed[fetchedMyDeckField] ? 'LOBBY' : 'EXCHANGE');
+            } else {
+              setPhase(refreshed[fetchedMyTopicField] ? 'LOBBY' : 'EXCHANGE');
+            }
+          }
+        }
+      } else {
+        setPhase('WAITING');
+      }
     }
     else if (d.status === 'setup') {
       if (d.mode === 'deck') {
@@ -147,7 +163,7 @@ export function ArenaDuel() {
     }
     else if (d.status === 'active') setPhase('TRIAL');
     else if (d.status === 'review' || d.status === 'finished') setPhase('REVIEW');
-  }, [getDuel, state.user?.id]);
+  }, [getDuel, state.user?.id, acceptDuelInvite]);
 
   // ── Realtime listener for active duel ──
   useEffect(() => {
