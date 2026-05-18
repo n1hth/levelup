@@ -7,7 +7,7 @@ import {
   Swords, UserMinus, UserPlus, ArrowLeft, Loader2, Link2, Check 
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
-import { getRankColor, getRankTitle, getLevelFromXp, getXpProgress } from '@/src/lib/xp.ts';
+import { getRankColor, getRankTitle, getLevelFromXp, getXpProgress, getRankFromLevel } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 
