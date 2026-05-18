@@ -79,14 +79,14 @@ export function Orb({ onInteractionChange }: OrbProps) {
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
 
-      // Check specifically for duel events to show bubble
-      const newDuel = newItems.find(n => n.type === 'duel' || n.type === 'duel_cancelled');
-      if (newDuel && !shownBubblesRef.current.has(newDuel.id)) {
+      // Check specifically for duel or friend request events to show bubble
+      const newEvent = newItems.find(n => n.type === 'duel' || n.type === 'duel_cancelled' || n.type === 'friend');
+      if (newEvent && !shownBubblesRef.current.has(newEvent.id)) {
         // Only show bubble if notification was created/updated in the last 45 seconds
-        const isRecent = Date.now() - new Date(newDuel.timestamp).getTime() < 45 * 1000;
+        const isRecent = Date.now() - new Date(newEvent.timestamp).getTime() < 45 * 1000;
         if (isRecent) {
-          shownBubblesRef.current.add(newDuel.id);
-          setLatestDuelNotif(newDuel);
+          shownBubblesRef.current.add(newEvent.id);
+          setLatestDuelNotif(newEvent);
           setShowBubble(true);
           setTimeout(() => setShowBubble(false), 8000);
         }
@@ -957,15 +957,25 @@ export function Orb({ onInteractionChange }: OrbProps) {
           >
             <div className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-3xl rounded-2xl px-5 py-3 flex items-center gap-4 shadow-[0_0_30px_rgba(6,182,212,0.2)] group">
                <div className="w-8 h-8 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0">
-                  <Swords size={16} className="text-cyan-400" />
+                  {latestDuelNotif.type === 'friend' ? (
+                    <UserPlus size={16} className="text-cyan-400" />
+                  ) : (
+                    <Swords size={16} className="text-cyan-400" />
+                  )}
                </div>
                <div className="flex flex-col">
                   <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">
-                    {latestDuelNotif.type === 'duel_cancelled' ? 'Missed Challenge' : 'Incoming Challenge'}
+                    {latestDuelNotif.type === 'friend'
+                      ? 'Neural Link Request'
+                      : latestDuelNotif.type === 'duel_cancelled'
+                      ? 'Missed Challenge'
+                      : 'Incoming Challenge'}
                   </span>
                   <span className="text-[11px] font-black text-white uppercase italic tracking-tight">
-                    {latestDuelNotif.type === 'duel_cancelled'
-                      ? `${latestDuelNotif.sender} tried to duel`
+                    {latestDuelNotif.type === 'friend'
+                      ? `${latestDuelNotif.sender} wants to connect`
+                      : latestDuelNotif.type === 'duel_cancelled'
+                      ? `${latestDuelNotif.sender} withdrew challenge`
                       : `${latestDuelNotif.sender} issued a duel`}
                   </span>
                </div>
