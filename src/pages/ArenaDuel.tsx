@@ -237,7 +237,7 @@ export function ArenaDuel() {
           hasCreated = true;
           setSearchStatus(`Target Locked: ${opp.name || 'Hunter'}...`);
           
-          createDuel(myMode as any, opp.user_id).then(newId => {
+          createDuel(myMode as any, opp.user_id, undefined, 'setup').then(newId => {
             if (!newId) {
               setSearchStatus('Error creating arena. Retrying...');
               hasCreated = false;

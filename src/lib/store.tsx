@@ -180,7 +180,7 @@ interface AppContextType {
   joinMatchmaking: (deckId: string) => Promise<void>;
   leaveMatchmaking: () => Promise<void>;
   getMatch: () => Promise<any>;
-  createDuel: (mode: 'deck' | 'writing', targetUserId: string, deckId?: string) => Promise<string>;
+  createDuel: (mode: 'deck' | 'writing', targetUserId: string, deckId?: string, initialStatus?: 'invited' | 'setup') => Promise<string>;
   updateDuel: (duelId: string, updates: any) => Promise<boolean>;
   getDuel: (id: string) => Promise<any>;
   getPublicDuels: () => Promise<any[]>;
@@ -1688,7 +1688,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
-  const createDuel = useCallback(async (mode: 'writing' | 'deck', opponentId: string, deckId?: string) => {
+  const createDuel = useCallback(async (mode: 'writing' | 'deck', opponentId: string, deckId?: string, initialStatus: 'invited' | 'setup' = 'invited') => {
     if (!state.user) return '';
     try {
       // Verified columns: player1_id, player2_id, mode, status, p1_deck_id, p2_deck_id
@@ -1697,7 +1697,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         player2_id: opponentId,
         mode,
         p1_deck_id: deckId || null,
-        status: 'invited'
+        status: initialStatus
       }).select().single();
       if (error) throw error;
       return data.id;
