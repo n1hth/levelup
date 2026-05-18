@@ -4,46 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, Flame, BookOpen, Clock, ChevronRight, AlertTriangle, 
   Trophy, Lock, Shield, Activity, Orbit, MessageSquare, 
-  Swords, UserMinus, UserPlus, ArrowLeft, Loader2, Link2, Check 
+  Swords, UserMinus, UserPlus, ArrowLeft, Loader2, Link2, Check, X 
 } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor, getRankTitle, getLevelFromXp, getXpProgress, getRankFromLevel } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
-
-// ═══════════════════════════════════════════════
-// RANK LADDER DATA
-// ═══════════════════════════════════════════════
-
-const RANKS = [
-  { letter: 'E', title: 'Novice Learner', minLevel: 1, maxLevel: 5, color: '#94a3b8' },
-  { letter: 'D', title: 'Card Apprentice', minLevel: 6, maxLevel: 10, color: '#22c55e' },
-  { letter: 'C', title: 'Knowledge Seeker', minLevel: 11, maxLevel: 20, color: '#3b82f6' },
-  { letter: 'B', title: 'Focus Hunter', minLevel: 21, maxLevel: 35, color: '#a855f7' },
-  { letter: 'A', title: 'Arena Master', minLevel: 36, maxLevel: 50, color: '#ef4444' },
-  { letter: 'S', title: 'Sovereign Scholar', minLevel: 51, maxLevel: 99, color: '#fbbf24' },
-];
-
-function SmallOrb({ hue = 200, state = 'idle', size = 36 }: { hue?: number; state?: string; size?: number }) {
-  // Simple glass orb styling
-  const glowColor = `hsla(${hue}, 100%, 50%, 0.3)`;
-  const activeGradient = `radial-gradient(circle at 35% 35%, hsla(${hue}, 100%, 75%, 0.8), hsla(${hue}, 90%, 40%, 0.9) 50%, hsla(${hue}, 100%, 15%, 1) 100%)`;
-
-  return (
-    <div 
-      className="rounded-full relative shrink-0 shadow-lg"
-      style={{ 
-        width: size, 
-        height: size, 
-        boxShadow: `0 0 15px ${glowColor}`,
-        background: activeGradient
-      }}
-    >
-      <div className="absolute inset-0 shadow-[inset_0_-4px_8px_rgba(0,0,0,0.5)] rounded-full pointer-events-none" />
-      <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/60 blur-[1.5px] -rotate-[35deg]" />
-    </div>
-  );
-}
 
 // Helper to generate Achievements dynamically
 function getAchievementsForStats(focusSessions: any[], decksCount: number, cards: any[], streak: number, totalXp: number) {
@@ -100,6 +66,17 @@ export function Profile() {
   const [friendActionLoading, setFriendActionLoading] = useState(false);
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showSeverConfirm, setShowSeverConfirm] = useState(false);
+  
+  // Custom system toast notification states
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  }, []);
 
   // Fetch player details if not me
   const loadPlayerData = useCallback(async () => {
@@ -210,41 +187,40 @@ export function Profile() {
     try {
       await sendFriendRequest(userId);
       await loadPlayerData();
-      alert("Syndicate link handshake initiated!");
+      showToast("Syndicate link handshake initiated!", "success");
     } catch (err) {
-      alert("Handshake initialization failed.");
+      showToast("Handshake initialization failed.", "error");
     } finally {
       setFriendActionLoading(false);
     }
   };
 
   const handleAcceptSequence = async () => {
-    if (!userId) return;
+    if (!friendship?.id) return;
     setFriendActionLoading(true);
     try {
-      await acceptFriendRequest(userId);
+      await acceptFriendRequest(friendship.id);
       await loadPlayerData();
-      alert("Neural Syndicate Link accepted and established!");
+      showToast("Neural Syndicate Link accepted and established!", "success");
     } catch (err) {
-      alert("Acceptance failed.");
+      showToast("Acceptance failed.", "error");
     } finally {
       setFriendActionLoading(false);
     }
   };
 
   const handleSeverLink = async () => {
-    if (!userId) return;
-    if (confirm("Irreversible sequence. Sever this neural Syndicate Link?")) {
-      setFriendActionLoading(true);
-      try {
-        await removeFriend(userId);
-        await loadPlayerData();
-        alert("Syndicate Link severed successfully.");
-      } catch (err) {
-        alert("Sever sequence aborted.");
-      } finally {
-        setFriendActionLoading(false);
-      }
+    if (!friendship?.id) return;
+    setFriendActionLoading(true);
+    try {
+      await removeFriend(friendship.id);
+      setShowSeverConfirm(false);
+      await loadPlayerData();
+      showToast("Syndicate Link severed successfully.", "info");
+    } catch (err) {
+      showToast("Sever sequence failed.", "error");
+    } finally {
+      setFriendActionLoading(false);
     }
   };
 
@@ -290,17 +266,11 @@ export function Profile() {
 
   const maxMin = Math.max(...heatmap.map(d => d.minutes), 1);
 
-  // Achievements
-  const achievements = isMe 
+  // Filter achievements to only show UNLOCKED ones as requested
+  const achievements = (isMe 
     ? getAchievements() 
-    : getAchievementsForStats(playerFocusSessions, playerDecksCount, playerCards, activeStreak, activeXp);
-
-  const unlockedCount = achievements.filter(a => a.unlocked).length;
-
-  // Rank Ladder Calculations
-  const currentRankData = RANKS.find(r => r.letter === rank) || RANKS[0];
-  const currentRankIdx = RANKS.findIndex(r => r.letter === rank);
-  const nextRank = currentRankIdx < RANKS.length - 1 ? RANKS[currentRankIdx + 1] : null;
+    : getAchievementsForStats(playerFocusSessions, playerDecksCount, playerCards, activeStreak, activeXp)
+  ).filter(a => a.unlocked);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -331,9 +301,36 @@ export function Profile() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6 pb-24 px-1"
+      className="space-y-6 pb-24 px-1 relative"
     >
       
+      {/* Dynamic Slide-down System Toast Notifications */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={cn(
+              "fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[110] p-4 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3",
+              toastMessage.type === 'success' ? "bg-emerald-950/80 border-emerald-500/30 text-emerald-400" :
+              toastMessage.type === 'error' ? "bg-red-950/80 border-red-500/30 text-red-400" :
+              "bg-cyan-950/80 border-cyan-500/30 text-cyan-400"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              {toastMessage.type === 'success' ? <Check size={16} strokeWidth={3} /> :
+               toastMessage.type === 'error' ? <AlertTriangle size={16} /> :
+               <Orbit size={16} />}
+              <span className="text-[10px] font-black uppercase tracking-wider italic leading-relaxed">{toastMessage.text}</span>
+            </div>
+            <button onClick={() => setToastMessage(null)} className="opacity-60 hover:opacity-100 transition-opacity">
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header bar back arrow if not me */}
       {!isMe && (
         <div className="flex items-center gap-3">
@@ -439,9 +436,9 @@ export function Profile() {
                   Open Uplink
                 </button>
                 <button
-                  onClick={handleSeverLink}
+                  onClick={() => setShowSeverConfirm(true)}
                   disabled={friendActionLoading}
-                  className="px-4 py-2.5 bg-red-650 hover:bg-red-600 text-white/90 border border-red-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest italic transition-all active:scale-95 flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-red-650 hover:bg-red-650/80 text-white/90 border border-red-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest italic transition-all active:scale-95 flex items-center gap-1.5"
                 >
                   <UserMinus size={12} />
                   Sever
@@ -566,81 +563,6 @@ export function Profile() {
         ))}
       </motion.div>
 
-      {/* ═══ Rank Progression ═══ */}
-      <motion.div variants={itemVariants} className="system-panel p-6 border-white/5 bg-white/[0.01]">
-        <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] mb-6 flex items-center gap-3 italic">
-          <Shield size={14} className="text-cyan-400" /> Hunter Rankings System
-        </h3>
-        <div className="space-y-2.5">
-          {RANKS.map((r, i) => {
-            const isCurrent = r.letter === rank;
-            const isPast = i < currentRankIdx;
-            const isFuture = i > currentRankIdx;
-
-            return (
-              <div
-                key={r.letter}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all relative overflow-hidden group border",
-                  isCurrent ? "bg-cyan-500/[0.03] border-cyan-400/30 shadow-[0_0_20px_rgba(34,211,238,0.05)] scale-[1.01]" : "bg-white/[0.02] border-white/5",
-                  isPast && "opacity-40",
-                  isFuture && "opacity-20 translate-x-1.5"
-                )}
-              >
-                {/* Rank Letter */}
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-black shrink-0 transition-all italic border-[3px] border-black/80",
-                    isCurrent && "shadow-xl scale-105"
-                  )}
-                  style={{
-                    background: isCurrent || isPast ? r.color : '#222',
-                  }}
-                >
-                  {r.letter}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-xs font-black uppercase italic tracking-tighter", isCurrent ? "text-cyan-400" : "text-white")}>{r.title}</span>
-                    {isCurrent && (
-                      <span className="text-[7px] font-black text-black bg-cyan-400 px-1.5 py-0.5 rounded-full uppercase tracking-widest italic animate-pulse">Current</span>
-                    )}
-                  </div>
-                  <span className="text-[8px] font-black text-white/30 italic uppercase tracking-widest mt-0.5 block">
-                    Lv. {r.minLevel} <span className="mx-1 opacity-20">—</span> {r.maxLevel}
-                  </span>
-                </div>
-
-                {/* Status Indicator */}
-                {isPast && <span className="text-emerald-400 font-black italic text-[10px]">COMPLETE</span>}
-                {isCurrent && <ChevronRight size={16} className="text-cyan-400 animate-pulse" />}
-                {isFuture && <Lock size={12} className="text-white/10" />}
-              </div>
-            );
-          })}
-        </div>
-
-        {nextRank && (
-          <div className="mt-8 pt-5 border-t border-white/5">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.4em] italic">Next Rank: {nextRank.letter}</span>
-              <span className="text-[8px] font-black text-cyan-400 italic">Lv. {nextRank.minLevel}</span>
-            </div>
-            <div className="w-full h-[2px] bg-white/[0.03] mt-2.5 overflow-hidden border border-white/5">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(((level - currentRankData.minLevel) / (nextRank.minLevel - currentRankData.minLevel)) * 100, 100)}%` }}
-                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.5 }}
-                className="h-full rounded-full"
-                style={{ background: nextRank.color }}
-              />
-            </div>
-          </div>
-        )}
-      </motion.div>
-
       {/* ═══ Study Activity History heatmap ═══ */}
       <motion.div variants={itemVariants} className="system-panel p-6 border-white/5 bg-white/[0.01]">
         <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] mb-6 flex items-center gap-3.5 italic">
@@ -691,31 +613,30 @@ export function Profile() {
           <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] flex items-center gap-3.5 italic">
             <Trophy size={14} className="text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]" /> Hunter Achievements
           </h3>
-          <span className="text-[9px] font-black text-white/20 italic tabular-nums">{unlockedCount} <span className="text-white/5 mx-0.5">/</span> {achievements.length}</span>
+          <span className="text-[9px] font-black text-white/20 italic tabular-nums">{achievements.length} UNLOCKED</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3.5">
-          {achievements.map((a) => (
-            <div
-              key={a.id}
-              className={cn(
-                "p-4 rounded-2xl border transition-all relative overflow-hidden group",
-                a.unlocked
-                  ? "bg-white/[0.03] border-cyan-500/20 shadow-2xl"
-                  : "bg-white/[0.01] border-white/5 opacity-30 grayscale"
-              )}
-            >
-              {a.unlocked && (
+        {achievements.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3.5">
+            {achievements.map((a) => (
+              <div
+                key={a.id}
+                className="p-4 rounded-2xl border bg-white/[0.03] border-cyan-500/20 shadow-2xl relative overflow-hidden group"
+              >
                 <div className="absolute top-2 right-2">
                    <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,1)]" />
                 </div>
-              )}
-              <div className="text-2xl mb-2.5 group-hover:scale-125 transition-transform duration-500 inline-block">{a.icon}</div>
-              <h4 className={cn("text-[10px] font-black uppercase italic tracking-tighter", a.unlocked ? "text-white" : "text-white/30")}>{a.title}</h4>
-              <p className={cn("text-[8px] font-black mt-1 leading-relaxed uppercase tracking-wider italic", a.unlocked ? "text-white/40" : "text-white/10")}>{a.description}</p>
-            </div>
-          ))}
-        </div>
+                <div className="text-2xl mb-2.5 group-hover:scale-125 transition-transform duration-500 inline-block">{a.icon}</div>
+                <h4 className="text-[10px] font-black uppercase italic tracking-tighter text-white">{a.title}</h4>
+                <p className="text-[8px] font-black mt-1 leading-relaxed uppercase tracking-wider italic text-white/40">{a.description}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 border border-dashed border-white/5 rounded-2xl">
+            <span className="text-[9px] font-black text-white/10 uppercase tracking-[0.25em] italic">No achievements unlocked yet</span>
+          </div>
+        )}
       </motion.div>
 
       {/* ═══ Help & System support (Only if me) ═══ */}
@@ -766,6 +687,50 @@ export function Profile() {
           </motion.div>
         </>
       )}
+
+      {/* ═══ Sever Friendship Connection Modal (Replaces browser dialogue) ═══ */}
+      <AnimatePresence>
+        {showSeverConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center px-6 bg-black/90 backdrop-blur-2xl"
+            onClick={e => e.target === e.currentTarget && setShowSeverConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="system-panel p-8 max-w-sm w-full shadow-2xl border-red-500/30 bg-black relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.05] to-transparent pointer-events-none" />
+              <div className="text-center relative z-10">
+                <div className="w-16 h-16 rounded-[1.8rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                  <UserMinus size={32} className="text-red-500 animate-pulse" />
+                </div>
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Sever Neural Link?</h3>
+                <p className="text-[9px] font-black text-white/30 mb-8 leading-relaxed uppercase tracking-[0.2em] italic">
+                  Irreversible sequence. This action will permanently sever the Syndicate connection between you two.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 relative z-10">
+                <button
+                  onClick={handleSeverLink}
+                  disabled={friendActionLoading}
+                  className="w-full py-4 rounded-xl bg-red-500 text-black font-black text-[10px] uppercase tracking-[0.3em] italic hover:bg-red-400 transition-all shadow-[0_0_30px_rgba(239,68,68,0.5)]"
+                >
+                  {friendActionLoading ? "SEVERING LINK..." : "SEVER CONNECTION"}
+                </button>
+                <button
+                  onClick={() => setShowSeverConfirm(false)}
+                  className="w-full py-4 rounded-xl border border-white/10 bg-white/[0.05] text-white/60 font-black text-[10px] uppercase tracking-[0.3em] italic hover:text-white transition-all shadow-2xl mt-1.5"
+                >
+                  ABORT SEQUENCE
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══ Reset Confirmation Modal ═══ */}
       <AnimatePresence>
