@@ -560,29 +560,63 @@ export function Social() {
                     <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">No pending requests</span>
                   </div>
                 ) : (
-                  friends.filter(f => f.status === 'pending' && f.isIncoming).map((req) => (
-                    <div key={req.id} className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-2xl p-3 gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <SmallOrb hue={req.orb_hue || 200} state="active" size={28} />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[9px] font-black text-white italic uppercase tracking-wider truncate">
-                            {req.name}
-                          </span>
-                          <span className="text-[7px] font-bold text-white/30 uppercase italic tracking-tighter">
-                            Awaiting Link
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <button
-                        onClick={() => handleAcceptFriend(req.friendshipId)}
-                        disabled={acceptingIds.has(req.friendshipId)}
-                        className="px-3 py-1.5 rounded-lg bg-cyan-500 text-black text-[8px] font-black uppercase tracking-wider hover:bg-cyan-400 transition-colors shrink-0 disabled:opacity-50"
-                      >
-                        {acceptingIds.has(req.friendshipId) ? 'LINKING...' : 'ACCEPT'}
-                      </button>
-                    </div>
-                  ))
+                  <AnimatePresence mode="popLayout">
+                    {friends.filter(f => f.status === 'pending' && f.isIncoming).map((req) => {
+                      const isAccepting = acceptingIds.has(req.friendshipId);
+                      return (
+                        <motion.div 
+                          key={req.friendshipId}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                          animate={{ 
+                            opacity: 1, 
+                            scale: 1, 
+                            y: 0,
+                            borderColor: isAccepting ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.05)',
+                            backgroundColor: isAccepting ? 'rgba(20,83,45,0.2)' : 'rgba(255,255,255,0.02)',
+                            boxShadow: isAccepting ? '0 0 20px rgba(34,197,94,0.15)' : 'none'
+                          }}
+                          exit={{ opacity: 0, scale: 0.8, x: 50, transition: { duration: 0.3 } }}
+                          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                          className="flex items-center justify-between border rounded-2xl p-3 gap-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <SmallOrb hue={req.orb_hue || 200} state={isAccepting ? "syncing" : "active"} size={28} />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9px] font-black text-white italic uppercase tracking-wider truncate">
+                                {req.name}
+                              </span>
+                              <span className={cn(
+                                "text-[7px] font-bold uppercase italic tracking-tighter transition-colors",
+                                isAccepting ? "text-green-400 animate-pulse" : "text-white/30"
+                              )}>
+                                {isAccepting ? 'Syncing Link...' : 'Awaiting Link'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => handleAcceptFriend(req.friendshipId)}
+                            disabled={isAccepting}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all shrink-0 active:scale-95 flex items-center justify-center min-w-[54px] h-6",
+                              isAccepting 
+                                ? "bg-green-500 text-black border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.4)]" 
+                                : "bg-cyan-500 text-black hover:bg-cyan-400"
+                            )}
+                          >
+                            {isAccepting ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                className="w-3 h-3 border-2 border-black border-t-transparent rounded-full shrink-0"
+                              />
+                            ) : 'ACCEPT'}
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 )}
               </div>
               

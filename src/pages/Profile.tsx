@@ -459,10 +459,21 @@ export function Profile() {
                 <button
                   onClick={handleAcceptSequence}
                   disabled={friendActionLoading}
-                  className="px-4 py-2.5 bg-green-500 text-black border border-green-400 rounded-xl text-[9px] font-black uppercase tracking-widest italic hover:bg-green-400 transition-all active:scale-95 flex items-center gap-1.5"
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest italic transition-all active:scale-95 flex items-center gap-1.5 min-w-[130px] justify-center h-[34px]",
+                    friendActionLoading
+                      ? "bg-green-500 text-black border border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.6)] animate-pulse"
+                      : "bg-green-600 hover:bg-green-500 text-white border border-green-500/20"
+                  )}
                 >
-                  <Check size={12} strokeWidth={3} />
-                  Accept Handshake
+                  {friendActionLoading ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                      className="w-3 h-3 border-2 border-black border-t-transparent rounded-full shrink-0"
+                    />
+                  ) : <Check size={12} strokeWidth={3} />}
+                  <span>{friendActionLoading ? 'SYNCING...' : 'Accept Handshake'}</span>
                 </button>
               )
             ) : (
