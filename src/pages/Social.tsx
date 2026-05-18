@@ -199,9 +199,21 @@ export function Social() {
 
   const handleAddFriend = async (id: string) => {
     await sendFriendRequest(id);
-    setSearchResults(prev => prev.filter(r => r.id !== id));
     getFriends().then(setFriends);
-    alert("Friend request sent!");
+    // Replace alert with premium toast triggers if present, else default
+    try {
+      const el = document.getElementById('system-toast-container');
+      if (el) {
+        const customEvent = new CustomEvent('show-toast', {
+          detail: { message: 'Friend request sent successfully!', type: 'success' }
+        });
+        window.dispatchEvent(customEvent);
+      } else {
+        alert("Friend request sent!");
+      }
+    } catch {
+      alert("Friend request sent!");
+    }
   };
 
   const handleAcceptFriend = async (id: string) => {
@@ -737,25 +749,51 @@ export function Social() {
                   animate={{ opacity: 1, height: 'auto' }}
                   className="px-6 space-y-3"
                 >
-                  {searchResults.map(user => (
-                    <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <SmallOrb hue={user.orb_hue} state="active" size={32} />
-                        <div>
-                          <div className="text-sm font-black text-white uppercase italic leading-none">{user.name}</div>
-                          <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 italic">
-                            @{user.username || user.name.toLowerCase().replace(/\s/g, '_')}
+                  {searchResults.map(user => {
+                    const relationship = friends.find(f => f.id === user.id);
+                    return (
+                      <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <SmallOrb hue={user.orb_hue} state="active" size={32} />
+                          <div>
+                            <div className="text-sm font-black text-white uppercase italic leading-none">{user.name}</div>
+                            <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 italic">
+                              @{user.username || user.name.toLowerCase().replace(/\s/g, '_')}
+                            </div>
                           </div>
                         </div>
+                        {relationship ? (
+                          relationship.status === 'accepted' ? (
+                            <button 
+                              onClick={() => navigate(`/social/chat/${user.id}`)}
+                              className="w-10 h-10 rounded-xl bg-cyan-400/20 text-cyan-400 border border-cyan-400/30 flex items-center justify-center hover:scale-105 transition-transform"
+                            >
+                              <MessageSquare size={16} />
+                            </button>
+                          ) : relationship.isIncoming ? (
+                            <button 
+                              onClick={() => handleAcceptFriend(relationship.friendshipId)}
+                              className="px-3 h-10 rounded-xl bg-cyan-400 text-black font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1 hover:scale-105 transition-transform animate-pulse"
+                            >
+                              <Check size={12} className="stroke-[3]" />
+                              Accept
+                            </button>
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center cursor-not-allowed">
+                              <Check size={16} className="stroke-[3]" />
+                            </div>
+                          )
+                        ) : (
+                          <button 
+                            onClick={() => handleAddFriend(user.id)} 
+                            className="w-10 h-10 rounded-xl bg-cyan-400 text-black flex items-center justify-center hover:scale-105 transition-transform"
+                          >
+                            <Plus size={16} className="stroke-[3]" />
+                          </button>
+                        )}
                       </div>
-                      <button 
-                        onClick={() => handleAddFriend(user.id)} 
-                        className="w-10 h-10 rounded-xl bg-cyan-400 text-black flex items-center justify-center hover:scale-105 transition-transform"
-                      >
-                        <Plus size={16} className="stroke-[3]" />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
