@@ -1245,6 +1245,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sendFriendRequest = useCallback(async (friendId: string) => {
     if (!state.user) return;
     try {
+      // Avoid creating duplicate friend requests/friendships
+      const { data: existing } = await supabase
+        .from('friends')
+        .select('id')
+        .or(`and(user_id.eq.${state.user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${state.user.id})`)
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        console.log("[store] Friendship record already exists, skipping insertion.");
+        return;
+      }
+
       const { error } = await supabase.from('friends').insert({
         user_id: state.user.id,
         friend_id: friendId,
@@ -1539,8 +1552,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           last_message: lastMessage || null
         };
       });
-      console.log("[store] getFriends SUCCESS. Final output:", result);
-      return result;
+
+      // Defensive Deduplication: Prioritize 'accepted' records over 'pending'
+      const uniqueMap = new Map<string, any>();
+      for (const item of result) {
+        const existing = uniqueMap.get(item.id);
+        if (!existing) {
+          uniqueMap.set(item.id, item);
+        } else {
+          if (item.status === 'accepted' && existing.status !== 'accepted') {
+            uniqueMap.set(item.id, item);
+          }
+        }
+      }
+      const deduplicated = Array.from(uniqueMap.values());
+      console.log("[store] getFriends SUCCESS. Deduplicated output:", deduplicated);
+      return deduplicated;
     } catch (err) {
       console.error("[store] Fetch friends failed with exception:", err);
       return [];
@@ -1563,12 +1590,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const acceptFriendRequest = useCallback(async (friendshipId: string) => {
     if (!state.user) return;
     try {
+      // Get the friend request details
+      const { data: request } = await supabase
+        .from('friends')
+        .select('*')
+        .eq('id', friendshipId)
+        .single();
+      
+      if (!request) return;
+
+      // Update this record to accepted
       const { error } = await supabase
         .from('friends')
         .update({ status: 'accepted' })
         .eq('id', friendshipId);
       
       if (error) throw error;
+
+      // Clean up any duplicate/secondary pending records between the two users
+      await supabase
+        .from('friends')
+        .delete()
+        .neq('id', friendshipId)
+        .or(`and(user_id.eq.${request.user_id},friend_id.eq.${request.friend_id}),and(user_id.eq.${request.friend_id},friend_id.eq.${request.user_id})`);
+
     } catch (err) {
       console.error("Accept friend failed:", err);
     }
