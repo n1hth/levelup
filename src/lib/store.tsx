@@ -1755,8 +1755,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }).select().single();
       if (error) throw error;
       return data.id;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Create duel failed:", err);
+      const errMsg = err?.message || JSON.stringify(err);
+      alert(`SYSTEM MATRIX ERROR:\n${errMsg}`);
       return '';
     }
   }, [state.user]);
