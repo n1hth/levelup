@@ -753,10 +753,15 @@ export function Social() {
                     const relationship = friends.find(f => f.id === user.id);
                     return (
                       <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <SmallOrb hue={user.orb_hue} state="active" size={32} />
+                        <div 
+                          onClick={() => navigate(`/profile/${user.id}`)}
+                          className="flex items-center gap-3 cursor-pointer group/card flex-1"
+                        >
+                          <div className="group-hover/card:scale-105 transition-transform duration-300">
+                            <SmallOrb hue={user.orb_hue} state="active" size={32} />
+                          </div>
                           <div>
-                            <div className="text-sm font-black text-white uppercase italic leading-none">{user.name}</div>
+                            <div className="text-sm font-black text-white uppercase italic leading-none group-hover/card:text-cyan-400 transition-colors">{user.name}</div>
                             <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 italic">
                               @{user.username || user.name.toLowerCase().replace(/\s/g, '_')}
                             </div>
