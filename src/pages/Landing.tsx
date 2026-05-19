@@ -2,277 +2,364 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
 import { 
-  Zap, Brain, Target, Flame, Users, BookOpen, 
-  Play, ArrowRight, Activity, Sparkles, CheckCircle2, Award
+  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Award, Swords,
+  MessageSquare, Play, ChevronDown, Check
 } from 'lucide-react';
 
 export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
-  const [activeSection, setActiveSection] = useState(0);
-  const [typedMessage, setTypedMessage] = useState('');
+  const [activeTab, setActiveTab] = useState(2); // Default to Home (index 2)
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sentient message typing effect from the Orb at start
-  const fullMessage = "AWAKEN, HUNTER. CORPORATE STUDY TOOLS ARE DEAD. CONVERT STUDYING INTO AN OBSESSION.";
-  
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < fullMessage.length) {
-        setTypedMessage(prev => prev + fullMessage.charAt(index));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 45);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Scroll Progress Monitoring
+  // Scroll monitoring
   const { scrollYProgress } = useScroll();
 
-  // 1. Orb Y-coordinate layout transform:
-  // Starts centered -> moves to bottom center -> stays static -> rises slightly to form center CTA button
+  // 1. Orb layout transforms:
+  // Starts centered -> moves to bottom center -> stays static -> scales up to become a pricing container
   const orbY = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["0vh", "34vh", "34vh", "15vh"]
+    ["0vh", "32vh", "32vh", "10vh"]
   );
 
-  // 2. Orb Dimensions Morphs:
-  // Circular sphere (280px) -> compact circular core (130px) -> wide interactive pill button (320px x 60px)!
+  // Orb dimensions morphs:
+  // Large circular sphere -> bottom anchor core -> massive pricing container card
   const orbWidth = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["280px", "120px", "120px", "320px"]
+    ["280px", "140px", "140px", "440px"]
   );
 
   const orbHeight = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["280px", "120px", "120px", "60px"]
+    ["280px", "140px", "140px", "380px"]
   );
 
   const orbBorderRadius = useTransform(
     scrollYProgress,
     [0, 0.8, 0.85],
-    ["9999px", "9999px", "20px"]
+    ["9999px", "9999px", "24px"]
   );
 
-  // Blur, glow, and shadow scaling
-  const orbBlur = useTransform(scrollYProgress, [0, 0.15, 0.8, 0.85], ["0px", "4px", "4px", "0px"]);
+  // Nav Arc opacity & scale transforms (open nav animation on scroll)
+  const navScale = useTransform(scrollYProgress, [0.08, 0.16], [0.7, 1]);
+  const navOpacity = useTransform(scrollYProgress, [0.08, 0.15, 0.8, 0.83], [0, 1, 1, 0]);
 
-  // Detect active section on scroll to emit features
+  // Welcome message bubble opacity: visible at the start, fades on scroll
+  const welcomeOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
+  const welcomeY = useTransform(scrollYProgress, [0, 0.08], [0, -30]);
+
+  // Update active tab based on scroll progress threshold
   useEffect(() => {
     return scrollYProgress.onChange((latest) => {
-      if (latest < 0.12) setActiveSection(0);
-      else if (latest >= 0.12 && latest < 0.28) setActiveSection(1);
-      else if (latest >= 0.28 && latest < 0.44) setActiveSection(2);
-      else if (latest >= 0.44 && latest < 0.60) setActiveSection(3);
-      else if (latest >= 0.60 && latest < 0.76) setActiveSection(4);
-      else if (latest >= 0.76 && latest < 0.88) setActiveSection(5);
-      else setActiveSection(6);
+      if (latest < 0.12) {
+        setActiveTab(2); // Welcome / Home state
+      } else if (latest >= 0.12 && latest < 0.25) {
+        setActiveTab(0); // Decks
+      } else if (latest >= 0.25 && latest < 0.38) {
+        setActiveTab(1); // Focus
+      } else if (latest >= 0.38 && latest < 0.51) {
+        setActiveTab(2); // Home / XP System
+      } else if (latest >= 0.51 && latest < 0.64) {
+        setActiveTab(3); // Duels
+      } else if (latest >= 0.64 && latest < 0.80) {
+        setActiveTab(4); // Social
+      } else {
+        setActiveTab(5); // Pricing Container
+      }
     });
   }, [scrollYProgress]);
 
-  // Features list emitted by the Orb as user scrolls
-  const features = [
+  // Define our 5 interactive navigation pages (matching coordinates and angles)
+  // Decks (-60 deg), Focus (-30 deg), Home (0 deg), Battle (30 deg), Social (60 deg)
+  const navItems = [
+    { id: 0, label: "DECKS", icon: BookOpen, angle: -60, x: -130, y: -75 },
+    { id: 1, label: "FOCUS", icon: Clock, angle: -30, x: -75, y: -130 },
+    { id: 2, label: "HOME", icon: Home, angle: 0, x: 0, y: -150 },
+    { id: 3, label: "BATTLE", icon: Swords, angle: 30, x: 75, y: -130 },
+    { id: 4, label: "SOCIAL", icon: Users, angle: 60, x: 130, y: -75 }
+  ];
+
+  // Feature cards displayed above the navigation dock corresponding to the active index
+  const featurePages = [
+    {
+      id: 0,
+      title: "EVOLUTIONARY DECKS",
+      tag: "SMART MEMORY SYSTEM",
+      desc: "Build evolutionary spaced repetition decks. Program target cards with cognitive blocks, automatically scheduling recall cycles via the SM-2 retention engine.",
+      color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
+      detail: "SM-2 RETENTION • 100% STABLE"
+    },
     {
       id: 1,
-      title: "DAILY FOCUS QUESTS",
-      tag: "MOTIVATION HARVESTER",
-      desc: "Bypass boring calendars. Earn massive XP multipliers by maintaining daily focus streaks, clearing revision objectives, and climbing your cognitive tiers.",
+      title: "DEEP FOCUS PULSE",
+      tag: "BRAINWAVE STABILIZER",
+      desc: "Launch immersive visual countdown lobbies. Focus checking algorithms monitor and restrict background noise, locking in deep presence indicators.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      badge: "ACTIVE MULTIPLIER x1.5"
+      detail: "PRESENCE DETECTED • ACTIVE LOCK"
     },
     {
       id: 2,
-      title: "DEEP FOCUS PULSE",
-      tag: "BRAINWAVE STABILIZER",
-      desc: "Launch immersive focus clocks that automatically dim secondary noise. Adaptive presence locks screen activity, ensuring complete cognitive isolation.",
-      color: "text-purple-400 border-purple-400/20 bg-purple-950/15",
-      badge: "COGNITIVE RESTRICTION ENGAGED"
+      title: "XP & S-RANK PROGRESSION",
+      tag: "DOPAMINE FEEDBACK LOOP",
+      desc: "Level up your hunter status. Standard focus actions, streak maintenance, and arena victories feed your raw XP gauges, shifting your status ranking glows.",
+      color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
+      detail: "S-RANK HARMONICS • x1.5 BOOST"
     },
     {
       id: 3,
       title: "STUDY ARENA DUELS",
-      tag: "PEER MATCHMAKING",
-      desc: "Challenge friends or S-rank opponents inside real-time matchmaking channels. Race through custom decks to test accuracy and recall speed.",
-      color: "text-red-400 border-red-400/20 bg-red-950/15",
-      badge: "PEER CONNECTOR STABLE"
+      tag: "PEER COMBAT MATRICES",
+      desc: "Test recall speeds inside real-time matchmaking channels. Race friends or random hunters through interactive flashcard battle grids.",
+      color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
+      detail: "MATCHMAKING CHANNELS • ONLINE"
     },
     {
       id: 4,
-      title: "EVOLUTIONARY DECKS",
-      tag: "SMART CARD ENGINES",
-      desc: "Build evolutionary spaced repetition decks. Program cards with smart cognitive triggers, automatically scheduling recall cycles for perfect storage stability.",
-      color: "text-emerald-400 border-emerald-400/20 bg-emerald-950/15",
-      badge: "SM-2 RETRIEVAL SYSTEM"
-    },
-    {
-      id: 5,
       title: "NEURAL SYNDICATES",
-      tag: "SOCIAL NETWORKS",
-      desc: "Join study guilds, inspect hunter stats, track status auric glows, and climb the leaderboard standings alongside S-Rank cognitive users globally.",
-      color: "text-yellow-400 border-yellow-400/20 bg-yellow-950/15",
-      badge: "SYNC RANKINGS ACTIVE"
+      tag: "SOCIAL SYNC LOBBIES",
+      desc: "Construct multiplayer study guilds, review hunter statistics grids, exchange direct messages, and climb leaderboards in complete synchronization.",
+      color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
+      detail: "SYNDICATE NETWORK • CONNECTED"
     }
   ];
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[#020204] text-white relative font-sans select-none scroll-smooth">
       {/* 1. Cyber scanlines overlay */}
-      <div className="fixed inset-0 pointer-events-none z-40 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%] opacity-30" />
+      <div className="fixed inset-0 pointer-events-none z-40 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%] opacity-25" />
 
-      {/* 2. Global floating hexagonal cyber grid */}
+      {/* 2. Cyber dotted background grid */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-10" style={{ 
         backgroundImage: `radial-gradient(circle at 1px 1px, rgba(6, 182, 212, 0.15) 1px, transparent 0)`,
-        backgroundSize: '45px 45px'
+        backgroundSize: '40px 40px'
       }} />
 
-      {/* 3. Ambient cyber glows */}
+      {/* 3. Ambient atmospheric lighting bloom */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[180px] animate-pulse" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-purple-600/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-1/4 -right-1/4 w-[750px] h-[750px] bg-indigo-500/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '1.2s' }} />
       </div>
 
-      {/* 4. THE SOUL — THE ORB WHICH BECOMES THE PAYMENT BUTTON */}
+      {/* 4. THE SOUL — CENTRAL MORPHING ORB & PRICING CONTAINER */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-30">
         <motion.div
           style={{
             y: orbY,
             width: orbWidth,
             height: orbHeight,
-            borderRadius: orbBorderRadius,
-            filter: orbBlur
+            borderRadius: orbBorderRadius
           }}
-          className="relative flex items-center justify-center overflow-hidden border border-cyan-400/30 shadow-[0_0_80px_rgba(6,182,212,0.45),inset_0_0_30px_rgba(255,255,255,0.2)] bg-gradient-to-tr from-cyan-900/60 via-indigo-950/80 to-purple-900/60 pointer-events-auto cursor-pointer"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            if (activeSection === 6 || activeSection === 0) {
-              setShowAuth(true);
-            }
-          }}
+          className="relative flex flex-col items-center justify-center border border-cyan-400/30 shadow-[0_0_80px_rgba(6,182,212,0.45),inset_0_0_30px_rgba(255,255,255,0.15)] bg-gradient-to-tr from-cyan-950/70 via-[#0a0b12]/90 to-purple-950/60 pointer-events-auto overflow-hidden"
         >
-          {/* Main animated orb graphics visible ONLY before morphing into button */}
-          <AnimatePresence>
-            {activeSection < 6 && (
-              <motion.div
-                key="orb-graphics"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                {/* Dynamic core glow */}
-                <motion.div 
-                  animate={{
-                    scale: [1, 1.05, 0.95, 1.05, 1],
-                    rotate: 360
-                  }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="absolute inset-2 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-600 to-purple-600 opacity-80 mix-blend-screen"
-                />
-                {/* Ethereal second layer */}
-                <div className="absolute w-[90%] h-[90%] rounded-full bg-pink-500/20 blur-md mix-blend-color-dodge animate-pulse" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Main animated Core (Only visible before morphing into Pricing Container) */}
+          {activeTab < 5 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              {/* Inner glowing pulsing orb */}
+              <motion.div 
+                animate={{
+                  scale: [1, 1.04, 0.96, 1.04, 1],
+                  rotate: 360
+                }}
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="w-[90%] h-[90%] rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-600 to-purple-600 opacity-80 mix-blend-screen shadow-[inset_0_0_30px_rgba(255,255,255,0.4)]"
+              />
+              <div className="absolute w-[80%] h-[80%] rounded-full bg-pink-500/10 blur-sm mix-blend-color-dodge animate-pulse" />
+            </div>
+          )}
 
-          {/* Morphing payment text visible ONLY in active button state */}
+          {/* Pricing Details Panel (Only visible in S-Rank container state) */}
           <AnimatePresence>
-            {activeSection === 6 && (
+            {activeTab === 5 && (
               <motion.div
-                key="btn-text"
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-3 font-black text-xs md:text-sm tracking-[0.25em] text-white uppercase italic"
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full h-full p-8 flex flex-col justify-between items-center text-center z-10"
               >
-                <Zap size={14} className="text-cyan-400 animate-bounce" />
-                AWAKEN SYSTEM • $10 ONE-TIME
+                <div className="space-y-3 w-full">
+                  <div className="flex items-center justify-center gap-2 text-cyan-400">
+                    <Zap size={16} className="animate-bounce" />
+                    <span className="text-[10px] font-black tracking-[0.4em] uppercase">S-RANK LICENSE</span>
+                  </div>
+                  
+                  <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white">
+                    AWAKEN ACCESS
+                  </h3>
+                  
+                  <div className="h-px bg-white/10 w-2/3 mx-auto" />
+
+                  {/* Pricing metrics */}
+                  <div className="py-2">
+                    <span className="text-5xl font-black italic tracking-tighter text-cyan-300">$10</span>
+                    <span className="text-[10px] font-black tracking-widest text-white/50 uppercase ml-2">ONE-TIME LICENSE</span>
+                  </div>
+
+                  <p className="text-[11px] text-white/60 uppercase tracking-wider leading-relaxed max-w-sm mx-auto">
+                    Permanent access to the complete spaced repetition engines, matchmaking combat duels, deep restriction matrices, and direct syndicates.
+                  </p>
+                </div>
+
+                <div className="space-y-4 w-full">
+                  {/* Glowing Activation button */}
+                  <button 
+                    onClick={() => setShowAuth(true)}
+                    className="w-full py-4 rounded-xl bg-cyan-500 text-black font-black text-xs tracking-[0.2em] uppercase transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.5)]"
+                  >
+                    AWAKEN NEURAL SYSTEM
+                  </button>
+                  <p className="text-[8px] font-mono text-cyan-400/40 tracking-[0.25em]">SECURE PAYMENT BRIDGE ACTIVE</p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
       </div>
 
-      {/* 5. SECTIONS FOR NATURAL SCROLL TRACKING */}
-      <div className="relative z-10">
+      {/* 5. HERO WELCOME TALK BUBBLE */}
+      <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-20">
+        <motion.div
+          style={{
+            opacity: welcomeOpacity,
+            y: welcomeY
+          }}
+          className="relative -top-48 w-full max-w-xs md:max-w-sm px-6 py-5 rounded-2xl border border-cyan-400/40 bg-black/80 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.2)] text-center flex flex-col items-center justify-center"
+        >
+          {/* Talk bubble down-arrow indicator */}
+          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 border-r border-b border-cyan-400/40 bg-[#020204] rotate-45" />
+          
+          <h2 className="text-[10px] font-black tracking-[0.4em] text-cyan-400 uppercase mb-2">NEURAL MESSAGE INCOMING</h2>
+          <p className="text-xs md:text-sm font-black tracking-wide text-white uppercase italic leading-relaxed">
+            "Greetings, Hunter. Welcome to the Neural Core. Ready to convert studying into an obsession?"
+          </p>
+        </motion.div>
+      </div>
 
-        {/* SECTION 1: HERO / AWAKENING ORB MESSAGE */}
-        <section className="h-screen w-screen flex flex-col justify-center items-center px-6 relative">
-          <div className="max-w-4xl mx-auto text-center space-y-8 z-20">
-            {/* HUD signature tag */}
-            <div className="inline-flex items-center gap-3 px-4 py-2 bg-cyan-500/5 border border-cyan-400/20 rounded-full backdrop-blur-md">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
-              </span>
-              <span className="text-[9px] font-black tracking-[0.4em] uppercase text-cyan-400">NEURAL CORE MATRIX ONLINE</span>
-            </div>
+      {/* 6. STATIC FIXED SEMICIRCULAR DOCK */}
+      <div className="fixed bottom-0 left-0 w-full flex justify-center z-20 pointer-events-none">
+        <motion.div
+          style={{
+            scale: navScale,
+            opacity: navOpacity
+          }}
+          className="relative w-[340px] h-[190px] flex justify-center pointer-events-auto"
+        >
+          {/* Semicircular tracking path matching the design */}
+          <svg className="absolute top-10 w-[300px] h-[150px] overflow-visible pointer-events-none" viewBox="0 0 300 150">
+            <path 
+              d="M 20,130 A 130,130 0 0,1 280,130" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.06)" 
+              strokeWidth="2"
+            />
+          </svg>
 
-            {/* Cinematic Headline */}
-            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-none text-white/95">
-              LEVELUP
-            </h1>
-
-            {/* Typewriter message flowing from the Orb */}
-            <div className="min-h-[60px] max-w-xl mx-auto flex items-center justify-center">
-              <p className="text-xs md:text-sm font-black tracking-widest text-cyan-400 uppercase font-mono leading-relaxed">
-                {typedMessage}
-                <span className="animate-pulse">|</span>
-              </p>
-            </div>
+          {/* Active curved cyan indicator line (directly above the Orb top boundary) */}
+          <div className="absolute top-[38px] w-[140px] h-[140px] rounded-full border border-white/5 pointer-events-none">
+            {/* Semicircular highlight curve exactly matching Home selection style */}
+            <motion.div 
+              animate={{ rotate: activeTab === 0 ? -60 : activeTab === 1 ? -30 : activeTab === 2 ? 0 : activeTab === 3 ? 30 : 60 }}
+              transition={{ type: "spring", damping: 20, stiffness: 100 }}
+              className="absolute -inset-[2px] rounded-full border border-transparent border-t-cyan-400 border-t-4"
+            />
           </div>
 
-          <div className="absolute bottom-10 flex flex-col items-center gap-2 text-white/20">
-            <span className="text-[8px] font-black tracking-[0.4em]">SCROLL TO CONNECT PROTOCOL</span>
-            <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-3 bg-white/20 rounded-full flex justify-center pt-0.5">
-              <div className="w-0.5 h-1 bg-cyan-400 rounded-full animate-ping" />
-            </motion.div>
+          {/* Semicircular Nav Icons Placement */}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  // Direct jump simulation if they click
+                  const scrollTarget = window.innerHeight * (0.16 + item.id * 0.13);
+                  window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                }}
+                style={{
+                  transform: `translate(${item.x}px, ${item.y + 40}px)`
+                }}
+                className="absolute w-10 h-10 rounded-full flex flex-col items-center justify-center transition-all duration-300"
+              >
+                <Icon 
+                  size={18} 
+                  className={`transition-colors duration-300 ${isActive ? "text-cyan-400 drop-shadow-[0_0_10px_#22d3ee]" : "text-white/40 hover:text-white/70"}`} 
+                />
+                
+                {/* Active Cyan Bold Label directly under active icon */}
+                {isActive && (
+                  <motion.span 
+                    layoutId="activeNavLabel"
+                    className="absolute top-10 text-[9px] font-black tracking-[0.2em] text-cyan-400 text-center"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </button>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* 7. NATURAL SCROLL SECTIONS BLOCK */}
+      <div className="relative z-10">
+
+        {/* HERO LOBBY */}
+        <section className="h-screen w-screen flex flex-col justify-center items-center px-6 relative">
+          <div className="max-w-4xl mx-auto text-center space-y-4 z-10 pt-16">
+            <h1 className="text-6xl sm:text-8xl font-black italic tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40">
+              LEVELUP
+            </h1>
+            <p className="text-[10px] font-black tracking-[0.5em] text-white/30 uppercase">NEURAL STUDY OPERATING SYSTEM</p>
+          </div>
+
+          <div className="absolute bottom-12 flex flex-col items-center gap-2 text-white/20">
+            <span className="text-[8px] font-black tracking-[0.4em]">SCROLL TO HANDSHAKE</span>
+            <ChevronDown size={14} className="animate-bounce" />
           </div>
         </section>
 
-        {/* SECTION 2-6: INDIVIDUAL SCROLL SECTIONS THAT EMIT FEATURES */}
-        {features.map((feature, index) => (
+        {/* EMITTING SCROLL SECTIONS */}
+        {featurePages.map((feature, index) => (
           <section 
             key={feature.id} 
-            className="h-screen w-screen flex flex-col justify-center items-center px-6 relative"
+            className="h-screen w-screen flex flex-col justify-start items-center px-6 pt-24 relative"
           >
-            {/* Feature emission card */}
+            {/* Animate feature card above the bottom nav */}
             <AnimatePresence>
-              {activeSection === feature.id && (
+              {activeTab === feature.id && (
                 <motion.div
-                  initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 50, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -100, scale: 0.95 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className={`w-full max-w-lg p-8 rounded-3xl border border-white/5 bg-[#08090d]/80 shadow-[0_0_50px_rgba(0,0,0,0.6)] backdrop-blur-2xl text-center space-y-6 relative overflow-hidden`}
+                  exit={{ opacity: 0, y: -50, scale: 0.98 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="w-full max-w-md p-6 md:p-8 rounded-3xl border border-white/5 bg-[#08090e]/95 shadow-[0_0_50px_rgba(0,0,0,0.7)] backdrop-blur-xl text-center space-y-4 relative overflow-hidden"
                 >
-                  {/* Glowing light sweep inside card */}
-                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+                  {/* Subtle top indicator curve inside card */}
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
                   
-                  <div className="space-y-2">
-                    <span className="text-[8px] font-black tracking-[0.4em] text-white/40 uppercase">MODULE DETECTED</span>
-                    <h3 className="text-2xl md:text-3xl font-black italic tracking-tighter text-white uppercase">
+                  <div className="space-y-1">
+                    <span className="text-[8px] font-black tracking-[0.3em] text-white/40 uppercase">SYSTEM DIAGNOSTICS</span>
+                    <h3 className="text-xl md:text-2xl font-black italic tracking-tighter text-white uppercase">
                       {feature.title}
                     </h3>
-                    <div className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black tracking-widest text-cyan-300 uppercase">
+                    <div className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-black tracking-widest text-cyan-400 uppercase">
                       {feature.tag}
                     </div>
                   </div>
 
-                  <p className="text-xs md:text-sm text-white/60 leading-relaxed max-w-md mx-auto">
+                  <p className="text-xs text-white/60 leading-relaxed max-w-sm mx-auto">
                     {feature.desc}
                   </p>
 
-                  <div className="pt-2">
-                    <span className="text-[9px] font-black tracking-widest text-cyan-400 px-3 py-1.5 bg-cyan-950/20 border border-cyan-500/25 rounded-xl uppercase">
-                      {feature.badge}
+                  <div className="pt-1">
+                    <span className="text-[8px] font-black tracking-widest text-cyan-400 px-3 py-1.5 bg-cyan-950/20 border border-cyan-500/25 rounded-xl uppercase">
+                      {feature.detail}
                     </span>
                   </div>
                 </motion.div>
@@ -281,29 +368,17 @@ export default function Landing() {
           </section>
         ))}
 
-        {/* SECTION 7: FINAL SCROLL CLIMAX - PAY FOR ACTIVATION */}
+        {/* PRICING SCROLL LOBBY */}
         <section className="h-screen w-screen flex flex-col justify-center items-center px-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
-
-          <div className="max-w-xl mx-auto text-center space-y-6 z-20">
-            <span className="text-[10px] font-black tracking-[0.4em] text-cyan-400 uppercase">SYNCHRONIZATION SEQUENCER</span>
-            <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase leading-none text-white">
-              AWAKEN THE FULL MATRIX.
-            </h2>
-            <p className="text-xs md:text-sm text-white/60 font-semibold uppercase tracking-wider max-w-md mx-auto leading-relaxed">
-              No complex subscriptions. No monthly friction. Pay ten dollars once and receive permanent S-rank access to focus matrices, flashcard evolution, and friendly battle arenas.
-            </p>
-          </div>
-
-          <div className="absolute bottom-10 flex flex-col md:flex-row justify-between items-center w-full max-w-7xl px-8 z-20 text-[10px] font-black text-white/30 tracking-widest uppercase">
-            <span>LEVELUP STUDY INC // ALL PROTOCOLS ENCRYPTED.</span>
-            <span>VERSION 1.1.0</span>
+          <div className="absolute bottom-10 flex flex-col md:flex-row justify-between items-center w-full max-w-7xl px-8 z-20 text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase">
+            <span>LEVELUP STUDY INC // CONNECT SIGNALS PROTECTED</span>
+            <span>SYSTEM V1.1.0</span>
           </div>
         </section>
 
       </div>
 
-      {/* 6. GLASSMORPHIC AUTH OVERLAY TRIGGERED BY CLICKING MORPHED BUTTON */}
+      {/* 8. SIGNUP/LOGIN MODAL OVERLAY */}
       <AnimatePresence>
         {showAuth && (
           <motion.div 
