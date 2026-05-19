@@ -1,699 +1,563 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
-import { Zap, ChevronDown } from 'lucide-react';
+import { Zap, ArrowRight, Star, Trophy, Swords, Users, Brain, Timer, Layers, Target, Shield, Flame } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════
-// PARTICLE SYSTEM — Canvas-based for buttery 60fps performance
+// REVEAL WRAPPER — Fade-in on scroll into view
 // ═══════════════════════════════════════════════════════════
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  opacity: number;
-  life: number;
-  maxLife: number;
-  hue: number;
-}
+function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
 
-function useParticleCanvas(
-  canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  mouseRef: React.RefObject<{ x: number; y: number }>,
-  scrollProgress: number
-) {
-  const particles = useRef<Particle[]>([]);
-  const animFrameRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const isMobile = window.innerWidth < 768;
-    const particleCount = isMobile ? 0 : 80; // Disable particles completely on mobile for smoothness
-
-    // Seed initial particles
-    for (let i = 0; i < particleCount; i++) {
-      particles.current.push(createParticle(canvas.width, canvas.height));
-    }
-
-    const animate = () => {
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const mouse = mouseRef.current;
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-
-      // Draw subtle connecting lines between nearby particles
-      for (let i = 0; i < particles.current.length; i++) {
-        for (let j = i + 1; j < particles.current.length; j++) {
-          const dx = particles.current[i].x - particles.current[j].x;
-          const dy = particles.current[i].y - particles.current[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(56, 189, 248, ${0.03 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particles.current[i].x, particles.current[i].y);
-            ctx.lineTo(particles.current[j].x, particles.current[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Update and draw particles
-      particles.current.forEach((p, idx) => {
-        // Gentle drift toward center orb area
-        const toCenterX = (cx - p.x) * 0.0003;
-        const toCenterY = (cy - p.y) * 0.0003;
-
-        // Mouse repulsion
-        if (mouse) {
-          const dmx = p.x - mouse.x;
-          const dmy = p.y - mouse.y;
-          const mouseDist = Math.sqrt(dmx * dmx + dmy * dmy);
-          if (mouseDist < 150) {
-            const force = (150 - mouseDist) / 150 * 0.8;
-            p.vx += (dmx / mouseDist) * force;
-            p.vy += (dmy / mouseDist) * force;
-          }
-        }
-
-        p.vx += toCenterX;
-        p.vy += toCenterY;
-        p.vx *= 0.98;
-        p.vy *= 0.98;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life--;
-
-        const lifeRatio = p.life / p.maxLife;
-        const alpha = lifeRatio * p.opacity;
-
-        // Glow effect
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 3);
-        gradient.addColorStop(0, `hsla(${p.hue}, 80%, 70%, ${alpha})`);
-        gradient.addColorStop(1, `hsla(${p.hue}, 80%, 70%, 0)`);
-        ctx.beginPath();
-        ctx.fillStyle = gradient;
-        ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Core dot
-        ctx.beginPath();
-        ctx.fillStyle = `hsla(${p.hue}, 90%, 85%, ${alpha})`;
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Recycle dead particles
-        if (p.life <= 0 || p.x < -50 || p.x > canvas.width + 50 || p.y < -50 || p.y > canvas.height + 50) {
-          particles.current[idx] = createParticle(canvas.width, canvas.height);
-        }
-      });
-
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animFrameRef.current);
-      window.removeEventListener('resize', resize);
-    };
-  }, [canvasRef, mouseRef]);
-}
-
-function createParticle(w: number, h: number): Particle {
-  const angle = Math.random() * Math.PI * 2;
-  const speed = 0.2 + Math.random() * 0.3;
-  return {
-    x: Math.random() * w,
-    y: Math.random() * h,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
-    radius: 0.5 + Math.random() * 1.5,
-    opacity: 0.1 + Math.random() * 0.3,
-    life: 300 + Math.random() * 500,
-    maxLife: 300 + Math.random() * 500,
-    hue: 190 + Math.random() * 30, // Cyan-blue range
-  };
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 32 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 // ═══════════════════════════════════════════════════════════
-// TYPEWRITER HOOK — Character-by-character text reveal
+// SECTION LABEL — Consistent section headers
 // ═══════════════════════════════════════════════════════════
-function useTypewriter(text: string, speed: number = 40, delay: number = 0) {
-  const [displayed, setDisplayed] = useState('');
-  const [started, setStarted] = useState(false);
-  const [done, setDone] = useState(false);
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+      <span className="text-[10px] sm:text-[11px] font-black tracking-[0.4em] text-cyan-400 uppercase">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANIMATED COUNTER — Count up on view
+// ═══════════════════════════════════════════════════════════
+function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const delayTimer = setTimeout(() => setStarted(true), delay);
-    return () => clearTimeout(delayTimer);
-  }, [delay]);
+    if (!isInView) return;
+    let start = 0;
+    const duration = 1800;
+    const startTime = performance.now();
 
-  useEffect(() => {
-    if (!started) return;
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) {
-        clearInterval(interval);
-        setDone(true);
-      }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed, started]);
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [isInView, target]);
 
-  return { displayed, done };
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
 // ═══════════════════════════════════════════════════════════
 // FEATURE DATA
 // ═══════════════════════════════════════════════════════════
-const FEATURES = [
+const BENTO_FEATURES = [
   {
-    title: "EVOLUTIONARY DECKS",
-    subtitle: "SM-2 Spaced Repetition",
-    description: "Cards that evolve with your memory. Each review strengthens neural pathways, automatically scheduling the next wave at the optimal forgetting threshold.",
-    icon: "◇",
-    stat: "94% retention rate"
+    title: 'Evolutionary Decks',
+    description: 'SM-2 spaced repetition that adapts to your memory. Cards resurface at the exact moment before you forget.',
+    icon: Layers,
+    span: 'col-span-1 md:col-span-2',
+    accent: 'from-cyan-500/20 to-blue-600/20',
   },
   {
-    title: "DEEP FOCUS PULSE",
-    subtitle: "Cognitive Restriction Matrix",
-    description: "Ambient breathing cycles dim the noise. Adaptive awareness checks monitor your flow state, building an unbreakable focus ritual.",
-    icon: "◈",
-    stat: "2.3x productivity"
+    title: 'Deep Focus',
+    description: 'Ambient breathing cycles and adaptive awareness checks that build an unbreakable flow state.',
+    icon: Timer,
+    span: 'col-span-1',
+    accent: 'from-violet-500/20 to-purple-600/20',
   },
   {
-    title: "XP & RANK SYSTEM",
-    subtitle: "Dopamine Feedback Loop",
-    description: "Every session feeds your progression. Ascend through hunter tiers — each rank evolution transforms your orb, making growth visible and addictive.",
-    icon: "⬡",
-    stat: "7 rank tiers"
+    title: 'XP & Rank System',
+    description: 'Every session feeds your progression. Ascend through hunter tiers — each rank transforms your orb.',
+    icon: Trophy,
+    span: 'col-span-1',
+    accent: 'from-amber-500/20 to-orange-600/20',
   },
   {
-    title: "ARENA DUELS",
-    subtitle: "Real-Time Matchmaking",
-    description: "Challenge friends or strangers. Race through flashcard grids under pressure. Your recall speed is your weapon — accuracy is your armor.",
-    icon: "⚔",
-    stat: "Live PvP"
+    title: 'Arena Duels',
+    description: 'Challenge friends in real-time flashcard battles. Your recall speed is your weapon, accuracy is your armor.',
+    icon: Swords,
+    span: 'col-span-1 md:col-span-2',
+    accent: 'from-rose-500/20 to-red-600/20',
   },
   {
-    title: "NEURAL SYNDICATES",
-    subtitle: "Study Guild Networks",
-    description: "Assemble your squad. Coordinate focus lobbies, share decks, climb guild leaderboards. Studying alone is optional — winning together is inevitable.",
-    icon: "⬢",
-    stat: "Guild rankings"
+    title: 'Study Guilds',
+    description: 'Assemble your squad. Share decks, coordinate focus sessions, and climb guild leaderboards together.',
+    icon: Users,
+    span: 'col-span-1',
+    accent: 'from-emerald-500/20 to-green-600/20',
+  },
+  {
+    title: 'Neural Analytics',
+    description: 'Track retention curves, session streaks, and cognitive performance with precision dashboards.',
+    icon: Brain,
+    span: 'col-span-1',
+    accent: 'from-sky-500/20 to-cyan-600/20',
+  },
+];
+
+const STATS = [
+  { value: 94, suffix: '%', label: 'Avg. Retention Rate' },
+  { value: 2847, suffix: '+', label: 'Active Hunters' },
+  { value: 12, suffix: 'M+', label: 'Cards Reviewed' },
+  { value: 4.9, suffix: '★', label: 'User Rating' },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    title: 'Create Your Decks',
+    description: 'Import or build flashcard decks for any subject. Our AI assists with card generation and optimization.',
+    icon: Target,
+  },
+  {
+    step: '02',
+    title: 'Enter Focus Mode',
+    description: 'Launch deep study sessions with ambient timers, breathing cues, and distraction shields.',
+    icon: Shield,
+  },
+  {
+    step: '03',
+    title: 'Level Up & Compete',
+    description: 'Earn XP, climb ranks, challenge friends to duels, and watch your orb evolve with your knowledge.',
+    icon: Flame,
   },
 ];
 
 // ═══════════════════════════════════════════════════════════
-// MAIN LANDING COMPONENT
+// MAIN LANDING
 // ═══════════════════════════════════════════════════════════
 export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: -1000, y: -1000 });
-
-  // Mouse tracking for parallax + particle interaction
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const smoothX = useSpring(mouseX, { stiffness: 50, damping: 20 });
-  const smoothY = useSpring(mouseY, { stiffness: 50, damping: 20 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-      mouseX.set((e.clientX - window.innerWidth / 2) / window.innerWidth);
-      mouseY.set((e.clientY - window.innerHeight / 2) / window.innerHeight);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY]);
-
-  // Scroll tracking
-  const { scrollYProgress } = useScroll({ target: containerRef });
-  const [scrollProg, setScrollProg] = useState(0);
-
-  useEffect(() => {
-    return scrollYProgress.on('change', (v) => setScrollProg(v));
-  }, [scrollYProgress]);
-
-  // Initialize particle system
-  useParticleCanvas(canvasRef, mouseRef, scrollProg);
-
-  // Typewriter for the orb's greeting
-  const { displayed: greeting, done: greetingDone } = useTypewriter(
-    "Greetings, Hunter. Your neural core is dormant. Ready to awaken it?",
-    35,
-    2000
-  );
-
-  // Derive active feature index from scroll
-  const activeFeature = useMemo(() => {
-    if (scrollProg < 0.12) return -1; // Hero section
-    if (scrollProg >= 0.85) return 5; // Pricing section
-    return Math.min(Math.floor((scrollProg - 0.12) / 0.146), 4);
-  }, [scrollProg]);
-
-  // Orb visual transforms based on scroll
-  const orbScale = useTransform(scrollYProgress, [0, 0.1, 0.12, 0.85, 0.92], [1, 1, 0.45, 0.45, 0.6]);
-  const orbY = useTransform(scrollYProgress, [0, 0.1, 0.12, 0.85, 0.92], ['0%', '0%', '110%', '110%', '0%']);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
-  const pricingOpacity = useTransform(scrollYProgress, [0.88, 0.93], [0, 1]);
-
-  // Parallax orb rotation from mouse
-  const orbRotateX = useTransform(smoothY, [-0.5, 0.5], [8, -8]);
-  const orbRotateY = useTransform(smoothX, [-0.5, 0.5], [-8, 8]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#020208] text-white font-sans select-none" style={{ height: '525dvh' }}>
+    <div className="min-h-screen bg-[#020208] text-white font-sans antialiased overflow-x-hidden">
 
-      {/* Canvas particle layer — fixed behind everything */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 z-[1] pointer-events-none"
-        style={{ opacity: 0.7 }}
-      />
-
-      {/* Ambient depth fog */}
-      <div className="fixed inset-0 z-[2] pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#020208] via-transparent to-[#020208] opacity-60" />
-        <div
-          className="absolute w-[800px] h-[800px] rounded-full blur-[120px] md:blur-[200px] animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, oklch(0.3 0.15 220) 0%, transparent 70%)',
-            top: '30%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            animationDuration: '6s',
-            willChange: 'transform'
-          }}
-        />
-      </div>
-
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* THE ORB — The living soul of the entire page       */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <div className="fixed inset-0 z-[10] pointer-events-none flex items-center justify-center">
-        <motion.div
-          style={{
-            scale: orbScale,
-            y: orbY,
-            rotateX: orbRotateX,
-            rotateY: orbRotateY,
-            perspective: 800,
-          }}
-          className="relative"
-        >
-          {/* Outer aura field */}
-          <motion.div
-            animate={{
-              scale: [1, 1.15, 1],
-              opacity: [0.15, 0.3, 0.15]
-            }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -inset-20 rounded-full pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle, oklch(0.76 0.25 220 / 0.3) 0%, transparent 70%)',
-            }}
-          />
-
-          {/* Orbital ring */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-            className="absolute -inset-6 border border-white/[0.06] rounded-full border-dashed pointer-events-none"
-          />
-
-          {/* Second orbital ring — counter-rotating */}
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
-            className="absolute -inset-12 border border-cyan-400/[0.04] rounded-full pointer-events-none"
-            style={{ borderStyle: 'dotted' }}
-          />
-
-          {/* Main orb sphere — exact visual DNA from Orb.tsx transcendent rank */}
-          <motion.div
-            animate={{
-              scale: [1, 1.03, 0.97, 1.03, 1],
-            }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-[200px] h-[200px] rounded-full relative overflow-hidden cursor-pointer pointer-events-auto"
-            style={{
-              background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.98 0.05 220) 30%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
-              boxShadow: '0 0 80px oklch(0.76 0.25 220 / 0.5), 0 0 200px oklch(0.6 0.3 220 / 0.2)',
-            }}
-            onClick={() => {
-              if (scrollProg < 0.1) {
-                window.scrollTo({ top: window.innerHeight * 0.85, behavior: 'smooth' });
-              }
-            }}
-          >
-            {/* Animated internal light sweep */}
-            <motion.div
-              animate={{
-                background: [
-                  'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)',
-                  'radial-gradient(circle at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 60%)',
-                  'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%)',
-                ]
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* NAVBAR                                                  */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            {/* Mini orb logo */}
+            <div
+              className="w-7 h-7 rounded-full flex-shrink-0"
+              style={{
+                background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
+                boxShadow: '0 0 20px oklch(0.6 0.3 220 / 0.4)',
               }}
-              transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0 pointer-events-none opacity-60"
             />
+            <span className="text-sm font-black tracking-wider uppercase italic">
+              Level<span className="text-cyan-400">Up</span>
+            </span>
+          </div>
 
-            {/* 3D depth — inner shadow */}
-            <div className="absolute inset-0 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.35)] rounded-full pointer-events-none z-10" />
+          <button
+            onClick={() => setShowAuth(true)}
+            className="text-xs font-bold tracking-wider uppercase px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] transition-colors duration-200"
+          >
+            Get Started
+          </button>
+        </div>
+      </nav>
 
-            {/* Specular highlight — top-left glare */}
-            <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/60 blur-[3px] -rotate-[35deg] z-10 pointer-events-none" />
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 1 — HERO                                        */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-16 overflow-hidden">
+        {/* Background ambient glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute w-[600px] h-[600px] md:w-[900px] md:h-[900px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, oklch(0.25 0.15 220 / 0.5) 0%, transparent 65%)',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        </div>
 
-            {/* Inner halo ring */}
-            <div className="absolute -inset-2 border border-white/20 rounded-full blur-[1px] animate-pulse pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto">
+          {/* The Orb — hero size */}
+          <Reveal>
+            <motion.div
+              animate={{ scale: [1, 1.04, 1], rotate: [0, 1, -1, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-full relative mb-10"
+              style={{
+                background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.98 0.05 220) 30%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
+                boxShadow: '0 0 80px oklch(0.76 0.25 220 / 0.5), 0 0 200px oklch(0.6 0.3 220 / 0.15)',
+              }}
+            >
+              {/* Specular highlight */}
+              <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/60 blur-[3px] -rotate-[35deg]" />
+              {/* Inner shadow for 3D depth */}
+              <div className="absolute inset-0 rounded-full shadow-[inset_0_-10px_20px_rgba(0,0,0,0.35)]" />
+            </motion.div>
+          </Reveal>
 
-            {/* Cosmic particle field around orb */}
-            <div className="absolute inset-[-40px] pointer-events-none z-20">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <motion.div
-                  key={`p-${i}`}
-                  animate={{
-                    x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100],
-                    y: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100],
-                    opacity: [0, 0.6, 0],
-                    scale: [0, 1, 0]
-                  }}
-                  transition={{
-                    duration: 4 + Math.random() * 4,
-                    repeat: Infinity,
-                    ease: 'easeInOut'
-                  }}
-                  className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`
-                  }}
-                />
+          {/* Headline */}
+          <Reveal delay={0.1}>
+            <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-black italic tracking-[-0.03em] leading-[0.95] mb-6">
+              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/40">
+                Study Like Your
+              </span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-500">
+                Life Depends On It
+              </span>
+            </h1>
+          </Reveal>
+
+          {/* Subheadline */}
+          <Reveal delay={0.2}>
+            <p className="text-base sm:text-lg md:text-xl text-white/40 max-w-xl leading-relaxed mb-10">
+              The gamified study system that turns focus into power, knowledge into XP, and
+              every session into a rank-climbing obsession.
+            </p>
+          </Reveal>
+
+          {/* CTA Row */}
+          <Reveal delay={0.3}>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <button
+                onClick={() => setShowAuth(true)}
+                className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, oklch(0.7 0.25 220) 0%, oklch(0.5 0.3 220) 100%)',
+                  boxShadow: '0 0 40px oklch(0.6 0.3 220 / 0.3), 0 4px 20px rgba(0,0,0,0.3)',
+                }}
+              >
+                <span>Start Your Awakening</span>
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              </button>
+              <span className="text-xs text-white/25 font-medium tracking-wide">
+                $10 one-time • Lifetime access
+              </span>
+            </div>
+          </Reveal>
+
+          {/* Social proof strip */}
+          <Reveal delay={0.5}>
+            <div className="mt-14 flex items-center gap-4">
+              {/* Stacked avatars */}
+              <div className="flex -space-x-2.5">
+                {['🧠', '⚡', '🎯', '🔥'].map((emoji, i) => (
+                  <div
+                    key={i}
+                    className="w-8 h-8 rounded-full border-2 border-[#020208] bg-white/[0.06] flex items-center justify-center text-xs"
+                  >
+                    {emoji}
+                  </div>
+                ))}
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={11} className="fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-[11px] text-white/30 font-medium">
+                  Loved by 2,800+ hunters worldwide
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Gradient fade at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#020208] to-transparent pointer-events-none" />
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 2 — STATS BAR                                   */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="relative py-16 border-y border-white/[0.04]">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
+          {STATS.map((stat, i) => (
+            <Reveal key={i} delay={i * 0.1}>
+              <div className="text-center">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight text-white mb-1">
+                  {typeof stat.value === 'number' && stat.value > 10
+                    ? <Counter target={stat.value} suffix={stat.suffix} />
+                    : <>{stat.value}{stat.suffix}</>
+                  }
+                </div>
+                <div className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-white/25 uppercase">
+                  {stat.label}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 3 — THE PROBLEM                                 */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6">
+        <div className="max-w-4xl mx-auto">
+          <Reveal>
+            <SectionLabel>The Problem</SectionLabel>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1] mb-8">
+              <span className="text-white/90">Traditional studying is </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-red-500">
+                boring, lonely, and forgettable.
+              </span>
+            </h2>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { emoji: '😴', problem: 'You re-read the same notes and forget everything by exam day.' },
+                { emoji: '📱', problem: 'Your phone steals your focus every 5 minutes. You never get deep.' },
+                { emoji: '😐', problem: 'There\'s no reward, no progress bar, no reason to keep going.' },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  className="p-6 rounded-2xl border border-white/[0.05] bg-white/[0.015]"
+                >
+                  <span className="text-2xl mb-3 block">{item.emoji}</span>
+                  <p className="text-sm text-white/40 leading-relaxed">{item.problem}</p>
+                </div>
               ))}
             </div>
-
-            {/* Left wing aura fragment */}
-            <motion.div
-              animate={{
-                rotate: [-5, 5, -5],
-                opacity: [0.3, 0.6, 0.3],
-                x: [-5, -8, -5]
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -left-10 top-1/2 -translate-y-1/2 w-8 h-16 bg-gradient-to-r from-transparent to-white/20 blur-[8px] rounded-l-full pointer-events-none"
-              style={{ transformOrigin: 'right center' }}
-            />
-
-            {/* Right wing aura fragment */}
-            <motion.div
-              animate={{
-                rotate: [5, -5, 5],
-                opacity: [0.3, 0.6, 0.3],
-                x: [5, 8, 5]
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -right-10 top-1/2 -translate-y-1/2 w-8 h-16 bg-gradient-to-l from-transparent to-white/20 blur-[8px] rounded-r-full pointer-events-none"
-              style={{ transformOrigin: 'left center' }}
-            />
-
-            {/* Rising energy shards */}
-            {Array.from({ length: 8 }).map((_, i) => (
-              <motion.div
-                key={`s-${i}`}
-                animate={{
-                  y: [-15, -45, -15],
-                  opacity: [0, 0.8, 0],
-                  scale: [0.3, 0.8, 0.3],
-                }}
-                transition={{
-                  duration: 3 + i,
-                  repeat: Infinity,
-                  delay: i * 0.5
-                }}
-                className="absolute w-1 h-3 bg-white blur-[0.5px] pointer-events-none"
-                style={{
-                  left: `${15 + i * 10}%`,
-                  top: `${30 + (i % 2) * 20}%`,
-                  boxShadow: '0 0 10px white'
-                }}
-              />
-            ))}
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* HERO SECTION — Title + Typewriter greeting         */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <motion.div
-        style={{ opacity: heroOpacity }}
-        className="fixed inset-0 z-[15] pointer-events-none flex flex-col items-center justify-between py-16"
-      >
-        {/* Top — Brand */}
-        <div className="text-center space-y-3 mt-4">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="text-6xl sm:text-8xl font-black italic tracking-[-0.04em] uppercase leading-none"
-          >
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/20">
-              LEVEL
-            </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 via-cyan-400 to-cyan-600">
-              UP
-            </span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            transition={{ delay: 0.8 }}
-            className="text-[9px] font-black tracking-[0.6em] text-white uppercase"
-          >
-            NEURAL STUDY OPERATING SYSTEM
-          </motion.p>
+          </Reveal>
+          <Reveal delay={0.3}>
+            <p className="mt-10 text-lg sm:text-xl font-semibold text-white/60 max-w-2xl">
+              We built LevelUp to make studying feel like the most addictive game you've ever played.
+              <span className="text-cyan-400"> Every session matters. Every card counts.</span>
+            </p>
+          </Reveal>
         </div>
+      </section>
 
-        {/* Center spacer — orb lives here visually */}
-        <div className="flex-1" />
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 4 — PRODUCT SHOWCASE (Bento Grid)               */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <SectionLabel>The System</SectionLabel>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1] mb-4">
+              Everything you need to
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400"> dominate.</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="text-base text-white/30 mb-14 max-w-xl">
+              Six interconnected systems designed to make knowledge acquisition feel like a progression RPG.
+            </p>
+          </Reveal>
 
-        {/* Bottom — Typewriter message from the orb */}
-        <div className="w-full max-w-lg px-8 mb-8">
-          <AnimatePresence>
-            {greeting && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative"
-              >
-                {/* Speech bubble */}
-                <div className="relative px-6 py-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl">
-                  {/* Subtle top shine */}
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {BENTO_FEATURES.map((feature, i) => (
+              <Reveal key={i} delay={i * 0.08} className={feature.span}>
+                <div className="group relative h-full p-7 md:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.03] hover:border-white/[0.1] transition-all duration-500 overflow-hidden">
+                  {/* Hover glow */}
+                  <div className={`absolute -inset-px rounded-2xl bg-gradient-to-br ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl`} />
 
-                  <p className="text-sm sm:text-base font-medium text-white/80 leading-relaxed tracking-wide italic">
-                    "{greeting}
-                    {!greetingDone && (
-                      <motion.span
-                        animate={{ opacity: [1, 0] }}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                        className="text-cyan-400"
-                      >
-                        |
-                      </motion.span>
-                    )}
-                    {greetingDone && '"'}
-                  </p>
-
-                  {/* Upward arrow pointing to orb */}
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 border-l border-t border-white/[0.08] bg-white/[0.03] rotate-45 backdrop-blur-xl" />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Scroll prompt */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.25 }}
-            transition={{ delay: 5 }}
-            className="flex flex-col items-center mt-8 gap-1 pointer-events-auto cursor-pointer"
-            onClick={() => window.scrollTo({ top: window.innerHeight * 0.85, behavior: 'smooth' })}
-          >
-            <span className="text-[8px] font-black tracking-[0.5em] uppercase">Scroll to awaken</span>
-            <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-              <ChevronDown size={14} />
-            </motion.div>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* FEATURE SECTIONS — Holographic glass panels         */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <div className="fixed inset-0 z-[12] pointer-events-none flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          {activeFeature >= 0 && activeFeature < 5 && (
-            <motion.div
-              key={activeFeature}
-              initial={{ opacity: 0, x: 80, rotateY: -15, scale: 0.92 }}
-              animate={{ opacity: 1, x: 0, rotateY: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -80, rotateY: 15, scale: 0.92 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-lg mx-6 pointer-events-auto"
-              style={{ perspective: 1000, willChange: 'transform, opacity' }}
-            >
-              <div className="relative p-8 md:p-10 rounded-3xl border border-white/[0.06] bg-[#0a0b12]/90 md:bg-white/[0.02] backdrop-blur-sm md:backdrop-blur-xl overflow-hidden">
-                {/* Top shimmer line */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
-
-                {/* Bottom shimmer line */}
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-
-                {/* Ambient card glow */}
-                <div
-                  className="absolute -inset-10 rounded-full blur-[60px] md:blur-[80px] pointer-events-none"
-                  style={{
-                    background: 'radial-gradient(circle, oklch(0.5 0.2 220 / 0.15) 0%, transparent 70%)',
-                  }}
-                />
-
-                {/* Feature number */}
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-3xl opacity-20">{FEATURES[activeFeature].icon}</span>
-                  <div>
-                    <div className="text-[8px] font-black tracking-[0.5em] text-cyan-400/60 uppercase">
-                      MODULE {String(activeFeature + 1).padStart(2, '0')} / 05
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-black italic tracking-tight text-white uppercase mt-1">
-                      {FEATURES[activeFeature].title}
-                    </h3>
+                  {/* Icon */}
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-5 group-hover:border-white/[0.12] transition-colors">
+                    <feature.icon size={18} className="text-white/50 group-hover:text-cyan-400 transition-colors" />
                   </div>
+
+                  {/* Text */}
+                  <h3 className="text-lg font-bold text-white/90 mb-2 tracking-tight">{feature.title}</h3>
+                  <p className="text-sm text-white/35 leading-relaxed">{feature.description}</p>
+
+                  {/* Product screenshot placeholder */}
+                  {(feature.span.includes('col-span-2') || i === 0) && (
+                    <div className="mt-6 w-full h-40 md:h-48 rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] flex items-center justify-center">
+                      <span className="text-[10px] font-bold tracking-[0.3em] text-white/15 uppercase">Product Screenshot</span>
+                    </div>
+                  )}
                 </div>
-
-                {/* Subtitle tag */}
-                <div className="inline-block px-3 py-1 rounded-full border border-cyan-400/15 bg-cyan-400/[0.04] mb-4">
-                  <span className="text-[9px] font-black tracking-[0.3em] text-cyan-400 uppercase">
-                    {FEATURES[activeFeature].subtitle}
-                  </span>
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-white/50 leading-relaxed mb-6">
-                  {FEATURES[activeFeature].description}
-                </p>
-
-                {/* Stat badge */}
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[10px] font-black tracking-[0.2em] text-white/30 uppercase">
-                    {FEATURES[activeFeature].stat}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Feature progress indicator — minimal dots */}
-      <AnimatePresence>
-        {activeFeature >= 0 && activeFeature < 5 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed right-6 top-1/2 -translate-y-1/2 z-[20] flex flex-col gap-3"
-          >
-            {FEATURES.map((_, i) => (
-              <motion.div
-                key={i}
-                animate={{
-                  height: i === activeFeature ? 24 : 6,
-                  opacity: i === activeFeature ? 1 : 0.2,
-                  backgroundColor: i === activeFeature ? 'oklch(0.76 0.25 220)' : 'white',
-                }}
-                className="w-1 rounded-full"
-              />
+              </Reveal>
             ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </section>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* PRICING SECTION — Final reveal                     */}
-      {/* ═══════════════════════════════════════════════════ */}
-      <motion.div
-        style={{ opacity: pricingOpacity }}
-        className="fixed inset-0 z-[14] pointer-events-none flex items-center justify-center px-6"
-      >
-        <motion.div
-          initial={false}
-          animate={activeFeature === 5 ? { scale: 1, y: 0 } : { scale: 0.9, y: 40 }}
-          className="w-full max-w-md pointer-events-auto"
-          style={{ willChange: 'transform, opacity' }}
-        >
-          <div className="relative p-10 rounded-3xl border border-cyan-400/20 bg-[#060a12]/95 md:bg-[#060a12]/90 backdrop-blur-sm md:backdrop-blur-xl overflow-hidden">
-            {/* Top shine */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 5 — HOW IT WORKS                                */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6 border-t border-white/[0.04]">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <SectionLabel>How It Works</SectionLabel>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1] mb-16">
+              Three steps to
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400"> neural dominance.</span>
+            </h2>
+          </Reveal>
 
-            {/* Ambient glow */}
-            <div className="absolute -inset-20 rounded-full blur-[80px] md:blur-[120px] pointer-events-none" style={{ background: 'radial-gradient(circle, oklch(0.5 0.3 220 / 0.2) 0%, transparent 70%)' }} />
+          <div className="grid md:grid-cols-3 gap-8 md:gap-6">
+            {HOW_IT_WORKS.map((item, i) => (
+              <Reveal key={i} delay={i * 0.15}>
+                <div className="relative">
+                  {/* Connector line (desktop only) */}
+                  {i < 2 && (
+                    <div className="hidden md:block absolute top-10 left-[calc(100%+4px)] w-[calc(100%-40px)] h-px bg-gradient-to-r from-white/10 to-transparent" />
+                  )}
 
-            <div className="relative z-10 flex flex-col items-center text-center space-y-6">
-              {/* Badge */}
-              <div className="flex items-center gap-2">
-                <Zap size={14} className="text-cyan-400" />
-                <span className="text-[8px] font-black tracking-[0.5em] text-cyan-400 uppercase">
-                  Lifetime Neural License
-                </span>
+                  {/* Step number */}
+                  <div className="text-6xl md:text-7xl font-black italic text-white/[0.04] leading-none mb-4 tracking-tight">
+                    {item.step}
+                  </div>
+
+                  {/* Icon */}
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-5">
+                    <item.icon size={20} className="text-cyan-400/80" />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-white/90 mb-3 tracking-tight">{item.title}</h3>
+                  <p className="text-sm text-white/35 leading-relaxed">{item.description}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 6 — PRODUCT PREVIEW                             */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-12">
+              <SectionLabel>See It In Action</SectionLabel>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1]">
+                Built for hunters who
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400"> mean business.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          {/* Large product screenshot placeholder */}
+          <Reveal delay={0.15}>
+            <div className="relative rounded-3xl border border-white/[0.06] bg-white/[0.015] overflow-hidden">
+              {/* Mock browser chrome */}
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/[0.08]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/[0.08]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/[0.08]" />
+                </div>
+                <div className="flex-1 mx-4 h-6 rounded-md bg-white/[0.03] flex items-center justify-center">
+                  <span className="text-[9px] font-mono text-white/15 tracking-wider">levelup.app</span>
+                </div>
               </div>
 
-              {/* Title */}
-              <h3 className="text-3xl md:text-4xl font-black italic tracking-tight text-white uppercase">
-                Awaken Access
-              </h3>
+              {/* Screenshot area */}
+              <div className="w-full aspect-[16/9] flex items-center justify-center">
+                <div className="text-center">
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto mb-4"
+                    style={{
+                      background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
+                      boxShadow: '0 0 40px oklch(0.6 0.3 220 / 0.3)',
+                    }}
+                  />
+                  <span className="text-[11px] font-bold tracking-[0.3em] text-white/15 uppercase">App Screenshots Coming Soon</span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 7 — PRICING                                     */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6 border-t border-white/[0.04]">
+        <div className="max-w-xl mx-auto text-center">
+          <Reveal>
+            <SectionLabel>Pricing</SectionLabel>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1] mb-4">
+              One price.
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400"> Forever.</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="text-base text-white/30 mb-12">
+              No subscriptions. No hidden fees. Pay once and own the entire neural system for life.
+            </p>
+          </Reveal>
+
+          {/* Pricing Card */}
+          <Reveal delay={0.2}>
+            <div className="relative p-10 md:p-12 rounded-3xl border border-cyan-400/15 bg-white/[0.015] overflow-hidden">
+              {/* Top shimmer */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+
+              {/* Ambient glow behind card */}
+              <div
+                className="absolute -inset-20 -z-10 rounded-full blur-[100px] opacity-30 pointer-events-none"
+                style={{ background: 'radial-gradient(circle, oklch(0.4 0.2 220) 0%, transparent 70%)' }}
+              />
+
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-400/15 bg-cyan-400/[0.05] mb-8">
+                <Zap size={12} className="text-cyan-400" />
+                <span className="text-[9px] font-black tracking-[0.4em] text-cyan-400 uppercase">Lifetime Access</span>
+              </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-1">
-                <span className="text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 to-cyan-500">
+              <div className="flex items-baseline justify-center gap-2 mb-2">
+                <span className="text-7xl md:text-8xl font-black italic tracking-tighter text-white">
                   $10
                 </span>
-                <span className="text-[10px] font-black tracking-[0.3em] text-white/30 uppercase ml-1">
-                  once, forever
-                </span>
               </div>
+              <p className="text-xs font-bold tracking-[0.2em] text-white/20 uppercase mb-10">
+                One-time payment • No recurring fees
+              </p>
 
-              {/* Divider */}
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
-
-              {/* Features list */}
-              <div className="space-y-2 text-left w-full">
-                {['Unlimited evolutionary decks', 'Deep focus pulse engine', 'All rank evolutions', 'Live arena matchmaking', 'Guild syndicate networks'].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-1 h-1 rounded-full bg-cyan-400/60" />
-                    <span className="text-xs text-white/40 tracking-wide">{item}</span>
+              {/* Feature checklist */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left mb-10">
+                {[
+                  'Unlimited flashcard decks',
+                  'Deep focus engine',
+                  'All 7 rank evolutions',
+                  'Real-time arena duels',
+                  'Guild & social features',
+                  'Neural analytics dashboard',
+                  'Priority feature requests',
+                  'Lifetime updates',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                    </div>
+                    <span className="text-sm text-white/45">{item}</span>
                   </div>
                 ))}
               </div>
@@ -701,50 +565,108 @@ export default function Landing() {
               {/* CTA */}
               <button
                 onClick={() => setShowAuth(true)}
-                className="w-full py-4 rounded-2xl font-black text-sm tracking-[0.15em] uppercase transition-all duration-300 hover:scale-[1.02] active:scale-95 relative overflow-hidden group"
+                className="group w-full flex items-center justify-center gap-3 py-4.5 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all duration-300 hover:scale-[1.02] active:scale-95"
                 style={{
                   background: 'linear-gradient(135deg, oklch(0.7 0.25 220) 0%, oklch(0.5 0.3 220) 100%)',
-                  boxShadow: '0 0 40px oklch(0.6 0.3 220 / 0.4)',
+                  boxShadow: '0 0 40px oklch(0.6 0.3 220 / 0.3)',
                 }}
               >
-                {/* Button shimmer */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                <span className="relative z-10 text-white">Awaken Neural System</span>
+                <span>Awaken Your Neural System</span>
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </button>
 
-              <p className="text-[8px] font-mono text-white/15 tracking-[0.3em]">
-                SECURE PAYMENT BRIDGE • 256-BIT ENCRYPTED
+              <p className="mt-4 text-[9px] font-mono text-white/15 tracking-[0.2em]">
+                SECURE 256-BIT ENCRYPTED PAYMENT
               </p>
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* SECTION 8 — FINAL CTA                                   */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 px-6 border-t border-white/[0.04]">
+        <div className="max-w-3xl mx-auto text-center">
+          <Reveal>
+            {/* Small orb */}
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-16 h-16 rounded-full mx-auto mb-10"
+              style={{
+                background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
+                boxShadow: '0 0 60px oklch(0.6 0.3 220 / 0.3)',
+              }}
+            />
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1.1] mb-6">
+              Ready to stop studying
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+                and start leveling up?
+              </span>
+            </h2>
+          </Reveal>
+
+          <Reveal delay={0.2}>
+            <p className="text-base text-white/30 mb-10 max-w-md mx-auto">
+              Join thousands of hunters who've turned their study grind into an addictive progression system.
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.3}>
+            <button
+              onClick={() => setShowAuth(true)}
+              className="group inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, oklch(0.7 0.25 220) 0%, oklch(0.5 0.3 220) 100%)',
+                boxShadow: '0 0 50px oklch(0.6 0.3 220 / 0.35), 0 4px 20px rgba(0,0,0,0.3)',
+              }}
+            >
+              <span>Get Lifetime Access — $10</span>
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+            </button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* FOOTER                                                  */}
+      {/* ════════════════════════════════════════════════════════ */}
+      <footer className="py-10 px-6 border-t border-white/[0.04]">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-5 h-5 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 35% 35%, white 0%, oklch(0.86 0.4 220) 60%, oklch(0.1 0.6 220) 100%)',
+              }}
+            />
+            <span className="text-xs font-bold tracking-wider uppercase text-white/30 italic">
+              Level<span className="text-cyan-400/50">Up</span>
+            </span>
           </div>
+          <p className="text-[10px] text-white/15 font-mono tracking-wider">
+            © 2025 LevelUp Neural Systems. All rights reserved.
+          </p>
+        </div>
+      </footer>
+
+      {/* ════════════════════════════════════════════════════════ */}
+      {/* AUTH OVERLAY                                             */}
+      {/* ════════════════════════════════════════════════════════ */}
+      {showAuth && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[60] overflow-auto bg-black/95 flex items-center justify-center"
+        >
+          <QuickStart initialPhase={2} onClose={() => setShowAuth(false)} />
         </motion.div>
-      </motion.div>
-
-      {/* Scroll sections — invisible spacers that drive the timeline */}
-      <div className="relative z-0">
-        {/* Hero spacer */}
-        <div className="h-[75dvh]" />
-        {/* Feature spacers */}
-        {FEATURES.map((_, i) => (
-          <div key={i} className="h-[75dvh]" />
-        ))}
-        {/* Pricing spacer */}
-        <div className="h-[75dvh]" />
-      </div>
-
-      {/* Auth overlay */}
-      <AnimatePresence>
-        {showAuth && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-hidden bg-black/95 backdrop-blur-3xl flex items-center justify-center"
-          >
-            <QuickStart initialPhase={2} onClose={() => setShowAuth(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      )}
     </div>
   );
 }
