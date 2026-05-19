@@ -40,7 +40,7 @@ function useParticleCanvas(
     window.addEventListener('resize', resize);
 
     const isMobile = window.innerWidth < 768;
-    const particleCount = isMobile ? 15 : 80; // Significantly reduce particles on mobile
+    const particleCount = isMobile ? 0 : 80; // Disable particles completely on mobile for smoothness
 
     // Seed initial particles
     for (let i = 0; i < particleCount; i++) {
@@ -282,7 +282,7 @@ export default function Landing() {
   const orbRotateY = useTransform(smoothX, [-0.5, 0.5], [-8, 8]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#020208] text-white font-sans select-none" style={{ height: '700dvh' }}>
+    <div ref={containerRef} className="relative bg-[#020208] text-white font-sans select-none" style={{ height: '525dvh' }}>
 
       {/* Canvas particle layer — fixed behind everything */}
       <canvas
@@ -564,7 +564,7 @@ export default function Landing() {
               className="w-full max-w-lg mx-6 pointer-events-auto"
               style={{ perspective: 1000, willChange: 'transform, opacity' }}
             >
-              <div className="relative p-8 md:p-10 rounded-3xl border border-white/[0.06] bg-[#0a0b12]/60 md:bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+              <div className="relative p-8 md:p-10 rounded-3xl border border-white/[0.06] bg-[#0a0b12]/90 md:bg-white/[0.02] backdrop-blur-sm md:backdrop-blur-xl overflow-hidden">
                 {/* Top shimmer line */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
 
@@ -654,7 +654,7 @@ export default function Landing() {
           className="w-full max-w-md pointer-events-auto"
           style={{ willChange: 'transform, opacity' }}
         >
-          <div className="relative p-10 rounded-3xl border border-cyan-400/20 bg-[#060a12]/90 backdrop-blur-xl overflow-hidden">
+          <div className="relative p-10 rounded-3xl border border-cyan-400/20 bg-[#060a12]/95 md:bg-[#060a12]/90 backdrop-blur-sm md:backdrop-blur-xl overflow-hidden">
             {/* Top shine */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 
@@ -723,13 +723,13 @@ export default function Landing() {
       {/* Scroll sections — invisible spacers that drive the timeline */}
       <div className="relative z-0">
         {/* Hero spacer */}
-        <div className="h-[100dvh]" />
+        <div className="h-[75dvh]" />
         {/* Feature spacers */}
         {FEATURES.map((_, i) => (
-          <div key={i} className="h-[100dvh]" />
+          <div key={i} className="h-[75dvh]" />
         ))}
         {/* Pricing spacer */}
-        <div className="h-[100dvh]" />
+        <div className="h-[75dvh]" />
       </div>
 
       {/* Auth overlay */}
