@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
 import { 
-  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Swords, Check
+  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Swords, Check, ChevronDown
 } from 'lucide-react';
 
 export default function Landing() {
