@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
 import { 
-  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Award, Swords,
-  MessageSquare, Play, ChevronDown, Check
+  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Swords, Check
 } from 'lucide-react';
 
 export default function Landing() {
@@ -11,29 +10,33 @@ export default function Landing() {
   const [activeTab, setActiveTab] = useState(2); // Default to Home (index 2)
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll monitoring
+  // Monitor scroll progress
   const { scrollYProgress } = useScroll();
 
-  // 1. Orb layout transforms:
-  // Starts centered -> moves to bottom center -> stays static -> scales up to become a pricing container
+  // 1. Orb Y-coordinate layout transform:
+  // - Phase 0 (Start): Center-left of viewport.
+  // - Phase 1-5 (Features): Moves to bottom-center of viewport and stays anchored.
+  // - Phase 6 (Pricing): Moves back to absolute center.
   const orbY = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["0vh", "32vh", "32vh", "10vh"]
+    ["10vh", "32vh", "32vh", "0vh"]
   );
 
-  // Orb dimensions morphs:
-  // Large circular sphere -> bottom anchor core -> massive pricing container card
+  // 2. Orb Dimensions morphs:
+  // - Starts as a gorgeous 220px glowing sphere.
+  // - Shrinks to a 110px interactive bottom core.
+  // - Morphs into a wide 450px x 380px premium pricing card block.
   const orbWidth = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["280px", "140px", "140px", "440px"]
+    ["220px", "110px", "110px", "440px"]
   );
 
   const orbHeight = useTransform(
     scrollYProgress,
     [0, 0.15, 0.8, 0.85],
-    ["280px", "140px", "140px", "380px"]
+    ["220px", "110px", "110px", "390px"]
   );
 
   const orbBorderRadius = useTransform(
@@ -43,12 +46,8 @@ export default function Landing() {
   );
 
   // Nav Arc opacity & scale transforms (open nav animation on scroll)
-  const navScale = useTransform(scrollYProgress, [0.08, 0.16], [0.7, 1]);
+  const navScale = useTransform(scrollYProgress, [0.08, 0.16], [0.85, 1.05]);
   const navOpacity = useTransform(scrollYProgress, [0.08, 0.15, 0.8, 0.83], [0, 1, 1, 0]);
-
-  // Welcome message bubble opacity: visible at the start, fades on scroll
-  const welcomeOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
-  const welcomeY = useTransform(scrollYProgress, [0, 0.08], [0, -30]);
 
   // Update active tab based on scroll progress threshold
   useEffect(() => {
@@ -71,66 +70,66 @@ export default function Landing() {
     });
   }, [scrollYProgress]);
 
-  // Define our 5 interactive navigation pages (matching coordinates and angles)
-  // Decks (-60 deg), Focus (-30 deg), Home (0 deg), Battle (30 deg), Social (60 deg)
+  // Navigation Items coordinates for clean semicircular arc:
+  // - Radius: 120px. Centered above the bottom-anchored Orb.
   const navItems = [
-    { id: 0, label: "DECKS", icon: BookOpen, angle: -60, x: -130, y: -75 },
-    { id: 1, label: "FOCUS", icon: Clock, angle: -30, x: -75, y: -130 },
-    { id: 2, label: "HOME", icon: Home, angle: 0, x: 0, y: -150 },
-    { id: 3, label: "BATTLE", icon: Swords, angle: 30, x: 75, y: -130 },
-    { id: 4, label: "SOCIAL", icon: Users, angle: 60, x: 130, y: -75 }
+    { id: 0, label: "DECKS", icon: BookOpen, x: -105, y: -60 },
+    { id: 1, label: "FOCUS", icon: Clock, x: -60, y: -105 },
+    { id: 2, label: "HOME", icon: Home, x: 0, y: -120 },
+    { id: 3, label: "BATTLE", icon: Swords, x: 60, y: -105 },
+    { id: 4, label: "SOCIAL", icon: Users, x: 105, y: -60 }
   ];
 
-  // Feature cards displayed above the navigation dock corresponding to the active index
+  // Feature content mapping corresponding to each navigation state
   const featurePages = [
     {
       id: 0,
       title: "EVOLUTIONARY DECKS",
-      tag: "SMART MEMORY SYSTEM",
-      desc: "Build evolutionary spaced repetition decks. Program target cards with cognitive blocks, automatically scheduling recall cycles via the SM-2 retention engine.",
+      tag: "SMART CARD RETRIEVAL",
+      desc: "Build evolutionary spaced repetition decks. Program cards with smart cognitive targets, automatically scheduling recall waves using our verified SM-2 algorithm.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      detail: "SM-2 RETENTION • 100% STABLE"
+      detail: "SM-2 RETENTION ENGINE • 100% STABLE"
     },
     {
       id: 1,
       title: "DEEP FOCUS PULSE",
       tag: "BRAINWAVE STABILIZER",
-      desc: "Launch immersive visual countdown lobbies. Focus checking algorithms monitor and restrict background noise, locking in deep presence indicators.",
+      desc: "Launch visual focus countdown lobbies. Ambient breathing cycles dim secondary browser noise, backed by adaptive checks that monitor focus logs.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      detail: "PRESENCE DETECTED • ACTIVE LOCK"
+      detail: "COGNITIVE RESTRICTION • ACTIVE"
     },
     {
       id: 2,
-      title: "XP & S-RANK PROGRESSION",
+      title: "XP & PROGRESS SYSTEMS",
       tag: "DOPAMINE FEEDBACK LOOP",
-      desc: "Level up your hunter status. Standard focus actions, streak maintenance, and arena victories feed your raw XP gauges, shifting your status ranking glows.",
+      desc: "Maintain streaks and complete objectives to accumulate raw XP. Ascend through tactical hunter tiers, triggering dynamic auric rank glows.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      detail: "S-RANK HARMONICS • x1.5 BOOST"
+      detail: "S-RANK HIGHLIGHTS • x1.5 BOOST"
     },
     {
       id: 3,
       title: "STUDY ARENA DUELS",
-      tag: "PEER COMBAT MATRICES",
-      desc: "Test recall speeds inside real-time matchmaking channels. Race friends or random hunters through interactive flashcard battle grids.",
+      tag: "PEER MATCHMAKING",
+      desc: "Challenge friends or S-rank opponents inside real-time matchmaking channels. Race through flashcard grids to test recall accuracy under pressure.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      detail: "MATCHMAKING CHANNELS • ONLINE"
+      detail: "MATCHMAKING BRIDGE • STABILIZED"
     },
     {
       id: 4,
       title: "NEURAL SYNDICATES",
-      tag: "SOCIAL SYNC LOBBIES",
-      desc: "Construct multiplayer study guilds, review hunter statistics grids, exchange direct messages, and climb leaderboards in complete synchronization.",
+      tag: "STUDY GUILD NETWORKS",
+      desc: "Assemble multiplayer guilds, coordinate real-time focus lobbies, exchange messages, and track group performance standings on live leaderboards.",
       color: "text-cyan-400 border-cyan-400/20 bg-cyan-950/15",
-      detail: "SYNDICATE NETWORK • CONNECTED"
+      detail: "SYNDICATE MESH • CONNECTED"
     }
   ];
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[#020204] text-white relative font-sans select-none scroll-smooth">
       {/* 1. Cyber scanlines overlay */}
-      <div className="fixed inset-0 pointer-events-none z-40 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%] opacity-25" />
+      <div className="fixed inset-0 pointer-events-none z-40 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%] opacity-20" />
 
-      {/* 2. Cyber dotted background grid */}
+      {/* 2. Dotted hex grid backdrop */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-10" style={{ 
         backgroundImage: `radial-gradient(circle at 1px 1px, rgba(6, 182, 212, 0.15) 1px, transparent 0)`,
         backgroundSize: '40px 40px'
@@ -142,7 +141,7 @@ export default function Landing() {
         <div className="absolute bottom-1/4 -right-1/4 w-[750px] h-[750px] bg-indigo-500/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '1.2s' }} />
       </div>
 
-      {/* 4. THE SOUL — CENTRAL MORPHING ORB & PRICING CONTAINER */}
+      {/* 4. THE SOUL — MORPHING CENTRAL FOCUS ORB & PRICING CONTAINER */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-30">
         <motion.div
           style={{
@@ -151,7 +150,7 @@ export default function Landing() {
             height: orbHeight,
             borderRadius: orbBorderRadius
           }}
-          className="relative flex flex-col items-center justify-center border border-cyan-400/30 shadow-[0_0_80px_rgba(6,182,212,0.45),inset_0_0_30px_rgba(255,255,255,0.15)] bg-gradient-to-tr from-cyan-950/70 via-[#0a0b12]/90 to-purple-950/60 pointer-events-auto overflow-hidden"
+          className="relative flex flex-col items-center justify-center border border-cyan-400/30 shadow-[0_0_80px_rgba(6,182,212,0.4),inset_0_0_30px_rgba(255,255,255,0.15)] bg-gradient-to-tr from-cyan-950/70 via-[#0a0b12]/90 to-purple-950/60 pointer-events-auto overflow-hidden"
         >
           {/* Main animated Core (Only visible before morphing into Pricing Container) */}
           {activeTab < 5 && (
@@ -173,7 +172,7 @@ export default function Landing() {
             </div>
           )}
 
-          {/* Pricing Details Panel (Only visible in S-Rank container state) */}
+          {/* Pricing Details Panel (Visible ONLY in final scroll phase) */}
           <AnimatePresence>
             {activeTab === 5 && (
               <motion.div
@@ -182,10 +181,10 @@ export default function Landing() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="w-full h-full p-8 flex flex-col justify-between items-center text-center z-10"
               >
-                <div className="space-y-3 w-full">
+                <div className="space-y-4 w-full">
                   <div className="flex items-center justify-center gap-2 text-cyan-400">
                     <Zap size={16} className="animate-bounce" />
-                    <span className="text-[10px] font-black tracking-[0.4em] uppercase">S-RANK LICENSE</span>
+                    <span className="text-[9px] font-black tracking-[0.4em] uppercase">S-RANK LICENSE ACTIVE</span>
                   </div>
                   
                   <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white">
@@ -221,38 +220,19 @@ export default function Landing() {
         </motion.div>
       </div>
 
-      {/* 5. HERO WELCOME TALK BUBBLE */}
-      <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-20">
-        <motion.div
-          style={{
-            opacity: welcomeOpacity,
-            y: welcomeY
-          }}
-          className="relative -top-48 w-full max-w-xs md:max-w-sm px-6 py-5 rounded-2xl border border-cyan-400/40 bg-black/80 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.2)] text-center flex flex-col items-center justify-center"
-        >
-          {/* Talk bubble down-arrow indicator */}
-          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 border-r border-b border-cyan-400/40 bg-[#020204] rotate-45" />
-          
-          <h2 className="text-[10px] font-black tracking-[0.4em] text-cyan-400 uppercase mb-2">NEURAL MESSAGE INCOMING</h2>
-          <p className="text-xs md:text-sm font-black tracking-wide text-white uppercase italic leading-relaxed">
-            "Greetings, Hunter. Welcome to the Neural Core. Ready to convert studying into an obsession?"
-          </p>
-        </motion.div>
-      </div>
-
-      {/* 6. STATIC FIXED SEMICIRCULAR DOCK */}
-      <div className="fixed bottom-0 left-0 w-full flex justify-center z-20 pointer-events-none">
+      {/* 5. STATIC FIXED BOTTOM NAVIGATION DOCK (Expanded container boundaries to avoid clipping) */}
+      <div className="fixed bottom-0 left-0 w-full h-[220px] flex justify-center z-20 pointer-events-none">
         <motion.div
           style={{
             scale: navScale,
             opacity: navOpacity
           }}
-          className="relative w-[340px] h-[190px] flex justify-center pointer-events-auto"
+          className="relative w-[340px] h-[220px] flex justify-center pointer-events-auto"
         >
-          {/* Semicircular tracking path matching the design */}
+          {/* Semicircular tracking path matching the screenshot exactly */}
           <svg className="absolute top-10 w-[300px] h-[150px] overflow-visible pointer-events-none" viewBox="0 0 300 150">
             <path 
-              d="M 20,130 A 130,130 0 0,1 280,130" 
+              d="M 30,120 A 120,120 0 0,1 270,120" 
               fill="none" 
               stroke="rgba(255,255,255,0.06)" 
               strokeWidth="2"
@@ -260,7 +240,7 @@ export default function Landing() {
           </svg>
 
           {/* Active curved cyan indicator line (directly above the Orb top boundary) */}
-          <div className="absolute top-[38px] w-[140px] h-[140px] rounded-full border border-white/5 pointer-events-none">
+          <div className="absolute top-[48px] w-[114px] h-[114px] rounded-full pointer-events-none">
             {/* Semicircular highlight curve exactly matching Home selection style */}
             <motion.div 
               animate={{ rotate: activeTab === 0 ? -60 : activeTab === 1 ? -30 : activeTab === 2 ? 0 : activeTab === 3 ? 30 : 60 }}
@@ -269,7 +249,7 @@ export default function Landing() {
             />
           </div>
 
-          {/* Semicircular Nav Icons Placement */}
+          {/* Semicircular Nav Icons Placement (With adjusted padding to guarantee zero window edge clipping) */}
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -282,7 +262,7 @@ export default function Landing() {
                   window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
                 }}
                 style={{
-                  transform: `translate(${item.x}px, ${item.y + 40}px)`
+                  transform: `translate(${item.x}px, ${item.y + 42}px)`
                 }}
                 className="absolute w-10 h-10 rounded-full flex flex-col items-center justify-center transition-all duration-300"
               >
@@ -306,31 +286,48 @@ export default function Landing() {
         </motion.div>
       </div>
 
-      {/* 7. NATURAL SCROLL SECTIONS BLOCK */}
+      {/* 6. SYSTEM SECTIONS LAYOUT */}
       <div className="relative z-10">
 
-        {/* HERO LOBBY */}
-        <section className="h-screen w-screen flex flex-col justify-center items-center px-6 relative">
-          <div className="max-w-4xl mx-auto text-center space-y-4 z-10 pt-16">
-            <h1 className="text-6xl sm:text-8xl font-black italic tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40">
+        {/* HERO SECTION: WELCOME MESSAGE AND GIANT ORB FLOATING (Clean Spaced Layout - ZERO Overlaps) */}
+        <section className="h-screen w-screen flex flex-col justify-between items-center px-6 py-20 relative">
+          
+          {/* Title Signature */}
+          <div className="text-center space-y-2 z-10 mt-6">
+            <h1 className="text-5xl sm:text-7xl font-black italic tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/30">
               LEVELUP
             </h1>
-            <p className="text-[10px] font-black tracking-[0.5em] text-white/30 uppercase">NEURAL STUDY OPERATING SYSTEM</p>
+            <p className="text-[9px] font-black tracking-[0.5em] text-cyan-400/60 uppercase">NEURAL STUDY OPERATING SYSTEM</p>
           </div>
 
-          <div className="absolute bottom-12 flex flex-col items-center gap-2 text-white/20">
-            <span className="text-[8px] font-black tracking-[0.4em]">SCROLL TO HANDSHAKE</span>
+          {/* Spacer to push Orb down */}
+          <div className="flex-1" />
+
+          {/* Welcoming Talk Bubble - Spacer adjusted to sit cleanly at the top of the Orb without colliding */}
+          <div className="w-full max-w-sm px-6 py-5 rounded-2xl border border-cyan-400/40 bg-[#08090f]/90 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.2)] text-center relative z-20 mb-8">
+            {/* Talk bubble down-arrow indicator */}
+            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 border-r border-b border-cyan-400/40 bg-[#08090f] rotate-45" />
+            
+            <h2 className="text-[9px] font-black tracking-[0.4em] text-cyan-400 uppercase mb-2">NEURAL CORRELATION INCOMING</h2>
+            <p className="text-xs md:text-sm font-black tracking-wide text-white uppercase italic leading-relaxed">
+              "Greetings, Hunter. Welcome to the Neural Core. Ready to convert studying into an obsession?"
+            </p>
+          </div>
+
+          {/* Scroll to Handshake prompt */}
+          <div className="flex flex-col items-center gap-2 text-white/20 z-10">
+            <span className="text-[8px] font-black tracking-[0.4em]">SCROLL TO INITIALIZE</span>
             <ChevronDown size={14} className="animate-bounce" />
           </div>
         </section>
 
-        {/* EMITTING SCROLL SECTIONS */}
-        {featurePages.map((feature, index) => (
+        {/* EMITTING SCROLL SECTIONS (Clean spacing between Top Feature Card and Bottom Nav Bar) */}
+        {featurePages.map((feature) => (
           <section 
             key={feature.id} 
-            className="h-screen w-screen flex flex-col justify-start items-center px-6 pt-24 relative"
+            className="h-screen w-screen flex flex-col justify-start items-center px-6 pt-28 relative"
           >
-            {/* Animate feature card above the bottom nav */}
+            {/* Animate feature card in the top half of the screen (Guarantees zero overlapping with bottom nav Orb) */}
             <AnimatePresence>
               {activeTab === feature.id && (
                 <motion.div
@@ -344,7 +341,7 @@ export default function Landing() {
                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
                   
                   <div className="space-y-1">
-                    <span className="text-[8px] font-black tracking-[0.3em] text-white/40 uppercase">SYSTEM DIAGNOSTICS</span>
+                    <span className="text-[8px] font-black tracking-[0.3em] text-white/40 uppercase">MODULE DIAGNOSTICS</span>
                     <h3 className="text-xl md:text-2xl font-black italic tracking-tighter text-white uppercase">
                       {feature.title}
                     </h3>
@@ -368,7 +365,7 @@ export default function Landing() {
           </section>
         ))}
 
-        {/* PRICING SCROLL LOBBY */}
+        {/* PRICING SCROLL SECTION SPACE HOLDER */}
         <section className="h-screen w-screen flex flex-col justify-center items-center px-6 relative">
           <div className="absolute bottom-10 flex flex-col md:flex-row justify-between items-center w-full max-w-7xl px-8 z-20 text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase">
             <span>LEVELUP STUDY INC // CONNECT SIGNALS PROTECTED</span>
@@ -378,7 +375,7 @@ export default function Landing() {
 
       </div>
 
-      {/* 8. SIGNUP/LOGIN MODAL OVERLAY */}
+      {/* 7. SIGNUP/LOGIN OVERLAY MODAL */}
       <AnimatePresence>
         {showAuth && (
           <motion.div 
