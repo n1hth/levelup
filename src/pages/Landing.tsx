@@ -39,8 +39,11 @@ function useParticleCanvas(
     resize();
     window.addEventListener('resize', resize);
 
+    const isMobile = window.innerWidth < 768;
+    const particleCount = isMobile ? 15 : 80; // Significantly reduce particles on mobile
+
     // Seed initial particles
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < particleCount; i++) {
       particles.current.push(createParticle(canvas.width, canvas.height));
     }
 
@@ -279,7 +282,7 @@ export default function Landing() {
   const orbRotateY = useTransform(smoothX, [-0.5, 0.5], [-8, 8]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#020208] text-white font-sans select-none" style={{ height: '700vh' }}>
+    <div ref={containerRef} className="relative bg-[#020208] text-white font-sans select-none" style={{ height: '700dvh' }}>
 
       {/* Canvas particle layer — fixed behind everything */}
       <canvas
@@ -292,13 +295,14 @@ export default function Landing() {
       <div className="fixed inset-0 z-[2] pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#020208] via-transparent to-[#020208] opacity-60" />
         <div
-          className="absolute w-[800px] h-[800px] rounded-full blur-[200px] animate-pulse"
+          className="absolute w-[800px] h-[800px] rounded-full blur-[120px] md:blur-[200px] animate-pulse"
           style={{
             background: 'radial-gradient(circle, oklch(0.3 0.15 220) 0%, transparent 70%)',
             top: '30%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            animationDuration: '6s'
+            animationDuration: '6s',
+            willChange: 'transform'
           }}
         />
       </div>
@@ -558,9 +562,9 @@ export default function Landing() {
               exit={{ opacity: 0, x: -80, rotateY: 15, scale: 0.92 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-lg mx-6 pointer-events-auto"
-              style={{ perspective: 1000 }}
+              style={{ perspective: 1000, willChange: 'transform, opacity' }}
             >
-              <div className="relative p-8 md:p-10 rounded-3xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl overflow-hidden">
+              <div className="relative p-8 md:p-10 rounded-3xl border border-white/[0.06] bg-[#0a0b12]/60 md:bg-white/[0.02] backdrop-blur-xl overflow-hidden">
                 {/* Top shimmer line */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
 
@@ -569,7 +573,7 @@ export default function Landing() {
 
                 {/* Ambient card glow */}
                 <div
-                  className="absolute -inset-10 rounded-full blur-[80px] pointer-events-none"
+                  className="absolute -inset-10 rounded-full blur-[60px] md:blur-[80px] pointer-events-none"
                   style={{
                     background: 'radial-gradient(circle, oklch(0.5 0.2 220 / 0.15) 0%, transparent 70%)',
                   }}
@@ -648,13 +652,14 @@ export default function Landing() {
           initial={false}
           animate={activeFeature === 5 ? { scale: 1, y: 0 } : { scale: 0.9, y: 40 }}
           className="w-full max-w-md pointer-events-auto"
+          style={{ willChange: 'transform, opacity' }}
         >
-          <div className="relative p-10 rounded-3xl border border-cyan-400/20 bg-[#060a12]/90 backdrop-blur-3xl overflow-hidden">
+          <div className="relative p-10 rounded-3xl border border-cyan-400/20 bg-[#060a12]/90 backdrop-blur-xl overflow-hidden">
             {/* Top shine */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 
             {/* Ambient glow */}
-            <div className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none" style={{ background: 'radial-gradient(circle, oklch(0.5 0.3 220 / 0.2) 0%, transparent 70%)' }} />
+            <div className="absolute -inset-20 rounded-full blur-[80px] md:blur-[120px] pointer-events-none" style={{ background: 'radial-gradient(circle, oklch(0.5 0.3 220 / 0.2) 0%, transparent 70%)' }} />
 
             <div className="relative z-10 flex flex-col items-center text-center space-y-6">
               {/* Badge */}
@@ -718,13 +723,13 @@ export default function Landing() {
       {/* Scroll sections — invisible spacers that drive the timeline */}
       <div className="relative z-0">
         {/* Hero spacer */}
-        <div className="h-[100vh]" />
+        <div className="h-[100dvh]" />
         {/* Feature spacers */}
         {FEATURES.map((_, i) => (
-          <div key={i} className="h-[100vh]" />
+          <div key={i} className="h-[100dvh]" />
         ))}
         {/* Pricing spacer */}
-        <div className="h-[100vh]" />
+        <div className="h-[100dvh]" />
       </div>
 
       {/* Auth overlay */}
