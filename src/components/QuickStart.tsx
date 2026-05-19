@@ -22,7 +22,7 @@ import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
 import { generateOrbHue, getOrbColors, getOrbGradient } from '@/src/lib/orb-color';
 
-export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
+export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: number; onClose?: () => void }) {
   const [phase, setPhase] = useState(initialPhase);
   const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
   const [generatedHue, setGeneratedHue] = useState<number | null>(null);
@@ -212,6 +212,19 @@ export function QuickStart({ initialPhase = 0 }: { initialPhase?: number }) {
 
       <AnimatePresence mode="wait">
         
+        {/* Close/Abort Button */}
+        {onClose && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            whileHover={{ opacity: 1, scale: 1.05 }}
+            onClick={onClose}
+            className="absolute top-8 left-8 z-50 text-[10px] font-black tracking-[0.4em] text-white uppercase italic px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md transition-all hover:border-red-500/30 hover:text-red-400"
+          >
+            {"<< "} ABORT SYSTEM LINK
+          </motion.button>
+        )}
+
         {/* Global Skip Button */}
         <motion.button
           initial={{ opacity: 0 }}
