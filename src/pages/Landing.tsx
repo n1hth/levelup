@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
 import { 
-  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Swords, Check, ChevronDown
+  Zap, Brain, Target, Flame, Users, BookOpen, Clock, Home, Swords, 
+  ChevronDown, Activity
 } from 'lucide-react';
 
 export default function Landing() {
@@ -14,7 +15,7 @@ export default function Landing() {
   const { scrollYProgress } = useScroll();
 
   // 1. Orb Y-coordinate layout transform:
-  // - Phase 0 (Start): Center-left of viewport.
+  // - Phase 0 (Start): Center of viewport.
   // - Phase 1-5 (Features): Moves to bottom-center of viewport and stays anchored.
   // - Phase 6 (Pricing): Moves back to absolute center.
   const orbY = useTransform(
@@ -70,14 +71,18 @@ export default function Landing() {
     });
   }, [scrollYProgress]);
 
-  // Navigation Items coordinates for clean semicircular arc:
-  // - Radius: 120px. Centered above the bottom-anchored Orb.
+  // ═══════════════════════════════════════════════
+  // EXACT MATHEMATICAL ARC GEOMETRY DOCK (Duplicating Orb.tsx)
+  // ═══════════════════════════════════════════════
+  const ARC_RADIUS = 90;
+  
+  // Navigation segments matched to exact angular mappings from the real Orb component
   const navItems = [
-    { id: 0, label: "DECKS", icon: BookOpen, x: -105, y: -60 },
-    { id: 1, label: "FOCUS", icon: Clock, x: -60, y: -105 },
-    { id: 2, label: "HOME", icon: Home, x: 0, y: -120 },
-    { id: 3, label: "BATTLE", icon: Swords, x: 60, y: -105 },
-    { id: 4, label: "SOCIAL", icon: Users, x: 105, y: -60 }
+    { id: 0, label: "DECKS", icon: <BookOpen size={20} />, angle: 200 },
+    { id: 1, label: "FOCUS", icon: <Clock size={20} />, angle: 235 },
+    { id: 2, label: "HOME", icon: <Home size={20} />, angle: 270 },
+    { id: 3, label: "BATTLE", icon: <Swords size={20} />, angle: 305 },
+    { id: 4, label: "SOCIAL", icon: <Users size={20} />, angle: 340 }
   ];
 
   // Feature content mapping corresponding to each navigation state
@@ -125,7 +130,7 @@ export default function Landing() {
   ];
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#020204] text-white relative font-sans select-none scroll-smooth">
+    <div ref={containerRef} className="min-h-screen bg-[#020617] text-white relative font-sans select-none scroll-smooth">
       {/* 1. Cyber scanlines overlay */}
       <div className="fixed inset-0 pointer-events-none z-40 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%] opacity-20" />
 
@@ -141,7 +146,7 @@ export default function Landing() {
         <div className="absolute bottom-1/4 -right-1/4 w-[750px] h-[750px] bg-indigo-500/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '1.2s' }} />
       </div>
 
-      {/* 4. THE SOUL — MORPHING CENTRAL FOCUS ORB & PRICING CONTAINER */}
+      {/* 4. THE SOUL — MORPHING CENTRAL FOCUS ORB & PRICING CONTAINER (Duplicating real Orb.tsx) */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-30">
         <motion.div
           style={{
@@ -150,12 +155,29 @@ export default function Landing() {
             height: orbHeight,
             borderRadius: orbBorderRadius
           }}
-          className="relative flex flex-col items-center justify-center border border-cyan-400/30 shadow-[0_0_80px_rgba(6,182,212,0.4),inset_0_0_30px_rgba(255,255,255,0.15)] bg-gradient-to-tr from-cyan-950/70 via-[#0a0b12]/90 to-purple-950/60 pointer-events-auto overflow-hidden"
+          className="relative flex flex-col items-center justify-center border border-cyan-400/30 shadow-[0_0_80px_rgba(0,229,255,0.4),inset_0_0_30px_rgba(255,255,255,0.15)] bg-gradient-to-tr from-cyan-950/70 via-[#0a0b12]/90 to-purple-950/60 pointer-events-auto overflow-visible"
         >
           {/* Main animated Core (Only visible before morphing into Pricing Container) */}
           {activeTab < 5 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              {/* Inner glowing pulsing orb */}
+              
+              {/* S-Rank Accessory: Left Aura Wing Fragment */}
+              <div 
+                className="absolute -left-10 top-1/2 -translate-y-1/2 w-8 h-16 bg-gradient-to-r from-transparent to-cyan-400/20 blur-[8px] rounded-l-full animate-pulse"
+                style={{ transformOrigin: 'right center' }}
+              />
+
+              {/* S-Rank Accessory: Right Aura Wing Fragment */}
+              <div 
+                className="absolute -right-10 top-1/2 -translate-y-1/2 w-8 h-16 bg-gradient-to-l from-transparent to-cyan-400/20 blur-[8px] rounded-r-full animate-pulse"
+                style={{ transformOrigin: 'left center' }}
+              />
+
+              {/* S-Rank accessory: Inner/Outer Halos */}
+              <div className="absolute -inset-2 border border-cyan-400/10 rounded-full blur-[1px] animate-pulse" />
+              <div className="absolute -inset-8 bg-cyan-400/5 rounded-full blur-[20px] animate-pulse" />
+
+              {/* Inner glowing pulsing orb - OKLCH-inspired high vibrancy gradient */}
               <motion.div 
                 animate={{
                   scale: [1, 1.04, 0.96, 1.04, 1],
@@ -166,9 +188,37 @@ export default function Landing() {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="w-[90%] h-[90%] rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-600 to-purple-600 opacity-80 mix-blend-screen shadow-[inset_0_0_30px_rgba(255,255,255,0.4)]"
+                className="w-[90%] h-[90%] rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-600 to-purple-600 opacity-85 mix-blend-screen shadow-[inset_0_0_30px_rgba(255,255,255,0.4)]"
               />
-              <div className="absolute w-[80%] h-[80%] rounded-full bg-pink-500/10 blur-sm mix-blend-color-dodge animate-pulse" />
+
+              {/* Specular glare & 3D depth highlights from real Orb.tsx */}
+              <div className="absolute inset-0 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.35)] rounded-full pointer-events-none" />
+              <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/50 blur-[3px] -rotate-[35deg]" />
+
+              {/* Cosmic particles floating around Orb */}
+              <div className="absolute inset-[-40px] pointer-events-none">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <motion.div
+                    key={`p-${i}`}
+                    animate={{ 
+                      x: [(Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80],
+                      y: [(Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80],
+                      opacity: [0, 0.5, 0],
+                      scale: [0, 1.2, 0]
+                    }}
+                    transition={{ 
+                      duration: 3 + Math.random() * 3, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute w-1 h-1 bg-cyan-300 rounded-full blur-[0.5px]"
+                    style={{ 
+                      left: `${Math.random() * 100}%`, 
+                      top: `${Math.random() * 100}%` 
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
@@ -220,69 +270,99 @@ export default function Landing() {
         </motion.div>
       </div>
 
-      {/* 5. STATIC FIXED BOTTOM NAVIGATION DOCK (Expanded container boundaries to avoid clipping) */}
-      <div className="fixed bottom-0 left-0 w-full h-[220px] flex justify-center z-20 pointer-events-none">
+      {/* 5. STATIC FIXED BOTTOM NAVIGATION DOCK (Duplicating the exact Orb.tsx SVG trigonometry coordinates) */}
+      <div className="fixed bottom-0 left-0 w-full h-[240px] flex justify-center z-20 pointer-events-none">
         <motion.div
           style={{
             scale: navScale,
             opacity: navOpacity
           }}
-          className="relative w-[340px] h-[220px] flex justify-center pointer-events-auto"
+          className="relative w-[400px] h-[400px] bottom-0 flex justify-center pointer-events-auto"
         >
-          {/* Semicircular tracking path matching the screenshot exactly */}
-          <svg className="absolute top-10 w-[300px] h-[150px] overflow-visible pointer-events-none" viewBox="0 0 300 150">
-            <path 
-              d="M 30,120 A 120,120 0 0,1 270,120" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.06)" 
-              strokeWidth="2"
-            />
-          </svg>
+          <svg width="400" height="400" viewBox="0 0 400 400" className="overflow-visible pointer-events-none">
+            <g transform="translate(200, 200)">
+              
+              {/* Global Background Track Arc from Orb.tsx */}
+              <motion.path
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.25 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                d={`M ${ARC_RADIUS * Math.cos(185 * (Math.PI / 180))} ${ARC_RADIUS * Math.sin(185 * (Math.PI / 180))} A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 1 ${ARC_RADIUS * Math.cos(355 * (Math.PI / 180))} ${ARC_RADIUS * Math.sin(355 * (Math.PI / 180))}`}
+                fill="none"
+                stroke="oklch(0.76 0.25 220)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeOpacity={0.25}
+              />
 
-          {/* Active curved cyan indicator line (directly above the Orb top boundary) */}
-          <div className="absolute top-[48px] w-[114px] h-[114px] rounded-full pointer-events-none">
-            {/* Semicircular highlight curve exactly matching Home selection style */}
-            <motion.div 
-              animate={{ rotate: activeTab === 0 ? -60 : activeTab === 1 ? -30 : activeTab === 2 ? 0 : activeTab === 3 ? 30 : 60 }}
-              transition={{ type: "spring", damping: 20, stiffness: 100 }}
-              className="absolute -inset-[2px] rounded-full border border-transparent border-t-cyan-400 border-t-4"
-            />
-          </div>
-
-          {/* Semicircular Nav Icons Placement (With adjusted padding to guarantee zero window edge clipping) */}
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  // Direct jump simulation if they click
-                  const scrollTarget = window.innerHeight * (0.16 + item.id * 0.13);
-                  window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-                }}
-                style={{
-                  transform: `translate(${item.x}px, ${item.y + 42}px)`
-                }}
-                className="absolute w-10 h-10 rounded-full flex flex-col items-center justify-center transition-all duration-300"
-              >
-                <Icon 
-                  size={18} 
-                  className={`transition-colors duration-300 ${isActive ? "text-cyan-400 drop-shadow-[0_0_10px_#22d3ee]" : "text-white/40 hover:text-white/70"}`} 
-                />
+              {/* Render Semicircular Nav Icons & Highlight Segments */}
+              {navItems.map((item, i) => {
+                const isActive = activeTab === item.id;
+                const angleRad = item.angle * (Math.PI / 180);
                 
-                {/* Active Cyan Bold Label directly under active icon */}
-                {isActive && (
-                  <motion.span 
-                    layoutId="activeNavLabel"
-                    className="absolute top-10 text-[9px] font-black tracking-[0.2em] text-cyan-400 text-center"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-              </button>
-            );
-          })}
+                // Active highlighting segment arcs
+                const startAngle = (item.angle - 11) * (Math.PI / 180);
+                const endAngle = (item.angle + 11) * (Math.PI / 180);
+                const x1 = ARC_RADIUS * Math.cos(startAngle);
+                const y1 = ARC_RADIUS * Math.sin(startAngle);
+                const x2 = ARC_RADIUS * Math.cos(endAngle);
+                const y2 = ARC_RADIUS * Math.sin(endAngle);
+
+                // Exact radial coordinate positioning
+                const iconX = (ARC_RADIUS + 38) * Math.cos(angleRad);
+                const iconY = (ARC_RADIUS + 38) * Math.sin(angleRad);
+
+                return (
+                  <g key={item.id}>
+                    {/* Active highlight arc stroke */}
+                    {isActive && (
+                      <motion.path
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        d={`M ${x1} ${y1} A ${ARC_RADIUS} ${ARC_RADIUS} 0 0 1 ${x2} ${y2}`}
+                        fill="none"
+                        stroke="oklch(0.76 0.25 220)"
+                        strokeWidth="5"
+                        strokeLinecap="round"
+                      />
+                    )}
+
+                    <foreignObject 
+                      x={iconX - 40} 
+                      y={iconY - 40} 
+                      width="80" 
+                      height="80"
+                      className="overflow-visible"
+                    >
+                      <button
+                        onClick={() => {
+                          const scrollTarget = window.innerHeight * (0.16 + item.id * 0.13);
+                          window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                        }}
+                        className="w-full h-full flex flex-col items-center justify-center text-center outline-none"
+                      >
+                        <div className={`transition-transform duration-300 ${isActive ? "text-cyan-400 scale-110 drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]" : "text-[#3d526b] hover:text-[#4d6682]"}`}>
+                          {item.icon}
+                        </div>
+                        
+                        {/* Selected label shown directly below selected icon */}
+                        {isActive && (
+                          <motion.span 
+                            initial={{ opacity: 0, y: 2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-[9px] font-black tracking-[0.15em] uppercase text-cyan-400 mt-1.5 leading-none"
+                          >
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </button>
+                    </foreignObject>
+                  </g>
+                );
+              })}
+            </g>
+          </svg>
         </motion.div>
       </div>
 
