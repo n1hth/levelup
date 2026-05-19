@@ -11,6 +11,7 @@ export default function Landing() {
   const [activeSection, setActiveSection] = useState(0);
   const [showWelcomeBubble, setShowWelcomeBubble] = useState(false);
   const [windowHeight, setWindowHeight] = useState(800);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Measure window height for bulletproof dynamic vertical calculations
   useEffect(() => {
