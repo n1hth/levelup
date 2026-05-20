@@ -68,40 +68,32 @@ function AppContent() {
     return <QuickStart initialPhase={0} />;
   }
 
-  // Only trigger full page unmounts when entering/leaving full-screen isolated views
-  const isIsolatedView = location.pathname.startsWith('/duels');
-  const routeKey = isIsolatedView ? location.pathname : 'main-layout';
-
   return (
     <>
       <AppTour />
-      <AnimatePresence mode="wait">
-        <div key={routeKey}>
-          <Routes location={location}>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/home" replace />} />
-              <Route path="home" element={<Dashboard />} />
-              <Route path="focus" element={<Focus />} />
-              <Route path="decks" element={<Decks />} />
-              <Route path="decks/:id" element={<DeckDetail />} />
-              <Route path="decks/:id/study" element={<StudySession />} />
-              <Route path="battle" element={<Battle />} />
-              <Route path="arenas" element={<Navigate to="/battle" replace />} />
-              <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
-              <Route path="social" element={<Social />}>
-                <Route path="chat/:userId" element={<Chat />} />
-              </Route>
-              <Route path="profile" element={<Profile />} />
-              <Route path="profile/:userId" element={<Profile />} />
-            </Route>
-            
-            {/* Isolated Full-Screen Routes */}
-            <Route path="duels/:duelId" element={<ArenaDuel />} />
-            
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
-        </div>
-      </AnimatePresence>
+      <Routes location={location}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/home" replace />} />
+          <Route path="home" element={<Dashboard />} />
+          <Route path="focus" element={<Focus />} />
+          <Route path="decks" element={<Decks />} />
+          <Route path="decks/:id" element={<DeckDetail />} />
+          <Route path="decks/:id/study" element={<StudySession />} />
+          <Route path="battle" element={<Battle />} />
+          <Route path="arenas" element={<Navigate to="/battle" replace />} />
+          <Route path="arenas/:deckId/:difficulty" element={<ArenaPlay />} />
+          <Route path="social" element={<Social />}>
+            <Route path="chat/:userId" element={<Chat />} />
+          </Route>
+          <Route path="profile" element={<Profile />} />
+          <Route path="profile/:userId" element={<Profile />} />
+        </Route>
+        
+        {/* Isolated Full-Screen Routes */}
+        <Route path="duels/:duelId" element={<ArenaDuel />} />
+        
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
     </>
   );
 }
