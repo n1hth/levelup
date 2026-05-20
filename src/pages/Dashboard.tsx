@@ -196,7 +196,7 @@ export function Dashboard() {
             </div>
             <div>
               <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight">Focus</h3>
-              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">Pulse active</p>
+              <p className="text-[7px] font-black text-white/30 uppercase tracking-[0.1em] italic mt-1">System Ready</p>
             </div>
           </button>
         </motion.div>

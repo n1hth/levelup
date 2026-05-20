@@ -162,6 +162,39 @@ export function Social() {
 
     const channel = supabase
       .channel('social-friends-realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'friends',
+        filter: `friend_id=eq.${state.user.id}` 
+      }, (payload) => {
+        // Refresh friends list to update previews and unread dots
+        getFriends().then((data) => {
+          const baseData = (data && data.length > 0) ? data : [];
+          let enriched = baseData.map((f: any) => ({
+            ...f,
+            activity: 'Idle',
+            streak: f.streak || 0
+          }));
+          setFriends(enriched);
+        });
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'friends',
+        filter: `user_id=eq.${state.user.id}` 
+      }, (payload) => {
+        getFriends().then((data) => {
+          const baseData = (data && data.length > 0) ? data : [];
+          let enriched = baseData.map((f: any) => ({
+            ...f,
+            activity: 'Idle',
+            streak: f.streak || 0
+          }));
+          setFriends(enriched);
+        });
+      })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -169,8 +202,8 @@ export function Social() {
       }, () => {
         // Refresh friends list to update previews and unread dots
         getFriends().then((data) => {
-          if (!data) return;
-          let enriched = data.map((f: any) => ({
+          const baseData = (data && data.length > 0) ? data : [];
+          let enriched = baseData.map((f: any) => ({
             ...f,
             activity: 'Idle',
             streak: f.streak || 0
@@ -230,7 +263,7 @@ export function Social() {
   };
 
   const handleRemoveFriend = async (id: string) => {
-    if (confirm("Sever this syndicate link?")) {
+    if (confirm("Remove this friend?")) {
       await removeFriend(id);
       getFriends().then(setFriends);
     }
@@ -335,7 +368,7 @@ export function Social() {
                       {selectedFriend.name}
                     </span>
                     <span className="text-[8px] font-bold text-cyan-400/60 uppercase italic tracking-tighter">
-                      {duelView === 'actions' ? 'Syndicate Member' : 'Select Challenge'}
+                      {duelView === 'actions' ? 'Active Hunter' : 'Select Challenge'}
                     </span>
                   </div>
                 </div>
@@ -559,7 +592,7 @@ export function Social() {
               className="z-[101] w-[300px] bg-[#080A0E]/98 backdrop-blur-3xl border border-white/20 rounded-[2rem] p-6 shadow-[0_40px_80px_-20px_rgba(0,0,0,1)] flex flex-col gap-4 animate-modal"
             >
               <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Syndicate Requests</span>
+                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Friend Requests</span>
                 <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded-full text-[8px] font-black italic">
                   {friends.filter(f => f.status === 'pending' && f.isIncoming).length} INCOMING
                 </span>
@@ -700,7 +733,7 @@ export function Social() {
             {/* Instagram style Orbs Row */}
             <div className="px-4 overflow-hidden">
                <div className="px-2 mb-2 flex items-center justify-between">
-                 <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Syndicate Friends</span>
+                 <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] italic">Friends</span>
                  
                  {/* Requests Button */}
                  <button
@@ -805,7 +838,7 @@ export function Social() {
 
             {/* Direct Messaging / Friends List */}
             <div className="px-6 space-y-4">
-              <h3 className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] italic">Direct Signals</h3>
+              <h3 className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] italic">Direct Messages</h3>
               {friends.filter(f => f.status === 'accepted').length > 0 ? (
                 <div className="space-y-1">
                   {friends.filter(f => f.status === 'accepted').map((friend) => {

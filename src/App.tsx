@@ -43,7 +43,7 @@ function AppContent() {
           </div>
           
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[11px] font-black tracking-[0.6em] text-cyan-400 uppercase italic">Initializing Neural Core</span>
+            <span className="text-[11px] font-black tracking-[0.6em] text-cyan-400 uppercase italic">System Initializing</span>
             <div className="flex gap-1">
                {Array.from({ length: 3 }).map((_, i) => (
                  <motion.div

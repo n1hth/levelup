@@ -421,7 +421,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                           <div className="flex-1 min-w-0">
                             <div className="text-[11px] font-black text-white uppercase tracking-tight truncate">{notif.sender}</div>
                             <div className="text-[8px] font-bold text-cyan-400/40 uppercase tracking-[0.15em] mt-0.5">
-                              {notif.type === 'friend' ? 'Syndicate Link Request' : (notif.message || 'Duel Challenge Issued')}
+                              {notif.type === 'friend' ? 'Friend Request' : (notif.message || 'Duel Challenge Issued')}
                             </div>
                           </div>
                         </div>
@@ -966,7 +966,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                <div className="flex flex-col">
                   <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">
                     {latestDuelNotif.type === 'friend'
-                      ? 'Neural Link Request'
+                      ? 'Friend Request'
                       : latestDuelNotif.type === 'duel_cancelled'
                       ? 'Missed Challenge'
                       : 'Incoming Challenge'}

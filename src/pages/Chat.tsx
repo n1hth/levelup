@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Send, Trash2, AtSign, Check, CheckCheck } from 'lucide-react';
+import { ChevronRight, Send, User, Check, CheckCheck } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';
@@ -162,14 +162,19 @@ export function Chat() {
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-1 h-1 rounded-full" style={{ background: friendPalette.accent }} />
-                <div className="text-[8px] font-black uppercase tracking-widest italic" style={{ color: friendPalette.accent, opacity: 0.5 }}>Encrypted Connection</div>
+                <div className="text-[8px] font-black uppercase tracking-widest italic" style={{ color: friendPalette.accent, opacity: 0.5 }}>Direct Message</div>
               </div>
             </div>
           </div>
         </div>
         <div className="flex gap-1">
-          <button className="p-2.5 text-white/20 hover:text-white transition-colors"><AtSign size={18} /></button>
-          <button className="p-2.5 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+          <button 
+            onClick={() => navigate(`/profile/${userId}`)}
+            className="px-4 py-2 bg-white/[0.03] border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest italic text-white/60 hover:text-white hover:bg-white/[0.06] transition-all flex items-center gap-2"
+          >
+            <User size={12} />
+            View Profile
+          </button>
         </div>
       </div>
 

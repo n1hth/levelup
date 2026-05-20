@@ -188,9 +188,9 @@ export function Profile() {
     try {
       await sendFriendRequest(userId);
       await loadPlayerData();
-      showToast("Syndicate link handshake initiated!", "success");
+      showToast("Friend request sent!", "success");
     } catch (err) {
-      showToast("Handshake initialization failed.", "error");
+      showToast("Failed to send request.", "error");
     } finally {
       setFriendActionLoading(false);
     }
@@ -202,9 +202,9 @@ export function Profile() {
     try {
       await acceptFriendRequest(friendship.id);
       await loadPlayerData();
-      showToast("Neural Syndicate Link accepted and established!", "success");
+      showToast("Friend request accepted!", "success");
     } catch (err) {
-      showToast("Acceptance failed.", "error");
+      showToast("Failed to accept request.", "error");
     } finally {
       setFriendActionLoading(false);
     }
@@ -217,9 +217,9 @@ export function Profile() {
       await removeFriend(friendship.id);
       setShowSeverConfirm(false);
       await loadPlayerData();
-      showToast("Syndicate Link severed successfully.", "info");
+      showToast("Friend removed.", "info");
     } catch (err) {
-      showToast("Sever sequence failed.", "error");
+      showToast("Failed to remove friend.", "error");
     } finally {
       setFriendActionLoading(false);
     }
@@ -292,7 +292,7 @@ export function Profile() {
     return (
       <div className="flex-1 min-h-[60vh] flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-cyan-400" size={32} />
-        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest italic animate-pulse">Syncing User profile...</span>
+        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest italic animate-pulse">Loading Profile...</span>
       </div>
     );
   }
@@ -341,7 +341,7 @@ export function Profile() {
           >
             <ArrowLeft size={16} />
           </button>
-          <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] italic">Back to Terminal</span>
+          <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] italic">Back</span>
         </div>
       )}
 
@@ -419,9 +419,9 @@ export function Profile() {
           <div className="flex items-center gap-3">
             <Link2 className="text-cyan-400 shrink-0" size={16} />
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Syndicate Link Connection</span>
+              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Friend Status</span>
               <span className="text-xs font-black text-white uppercase italic mt-0.5">
-                {friendship?.status === 'accepted' ? 'ACTIVE ENCRYPTED LINK' : friendship?.status === 'pending' ? 'HANDSHAKE SEQUENCE INITIATED' : 'LINK OFFLINE'}
+                {friendship?.status === 'accepted' ? 'FRIENDS' : friendship?.status === 'pending' ? 'REQUEST PENDING' : 'NOT FRIENDS'}
               </span>
             </div>
           </div>
@@ -434,7 +434,7 @@ export function Profile() {
                   className="px-4 py-2.5 bg-cyan-500 text-black border border-cyan-400 rounded-xl text-[9px] font-black uppercase tracking-widest italic hover:bg-cyan-400 transition-all active:scale-95 flex items-center gap-1.5"
                 >
                   <MessageSquare size={12} />
-                  Open Uplink
+                  Message
                 </button>
                 <button
                   onClick={() => setShowSeverConfirm(true)}
@@ -442,18 +442,19 @@ export function Profile() {
                   className="px-4 py-2.5 bg-red-650 hover:bg-red-650/80 text-white/90 border border-red-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest italic transition-all active:scale-95 flex items-center gap-1.5"
                 >
                   <UserMinus size={12} />
-                  Sever
+                  Remove Friend
                 </button>
               </>
             ) : friendship?.status === 'pending' ? (
               friendship.friend_id === userId ? (
                 // Request sent by us
                 <button
-                  disabled
-                  className="px-4 py-2.5 bg-white/5 text-white/30 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5"
+                  onClick={handleSeverLink}
+                  disabled={friendActionLoading}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5 transition-all"
                 >
-                  <Orbit size={12} className="animate-spin text-cyan-400" />
-                  Awaiting Handshake
+                  <X size={12} />
+                  Cancel Request
                 </button>
               ) : (
                 // Incoming request
@@ -474,7 +475,7 @@ export function Profile() {
                       className="w-3 h-3 border-2 border-black border-t-transparent rounded-full shrink-0"
                     />
                   ) : <Check size={12} strokeWidth={3} />}
-                  <span>{friendActionLoading ? 'SYNCING...' : 'Accept Handshake'}</span>
+                  <span>{friendActionLoading ? 'SYNCING...' : 'Accept Request'}</span>
                 </button>
               )
             ) : (
@@ -485,7 +486,7 @@ export function Profile() {
                 className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white border border-cyan-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest italic transition-all active:scale-95 flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.3)] animate-pulse"
               >
                 <UserPlus size={12} />
-                Link Syndicate
+                Add Friend
               </button>
             )}
           </div>
@@ -501,7 +502,7 @@ export function Profile() {
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-black text-white italic tracking-tighter tabular-nums">{friendshipStats.messagesCount}</span>
-              <span className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-0.5">DIRECT ENCRYPTED UPLOADS</span>
+              <span className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-0.5">MESSAGES SENT</span>
             </div>
           </div>
 
@@ -511,7 +512,7 @@ export function Profile() {
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-black text-white italic tracking-tighter tabular-nums">{friendshipStats.duelsCount}</span>
-              <span className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-0.5">COMBAT CLASHES CONCLUDED</span>
+              <span className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-0.5">DUELS FINISHED</span>
             </div>
           </div>
         </motion.div>
@@ -541,8 +542,8 @@ export function Profile() {
 
           <div className="flex items-center justify-between p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl">
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Average Peer rating</span>
-              <span className="text-xs font-black text-white uppercase italic mt-0.5">HONOUR EVALUATION RATIO</span>
+              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Average Peer Rating</span>
+              <span className="text-xs font-black text-white uppercase italic mt-0.5">HONOR RATING</span>
             </div>
             <div className="flex items-center gap-1.5 bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-500/20 text-cyan-400 font-black italic text-[10px] tabular-nums">
               <Zap size={10} fill="currentColor" />
@@ -578,7 +579,7 @@ export function Profile() {
       {/* ═══ Study Activity History heatmap ═══ */}
       <motion.div variants={itemVariants} className="system-panel p-6 border-white/5 bg-white/[0.01]">
         <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] mb-6 flex items-center gap-3.5 italic">
-          <Activity size={14} className="text-cyan-400" /> Focus core stability history
+          <Activity size={14} className="text-cyan-400" /> Study Activity History
         </h3>
 
         {/* Heatmap Grid */}
@@ -656,10 +657,10 @@ export function Profile() {
         <>
           <motion.div variants={itemVariants} className="system-panel p-6 border-white/5 bg-white/[0.01]">
             <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 flex items-center gap-3.5 italic">
-              <Orbit size={14} className="text-cyan-400" /> System Neural Support
+              <Orbit size={14} className="text-cyan-400" /> System Guide
             </h3>
             <p className="text-[9px] font-black text-white/20 mb-5 leading-relaxed uppercase tracking-widest italic">
-              Re-initialize the neural synchronization tour to understand all system capabilities.
+              Take the system tour again to understand all features.
             </p>
             <button
               onClick={() => {
@@ -669,14 +670,14 @@ export function Profile() {
               className="w-full py-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 font-black text-[9px] uppercase tracking-[0.2em] italic hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all flex items-center justify-center gap-2.5 shadow-2xl"
             >
               <Orbit size={14} />
-              START SYSTEM TOUR
+              START TOUR
             </button>
           </motion.div>
 
           {/* Danger Zone */}
           <motion.div variants={itemVariants} className="system-panel p-6 border-red-500/10 bg-red-500/[0.01]">
             <h3 className="text-[9px] font-black text-red-500 uppercase tracking-[0.4em] mb-3 flex items-center gap-3.5 italic">
-              <AlertTriangle size={14} className="animate-pulse" /> Core Purge Zone
+              <AlertTriangle size={14} className="animate-pulse" /> Danger Zone
             </h3>
             <p className="text-[9px] font-black text-white/20 mb-6 leading-relaxed uppercase tracking-widest italic">
               Irreversible action. All study progress, decks, and level data will be permanently deleted.
@@ -719,9 +720,9 @@ export function Profile() {
                 <div className="w-16 h-16 rounded-[1.8rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 shadow-2xl">
                   <UserMinus size={32} className="text-red-500 animate-pulse" />
                 </div>
-                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Sever Neural Link?</h3>
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Remove Friend?</h3>
                 <p className="text-[9px] font-black text-white/30 mb-8 leading-relaxed uppercase tracking-[0.2em] italic">
-                  Irreversible sequence. This action will permanently sever the Syndicate connection between you two.
+                  This action will remove this user from your friends list.
                 </p>
               </div>
               <div className="flex flex-col gap-2 relative z-10">
@@ -730,13 +731,13 @@ export function Profile() {
                   disabled={friendActionLoading}
                   className="w-full py-4 rounded-xl bg-red-500 text-black font-black text-[10px] uppercase tracking-[0.3em] italic hover:bg-red-400 transition-all shadow-[0_0_30px_rgba(239,68,68,0.5)]"
                 >
-                  {friendActionLoading ? "SEVERING LINK..." : "SEVER CONNECTION"}
+                  {friendActionLoading ? "REMOVING..." : "REMOVE FRIEND"}
                 </button>
                 <button
                   onClick={() => setShowSeverConfirm(false)}
                   className="w-full py-4 rounded-xl border border-white/10 bg-white/[0.05] text-white/60 font-black text-[10px] uppercase tracking-[0.3em] italic hover:text-white transition-all shadow-2xl mt-1.5"
                 >
-                  ABORT SEQUENCE
+                  CANCEL
                 </button>
               </div>
             </motion.div>
@@ -763,9 +764,9 @@ export function Profile() {
                 <div className="w-16 h-16 rounded-[1.8rem] bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 shadow-2xl">
                   <AlertTriangle size={32} className="text-red-500 animate-pulse" />
                 </div>
-                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Total System Purge?</h3>
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Delete Account?</h3>
                 <p className="text-[9px] font-black text-white/30 mb-8 leading-relaxed uppercase tracking-[0.2em] italic">
-                  Requested core reset. All neural fragments and xp loads will be permanently deleted from the interface.
+                  This action is irreversible. All your data will be permanently deleted.
                 </p>
               </div>
               <div className="flex flex-col gap-2 relative z-10">
@@ -792,13 +793,13 @@ export function Profile() {
                       className="w-4 h-4 border-2 border-black border-t-transparent rounded-full"
                     />
                   ) : null}
-                  <span>{isPurging ? 'PURGING MATRIX...' : 'CONFIRM PURGE'}</span>
+                  <span>{isPurging ? 'DELETING...' : 'CONFIRM DELETE'}</span>
                 </button>
                 <button
                   onClick={() => setShowResetConfirm(false)}
                   className="w-full py-4 rounded-xl border border-white/10 bg-white/[0.05] text-white/60 font-black text-[10px] uppercase tracking-[0.3em] italic hover:text-white transition-all shadow-2xl mt-1.5"
                 >
-                  ABORT SEQUENCE
+                  CANCEL
                 </button>
               </div>
             </motion.div>

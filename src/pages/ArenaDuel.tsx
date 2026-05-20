@@ -189,7 +189,10 @@ export function ArenaDuel() {
     setSearchStatus('Broadcasting Hunter Signature...');
 
     const lobby = supabase.channel('arena-searching', {
-      config: { presence: { key: state.user.id } }
+      config: { 
+        presence: { key: state.user.id },
+        broadcast: { self: true }
+      }
     });
 
     const startTime = new Date().toISOString();
@@ -201,19 +204,23 @@ export function ArenaDuel() {
 
       const { data } = await supabase
         .from('duels')
-        .select('id')
+        .select('id, created_at')
         .eq('player2_id', state.user!.id)
         .eq('status', 'setup')
         .eq('mode', myMode)
-        .gt('created_at', startTime)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
       if (data) {
-        clearInterval(pollInterval);
-        lobby.unsubscribe();
-        setSearchStatus('Combat Link Detected!');
-        navigate(`/duels/${data.id}`, { replace: true });
+        // Only accept if it's recent (created in the last 2 minutes) to avoid old stale duels
+        const createdTime = new Date(data.created_at).getTime();
+        if (Date.now() - createdTime < 120000) {
+          clearInterval(pollInterval);
+          lobby.unsubscribe();
+          setSearchStatus('Combat Link Detected!');
+          navigate(`/duels/${data.id}`, { replace: true });
+        }
       }
     }, 2500);
 

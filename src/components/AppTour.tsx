@@ -20,7 +20,7 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     title: "SYSTEM INITIALIZED",
-    content: "Welcome to LevelUp. You have been selected to join the Syndicate. Let's synchronize your interface.",
+    content: "Welcome to LevelUp. You have been selected by the System to level up your potential. Let's synchronize your interface.",
     position: 'center'
   },
   {
@@ -63,13 +63,13 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     title: "ACTIVE DUELS",
-    content: "Challenge Syndicate members to real-time duels. Stake your rank in lexical conflict or fragment clashes.",
+    content: "Challenge other hunters to real-time duels. Stake your rank in lexical conflict or spelling clashes.",
     path: '/battle?tab=duels',
     position: 'bottom'
   },
   {
     title: "RANKINGS",
-    content: "Check the global Leaderboards. See where you stand among the top hunters in the Syndicate.",
+    content: "Check the global Leaderboards. See where you stand among the top hunters.",
     path: '/social?tab=leaderboard',
     position: 'bottom'
   },
@@ -80,7 +80,7 @@ const TOUR_STEPS: TourStep[] = [
     position: 'bottom'
   },
   {
-    title: "SYNDICATE NETWORK",
+    title: "HUNTER NETWORK",
     content: "Monitor active agents, coordinate with allies, and issue direct challenges through the Social grid.",
     path: '/social?tab=friends',
     position: 'bottom'

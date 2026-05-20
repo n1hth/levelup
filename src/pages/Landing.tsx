@@ -131,8 +131,8 @@ function HeroOrb() {
   const sy = useSpring(my, { stiffness: 80, damping: 30 });
   const rotX = useTransform(sy, [-0.5, 0.5], [12, -12]);
   const rotY = useTransform(sx, [-0.5, 0.5], [-12, 12]);
-  const glowX = useTransform(sx, [-0.5, 0.5], ['45%', '25%']);
-  const glowY = useTransform(sy, [-0.5, 0.5], ['45%', '25%']);
+  const glowX = useTransform(sx, [-0.5, 0.5], [20, -20]);
+  const glowY = useTransform(sy, [-0.5, 0.5], [20, -20]);
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
@@ -168,12 +168,11 @@ function HeroOrb() {
       >
         {/* Moving specular highlight */}
         <motion.div
-          className="absolute inset-0 rounded-full"
+          className="absolute inset-[-20%] rounded-full opacity-70"
           style={{
-            background: useTransform(
-              [glowX, glowY] as any,
-              ([x, y]: string[]) => `radial-gradient(circle at ${x} ${y}, rgba(255,255,255,0.5) 0%, transparent 55%)`
-            ),
+            x: glowX,
+            y: glowY,
+            background: 'radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, transparent 45%)'
           }}
         />
         {/* Inner shadow */}
