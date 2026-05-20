@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
 import { ArrowRight } from 'lucide-react';
 
@@ -245,6 +245,14 @@ const CAPABILITIES = [
 // ═══════════════════════════════════════════════════════════
 export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
+  const [activeCapIndex, setActiveCapIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveCapIndex((prev) => (prev + 1) % CAPABILITIES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#030309] text-white font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30 selection:text-white">
@@ -369,31 +377,60 @@ export default function Landing() {
 
           {/* Capability list */}
           <div className="space-y-0">
-            {CAPABILITIES.map((cap, i) => (
-              <Reveal key={cap.id} delay={i * 0.06}>
-                <div className="group flex items-start sm:items-center gap-5 sm:gap-8 py-6 md:py-7 border-t border-white/[0.04] hover:border-white/[0.08] cursor-default transition-colors duration-500">
-                  {/* Number */}
-                  <span className="text-[11px] font-mono text-white/[0.1] group-hover:text-cyan-400/40 transition-colors duration-500 flex-shrink-0 pt-1 sm:pt-0">
-                    {cap.id}
-                  </span>
+            {CAPABILITIES.map((cap, i) => {
+              const isActive = i === activeCapIndex;
+              return (
+                <Reveal key={cap.id} delay={i * 0.06}>
+                  <div 
+                    onClick={() => setActiveCapIndex(i)}
+                    className={`group flex flex-col gap-4 py-6 md:py-7 border-t border-white/[0.04] cursor-pointer transition-colors duration-500 ${isActive ? 'bg-white/[0.02] border-white/[0.1] px-4 rounded-xl -mx-4' : 'hover:border-white/[0.08]'}`}
+                  >
+                    <div className="flex items-start sm:items-center gap-5 sm:gap-8">
+                      {/* Number */}
+                      <span className={`text-[11px] font-mono flex-shrink-0 pt-1 sm:pt-0 transition-colors duration-500 ${isActive ? 'text-cyan-400' : 'text-white/[0.1] group-hover:text-cyan-400/40'}`}>
+                        {cap.id}
+                      </span>
 
-                  {/* Content */}
-                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-8">
-                    <h3 className="text-lg sm:text-xl font-bold text-white/80 group-hover:text-white tracking-tight transition-colors duration-500">
-                      {cap.name}
-                    </h3>
-                    <p className="text-[13px] text-white/20 group-hover:text-white/35 sm:text-right max-w-xs leading-relaxed transition-colors duration-500 flex-shrink-0">
-                      {cap.brief}
-                    </p>
-                  </div>
+                      {/* Content */}
+                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-8">
+                        <h3 className={`text-lg sm:text-xl font-bold tracking-tight transition-colors duration-500 ${isActive ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
+                          {cap.name}
+                        </h3>
+                        <p className={`text-[13px] sm:text-right max-w-xs leading-relaxed transition-colors duration-500 flex-shrink-0 ${isActive ? 'text-white/60' : 'text-white/20 group-hover:text-white/35'}`}>
+                          {cap.brief}
+                        </p>
+                      </div>
 
-                  {/* Arrow hint */}
-                  <div className="hidden sm:flex w-5 flex-shrink-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-2 group-hover:translate-x-0">
-                    <ArrowRight size={14} className="text-cyan-400/50" />
+                      {/* Arrow hint */}
+                      <div className={`hidden sm:flex w-5 flex-shrink-0 items-center justify-center transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0'}`}>
+                        <ArrowRight size={14} className="text-cyan-400/50" />
+                      </div>
+                    </div>
+
+                    {/* Image Placeholder */}
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="w-full h-32 sm:h-48 mt-2 bg-[#060812] border border-white/10 rounded-xl flex flex-col items-center justify-center relative overflow-hidden group/img">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-50" />
+                            <div className="text-white/20 text-[10px] font-mono tracking-widest uppercase flex flex-col items-center gap-3">
+                              <div className="w-8 h-8 rounded-full border border-white/10 border-t-cyan-400 animate-spin" />
+                              <span>[ IMAGE_PLACEHOLDER ]</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
             {/* Bottom border */}
             <div className="border-t border-white/[0.04]" />
           </div>
