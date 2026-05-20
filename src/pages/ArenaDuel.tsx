@@ -186,7 +186,7 @@ export function ArenaDuel() {
   useEffect(() => {
     if (!isSearching || !state.user) return;
 
-    setSearchStatus('Broadcasting Hunter Signature...');
+    setSearchStatus('Finding players...');
 
     const lobby = supabase.channel('arena-searching', {
       config: { 
@@ -218,7 +218,7 @@ export function ArenaDuel() {
         if (Date.now() - createdTime < 120000) {
           clearInterval(pollInterval);
           lobby.unsubscribe();
-          setSearchStatus('Combat Link Detected!');
+          setSearchStatus('Opponent found!');
           navigate(`/duels/${data.id}`, { replace: true });
         }
       }
@@ -242,11 +242,11 @@ export function ArenaDuel() {
 
         if (opp && state.user && state.user.id < opp.user_id) {
           hasCreated = true;
-          setSearchStatus(`Target Locked: ${opp.name || 'Hunter'}...`);
+          setSearchStatus(`Connecting to ${opp.name || 'Player'}...`);
           
           createDuel(myMode as any, opp.user_id, undefined, 'setup').then(newId => {
             if (!newId) {
-              setSearchStatus('Error creating arena. Retrying...');
+              setSearchStatus('Error starting match. Retrying...');
               hasCreated = false;
               return;
             }
@@ -262,7 +262,7 @@ export function ArenaDuel() {
       .on('broadcast', { event: 'match_found' }, ({ payload }) => {
         if (payload.targetId === state.user?.id) {
           clearInterval(pollInterval);
-          setSearchStatus('Combat Link Received!');
+          setSearchStatus('Connected!');
           setTimeout(() => navigate(`/duels/${payload.duelId}`, { replace: true }), 600);
         }
       })
@@ -278,7 +278,7 @@ export function ArenaDuel() {
             mode: myMode,
             ts: Date.now()
           });
-          setSearchStatus('Scanning Neural Network...');
+          setSearchStatus('Searching for players...');
         }
       });
 
@@ -485,7 +485,7 @@ export function ArenaDuel() {
         </div>
 
         <div className="space-y-4 z-10">
-          <span className="text-[10px] font-black tracking-[1em] text-cyan-400/40 uppercase italic">Broadcasting Signal</span>
+          <span className="text-[10px] font-black tracking-[1em] text-cyan-400/40 uppercase italic">Searching</span>
           <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Matchmaking</h2>
           <motion.p 
             animate={{ opacity: [0.3, 1, 0.3] }} 
@@ -500,7 +500,7 @@ export function ArenaDuel() {
           onClick={() => navigate('/battle')}
           className="absolute bottom-16 px-10 py-4 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-black text-red-500/50 uppercase tracking-[0.4em] hover:text-red-500 hover:bg-red-500/10 transition-all z-10 italic"
         >
-          Abort Protocol
+          Cancel
         </button>
       </div>
     );
@@ -537,10 +537,10 @@ export function ArenaDuel() {
         </div>
 
         <div className="space-y-4 z-10">
-          <span className="text-[9px] font-black tracking-[0.8em] text-purple-400/60 uppercase italic">Signal Transmitted</span>
-          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Neural <span className="text-purple-400">Await</span></h2>
+          <span className="text-[9px] font-black tracking-[0.8em] text-purple-400/60 uppercase italic">Invite Sent</span>
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Waiting <span className="text-purple-400">Room</span></h2>
           <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.4em] italic leading-relaxed max-w-xs mx-auto">
-            Tactical challenge issued to <span className="text-white">{opponent?.name || 'Peer Node'}</span>.<br/>Synchronizing combat interface...
+            Challenge sent to <span className="text-white">{opponent?.name || 'Player'}</span>.<br/>Waiting for them to join...
           </p>
         </div>
 
@@ -553,7 +553,7 @@ export function ArenaDuel() {
           }}
           className="absolute bottom-16 px-10 py-4 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-black text-white/20 uppercase tracking-[0.4em] hover:text-red-500 hover:bg-red-500/10 transition-all z-10 italic"
         >
-          Retract Challenge
+          Cancel Invite
         </button>
       </div>
     );
@@ -569,7 +569,7 @@ export function ArenaDuel() {
            <Loader2 className="text-cyan-500 animate-spin" size={48} />
            <div className="absolute inset-0 blur-xl bg-cyan-500/20 animate-pulse" />
         </div>
-        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-8">Reconstructing Combat Link...</span>
+        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-8">Connecting to duel...</span>
       </div>
     );
   }
@@ -603,7 +603,7 @@ export function ArenaDuel() {
               "text-[10px] font-black uppercase tracking-[0.5em] italic mb-1",
               duel.mode === 'deck' ? "text-purple-400" : "text-cyan-400"
             )}>{phase}</div>
-            <h1 className="text-xl font-black uppercase italic tracking-tighter leading-none">Circuit: {duelId?.slice(0, 6)}</h1>
+            <h1 className="text-xl font-black uppercase italic tracking-tighter leading-none">Duel ID: {duelId?.slice(0, 6)}</h1>
           </div>
         </div>
 
@@ -654,15 +654,15 @@ export function ArenaDuel() {
                 </div>
                 <h2 className="text-4xl font-black uppercase italic tracking-tighter">
                   {duel.mode === 'deck' ? (
-                    <>Select <span className="text-purple-400">Armament</span></>
+                    <>Select <span className="text-purple-400">Deck</span></>
                   ) : (
-                    <>Deploy <span className="text-cyan-400">Subject</span></>
+                    <>Create <span className="text-cyan-400">Challenge</span></>
                   )}
                 </h2>
                 <p className="text-[11px] font-bold text-white/30 uppercase tracking-[0.3em] leading-relaxed italic max-w-sm mx-auto">
                   {duel.mode === 'deck' 
-                    ? 'Synchronize your neural fragments for combat. Interface activates once both nodes are ready.' 
-                    : 'Designate the semantic target for your peer. Engagement begins upon mutual confirmation.'}
+                    ? 'Select a deck to duel with. The match begins when both players are ready.' 
+                    : 'Type a word or topic for your opponent to write about. The duel starts when both are ready.'}
                 </p>
               </div>
 
@@ -671,7 +671,7 @@ export function ArenaDuel() {
                   {isLoading ? (
                     <div className="text-center py-24">
                       <Loader2 size={32} className="text-purple-500 animate-spin mx-auto mb-4" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Extracting Neural Files...</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20 italic">Loading Flashcard Decks...</p>
                     </div>
                   ) : arenaDecks && arenaDecks.length > 0 ? arenaDecks.map(deck => (
                     <button
@@ -694,7 +694,7 @@ export function ArenaDuel() {
                         <div className="flex items-center gap-3 mt-1.5">
                            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">{deck.subject || 'GENERAL'}</span>
                            <div className="w-1 h-1 rounded-full bg-white/10" />
-                           <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest italic">{state.cards.filter(c => c.deckId === deck.id).length} SLICES</span>
+                           <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest italic">{state.cards.filter(c => c.deckId === deck.id).length} CARDS</span>
                         </div>
                       </div>
                       {duel[myDeckField] === deck.id && (
@@ -707,12 +707,12 @@ export function ArenaDuel() {
                   )) : (
                     <div className="system-panel p-16 text-center border-white/5 bg-white/[0.01]">
                       <Search size={48} className="mx-auto mb-6 text-white/5" />
-                      <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-10">No Armaments Detected</p>
+                      <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/20 italic mb-10">No Decks Detected</p>
                       <button 
                         onClick={loadArenaDecks}
                         className="px-8 py-4 bg-cyan-600/20 text-cyan-400 border border-cyan-400/20 text-[10px] tracking-[0.3em] uppercase italic hover:bg-cyan-500 hover:text-white transition-all underline underline-offset-8"
                       >
-                        Force Tactical Sync
+                        Reload Decks
                       </button>
                     </div>
                   )}
@@ -723,10 +723,10 @@ export function ArenaDuel() {
                   <textarea
                     value={localTopic}
                     onChange={(e) => setLocalTopic(e.target.value)}
-                    placeholder="Enter strategic focus here..."
+                    placeholder="Type the word or topic for your opponent here..."
                     className="flex-1 min-h-[220px] w-full bg-white/[0.02] border border-white/10 rounded-3xl p-8 text-lg font-black italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none relative z-10 shadow-2xl"
                   />
-                  <div className="absolute bottom-6 right-8 text-[10px] font-black text-white/10 uppercase tracking-[0.3em] z-10 italic">Secure Transcript Channel</div>
+                  <div className="absolute bottom-6 right-8 text-[10px] font-black text-white/10 uppercase tracking-[0.3em] z-10 italic">Secure Input</div>
                 </div>
               )}
 
@@ -740,7 +740,7 @@ export function ArenaDuel() {
                       ? "bg-white/[0.03] text-white/20 border border-white/5"
                       : "bg-cyan-600 text-white shadow-[0_10px_40px_rgba(6,182,212,0.3)] hover:bg-cyan-500"
                   )}>
-                  {duel[myTopicField] ? 'TRANSMISSION SENT — AWAITING FEEDBACK...' : 'Lock Strategic Signal'}
+                  {duel[myTopicField] ? 'CHALLENGE SENT — WAITING FOR OPPONENT...' : 'Lock in Topic'}
                   {!duel[myTopicField] && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />}
                 </button>
               )}
@@ -752,7 +752,7 @@ export function ArenaDuel() {
                      ))}
                   </div>
                   <div className="text-[11px] font-black text-purple-400 uppercase tracking-[0.4em] italic animate-pulse">
-                    Armament Locked — Peer Node Syncing
+                    Deck Selected — Waiting for Opponent
                   </div>
                 </div>
               )}
@@ -768,13 +768,13 @@ export function ArenaDuel() {
                 <div className="absolute inset-0 blur-2xl bg-cyan-400/30 animate-pulse" />
               </div>
               <div className="space-y-4">
-                 <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Node <span className="text-cyan-400">Sync</span></h2>
+                 <h2 className="text-5xl font-black uppercase italic tracking-tighter text-white">Connecting...</h2>
                  <p className="text-[12px] font-bold text-white/30 uppercase tracking-[0.4em] leading-relaxed italic max-w-sm">
-                   Tactical parameters established.<br/>Initializing combat link with peer node.
+                   Topic locked in.<br/>Initializing connection with player.
                  </p>
               </div>
               <div className="h-px w-24 bg-white/10" />
-              <div className="text-[10px] font-black text-cyan-400/50 uppercase tracking-[0.5em] italic animate-pulse">Encryption Handshake Active</div>
+              <div className="text-[10px] font-black text-cyan-400/50 uppercase tracking-[0.5em] italic animate-pulse">Establishing Connection...</div>
             </motion.div>
           )}
 
@@ -787,12 +787,12 @@ export function ArenaDuel() {
                 <>
                   <div className="flex justify-between items-center px-4">
                     <div className="flex flex-col">
-                       <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] italic mb-1 pr-1">Current Slice</span>
+                       <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] italic mb-1 pr-1">Current Card</span>
                        <div className="text-sm font-black text-purple-400 italic">#{currentCardIndex + 1} / {cards.length}</div>
                     </div>
                     <div className="text-right">
-                       <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] italic mb-1 pr-1">Total Impact</span>
-                       <div className="text-sm font-black text-emerald-400 italic">{score} INFLEXION</div>
+                       <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] italic mb-1 pr-1">Score</span>
+                       <div className="text-sm font-black text-emerald-400 italic">{score} Points</div>
                     </div>
                   </div>
 
@@ -812,18 +812,18 @@ export function ArenaDuel() {
                           className="absolute inset-0 bg-white/[0.02] border border-white/10 rounded-[3rem] p-12 flex flex-col items-center justify-center text-center shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-3xl"
                           style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                         >
-                          <div className="absolute top-10 left-10 text-[9px] font-black text-purple-400 uppercase tracking-[0.5em] italic">Stimulus Output</div>
+                          <div className="absolute top-10 left-10 text-[9px] font-black text-purple-400 uppercase tracking-[0.5em] italic">Question</div>
                           <div className="text-3xl font-black uppercase italic tracking-tighter text-white underline decoration-purple-500/20 underline-offset-8 decoration-4">{cards[currentCardIndex].front}</div>
-                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] animate-pulse italic">Tap for Response</div>
+                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] animate-pulse italic">Tap to Flip</div>
                         </div>
                         {/* Back */}
                         <div 
                           className="absolute inset-0 bg-white/[0.03] border border-purple-500/30 rounded-[3rem] p-12 flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-3xl"
                           style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                         >
-                          <div className="absolute top-10 left-10 text-[9px] font-black text-emerald-400 uppercase tracking-[0.5em] italic">Neural Mapping</div>
+                          <div className="absolute top-10 left-10 text-[9px] font-black text-emerald-400 uppercase tracking-[0.5em] italic">Answer</div>
                           <div className="text-2xl font-black text-white italic tracking-tight underline decoration-emerald-500/20 underline-offset-8 decoration-4">{cards[currentCardIndex].back || 'DATA VOID'}</div>
-                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] italic leading-tight">Verify response accuracy</div>
+                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] italic leading-tight">Verify your answer</div>
                         </div>
                       </motion.div>
                     </div>
@@ -838,13 +838,13 @@ export function ArenaDuel() {
                       onClick={() => handleAnswerDeck(false)}
                       className="py-6 rounded-3xl bg-white/[0.03] border border-white/10 text-[12px] font-black uppercase tracking-[0.4em] italic text-white/40 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all active:scale-95 shadow-xl"
                     >
-                      Fragmented
+                      Forgot
                     </button>
                     <button
                       onClick={() => handleAnswerDeck(true)}
                       className="py-6 rounded-3xl bg-purple-600 text-white text-[12px] font-black uppercase tracking-[0.4em] italic shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:bg-purple-500 active:scale-95 transition-all overflow-hidden relative group"
                     >
-                      Synchronized
+                      Remembered
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </button>
                   </div>
@@ -858,7 +858,7 @@ export function ArenaDuel() {
                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
                           <AlertCircle size={14} className="text-cyan-400" />
                        </div>
-                       <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400/60 italic">COMBAT ANALYSIS TARGET</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400/60 italic">YOUR DUEL TOPIC</span>
                     </div>
                     <h2 className="text-3xl font-black tracking-tighter uppercase italic text-white leading-none">{duel[theirTopicField] || 'SIGNAL LOST'}</h2>
                   </div>
@@ -868,11 +868,11 @@ export function ArenaDuel() {
                     <textarea
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
-                      placeholder="Inject analysis transcript..."
+                      placeholder="Write your response or essay here..."
                       className="w-full h-full bg-black border border-white/10 rounded-3xl p-10 text-lg font-black italic outline-none focus:border-red-500/40 transition-all placeholder:text-white/5 resize-none relative z-10 shadow-[0_20px_60px_rgba(0,0,0,0.8)]"
                     />
                     <div className="absolute bottom-8 right-10 flex items-center gap-2 z-10 opacity-20">
-                       <span className="text-[10px] font-black uppercase tracking-widest italic">Encrypted Uplink Active</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest italic">Secure Mode Active</span>
                        <Zap size={10} fill="currentColor" />
                     </div>
                   </div>
@@ -886,7 +886,7 @@ export function ArenaDuel() {
                         ? "bg-white/[0.03] text-white/20 border border-white/5"
                         : "bg-red-600 text-white shadow-[0_10px_50px_rgba(220,38,38,0.3)] hover:bg-red-500"
                     )}>
-                    {duel[myAnswerField] ? 'ANALYSIS TRANSMITTED — WAITING FOR PEER' : 'Deploy Combat Analysis'}
+                    {duel[myAnswerField] ? 'ANSWER SUBMITTED — WAITING FOR OPPONENT...' : 'Submit Answer'}
                     {!duel[myAnswerField] && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />}
                   </button>
                 </>
@@ -901,8 +901,8 @@ export function ArenaDuel() {
               
               {/* Header section (Terminated indicator) */}
               <div className="text-center w-full mb-2">
-                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">Circuit <span className="text-cyan-400">Terminated</span></h2>
-                <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-2">Synchronization Logic Resolved</div>
+                <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">Duel <span className="text-cyan-400">Complete</span></h2>
+                <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em] italic mt-2">Both players have finished!</div>
               </div>
 
               {/* Reusable Review Form Helper */}
@@ -916,8 +916,8 @@ export function ArenaDuel() {
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
                         
                         <div className="text-center">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 italic">Honour Verification</h3>
-                          <p className="text-[9px] text-white/20 mt-1.5 uppercase font-black italic tracking-[0.15em]">Evaluate peer performance for XP release</p>
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-cyan-400 italic">Rate Opponent</h3>
+                          <p className="text-[9px] text-white/20 mt-1.5 uppercase font-black italic tracking-[0.15em]">Rate your opponent to complete the duel</p>
                         </div>
                         
                         <div className="flex justify-center gap-2 md:gap-3">
@@ -943,7 +943,7 @@ export function ArenaDuel() {
                           <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder="Neural feedback regarding peer node performance (Optional)..."
+                            placeholder="Write feedback about your opponent (Optional)..."
                             className="w-full bg-black border border-white/10 rounded-xl p-4 text-[10px] md:text-xs font-medium italic outline-none focus:border-cyan-400/30 transition-all placeholder:text-white/5 resize-none h-20"
                           />
                         </div>
@@ -954,7 +954,7 @@ export function ArenaDuel() {
                           disabled={isSyncing || rating === 0}
                           className="w-full py-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-[0.25em] text-[10px] shadow-[0_5px_20px_rgba(6,182,212,0.25)] transition-all active:scale-[0.98] hover:bg-cyan-500 italic relative overflow-hidden group"
                         >
-                          <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'SUBMIT HONOUR'}</span>
+                          <span className="relative z-10">{isSyncing ? 'FINALIZING...' : 'SUBMIT RATING'}</span>
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                         </button>
                       </motion.div>
@@ -966,8 +966,8 @@ export function ArenaDuel() {
                         <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }}>
                            <Shield className="w-8 h-8 text-emerald-500 mx-auto mb-3 opacity-80" />
                         </motion.div>
-                        <div className="text-sm font-black uppercase italic tracking-widest text-emerald-500">Signal Verified</div>
-                        <p className="text-[9px] text-emerald-500/40 mt-2 font-black uppercase italic tracking-[0.15em] leading-relaxed">XP tokens are being released across the network.<br/>Combat cycle complete.</p>
+                        <div className="text-sm font-black uppercase italic tracking-widest text-emerald-500">Duel Verified</div>
+                        <p className="text-[9px] text-emerald-500/40 mt-2 font-black uppercase italic tracking-[0.15em] leading-relaxed">XP is being released.<br/>Match complete!</p>
                       </div>
                     );
                   }
@@ -981,12 +981,12 @@ export function ArenaDuel() {
                     {/* Header Controls: Title & Flip button */}
                     <div className="flex items-center justify-between px-2 mt-4">
                       <div className="flex flex-col">
-                        <span className="text-[9px] font-black uppercase text-white/20 tracking-[0.3em] italic mb-0.5">Combat Log Review</span>
+                        <span className="text-[9px] font-black uppercase text-white/20 tracking-[0.3em] italic mb-0.5">Duel Review</span>
                         <h3 className={cn(
                           "text-xs md:text-sm font-black uppercase tracking-widest italic transition-colors duration-300",
                           activeSide === 'me' ? "text-cyan-400" : "text-red-500"
                         )}>
-                          {activeSide === 'me' ? 'Operator Sync Log' : `${opponentName}'S Sync Log`}
+                          {activeSide === 'me' ? 'Your Answer' : `${opponentName}'s Answer`}
                         </h3>
                       </div>
 
@@ -997,7 +997,7 @@ export function ArenaDuel() {
                         className="px-4 py-2 bg-white/[0.03] hover:bg-cyan-500 hover:text-black border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-cyan-400 transition-all active:scale-95 flex items-center gap-2"
                       >
                         <RefreshCw size={10} />
-                        FLIP TO {activeSide === 'me' ? opponentName : 'YOUR LOG'}
+                        FLIP TO {activeSide === 'me' ? opponentName : 'YOUR ANSWER'}
                       </button>
                     </div>
 
@@ -1032,7 +1032,7 @@ export function ArenaDuel() {
                             </span>
                             <h2 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic text-white leading-none">
                               {duel.mode === 'deck' 
-                                ? 'ARMAMENT DECK SYNC' 
+                                ? 'DECK DUEL' 
                                 : (activeSide === 'me' ? (duel[theirTopicField] || 'SIGNAL LOST') : (duel[myTopicField] || 'SIGNAL LOST'))
                               }
                             </h2>
@@ -1055,11 +1055,11 @@ export function ArenaDuel() {
                             <div className="text-sm md:text-base font-medium italic text-white/80 leading-relaxed min-h-[160px] max-h-[300px] overflow-y-auto pr-2 custom-scrollbar whitespace-pre-wrap select-text">
                               {duel.mode === 'deck' ? (
                                 activeSide === 'me'
-                                  ? `Operator score locked: ${duel[myScoreField]} out of 10 fragments successfully synchronized.`
-                                  : `Opponent score locked: ${duel[theirScoreField] !== null ? duel[theirScoreField] : '...'} out of 10 fragments successfully synchronized.`
+                                  ? `Score locked: ${duel[myScoreField]} out of 10 cards remembered.`
+                                  : `Opponent score locked: ${duel[theirScoreField] !== null ? duel[theirScoreField] : '...'} out of 10 cards remembered.`
                               ) : (
                                 (activeSide === 'me' ? duel[myAnswerField] : duel[theirAnswerField]) || 
-                                (activeSide === 'me' ? 'No transcript deployed.' : 'Opponent neural logs resolving...')
+                                (activeSide === 'me' ? 'No response submitted.' : 'Opponent is still writing...')
                               )}
                             </div>
                           </div>
@@ -1067,7 +1067,7 @@ export function ArenaDuel() {
                           {/* Integrated Bottom telemetry indicator */}
                           <div className="flex items-center gap-2 opacity-20 pt-1">
                              <span className="text-[9px] font-black uppercase tracking-widest italic">
-                               {activeSide === 'me' ? 'Encrypted Uplink Active' : 'Peer Link Active'}
+                               {activeSide === 'me' ? 'Secure Mode' : 'Opponent Connected'}
                              </span>
                              <Zap size={10} fill="currentColor" className={activeSide === 'me' ? "text-cyan-400" : "text-red-500"} />
                           </div>
@@ -1088,7 +1088,7 @@ export function ArenaDuel() {
               <button onClick={() => navigate('/battle')}
                 className="w-full py-6 rounded-3xl bg-white/[0.02] border border-white/5 text-[11px] font-black uppercase tracking-[0.5em] hover:bg-white/[0.1] hover:text-white text-white/40 transition-all italic active:scale-95 mb-8"
               >
-                Return to Battlefront Core
+                Return to Battle Menu
               </button>
             </motion.div>
           )}

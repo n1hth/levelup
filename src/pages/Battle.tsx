@@ -108,7 +108,7 @@ export function Battle() {
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse" />
-            <span className="text-[6px] font-black tracking-[0.4em] text-white/20 uppercase italic">Neural Battlefront Core</span>
+            <span className="text-[6px] font-black tracking-[0.4em] text-white/20 uppercase italic">Battle Hub Central</span>
           </div>
           <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-2">
             ARENA <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500">ENGAGEMENT</span>
@@ -145,7 +145,7 @@ export function Battle() {
           >
             {activeTab === 'practice' && <motion.div layoutId="tab-bg" className="absolute inset-0 bg-cyan-400/5 blur-lg" />}
             <Target size={14} />
-            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Neural Arenas</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Practice Arenas</span>
           </button>
           <button
             onClick={() => setActiveTab('duels')}
@@ -177,9 +177,9 @@ export function Battle() {
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-[8px] font-black text-white/30 uppercase tracking-[0.5em] italic flex items-center gap-3">
-                  <Trophy size={12} className="text-yellow-500/50" /> Tactical Deployment zones
+                  <Trophy size={12} className="text-yellow-500/50" /> Practice Decks
                 </h3>
-                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{eligibleDecks.length} ACTIVE DOMAINS</span>
+                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{eligibleDecks.length} ACTIVE DECKS</span>
               </div>
 
               {eligibleDecks.length === 0 ? (
@@ -187,11 +187,11 @@ export function Battle() {
                   <div className="w-16 h-16   rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center mx-auto mb-6  shadow-inner">
                     <Swords size={24} className=" text-white/5" />
                   </div>
-                  <h3 className="text-base  font-black text-white mb-2  italic uppercase tracking-wider">Arsenal Depleted</h3>
+                  <h3 className="text-base  font-black text-white mb-2  italic uppercase tracking-wider">No Eligible Decks</h3>
                   <p className="text-[8px]  font-black text-white/10 mb-8  uppercase tracking-[0.2em]  max-w-[200px]  mx-auto italic leading-relaxed">
-                    Minimum requirement: 4 neural fragments.
+                    Minimum requirement: 4 flashcards in a deck.
                   </p>
-                  <button onClick={() => navigate('/decks')} className="px-8  py-4  bg-cyan-600 text-[9px]  font-black uppercase tracking-[0.3em]  italic rounded-xl  hover:bg-cyan-500 transition-all shadow-2xl shadow-cyan-900/20 active:scale-95">REPLENISH ARSENAL</button>
+                  <button onClick={() => navigate('/decks')} className="px-8  py-4  bg-cyan-600 text-[9px]  font-black uppercase tracking-[0.3em]  italic rounded-xl  hover:bg-cyan-500 transition-all shadow-2xl shadow-cyan-900/20 active:scale-95">GO TO DECKS</button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 ">
@@ -226,13 +226,13 @@ export function Battle() {
                           <h4 className="text-base  font-black text-white truncate tracking-tighter italic uppercase group-hover:text-cyan-400 transition-colors">{deck.title}</h4>
                           <div className="flex items-center gap-3 mt-0.5 ">
                             <span className="text-[7px]  font-black text-white/10 uppercase italic tracking-widest flex items-center gap-1.5">
-                              <Zap className="size-2  text-cyan-400/30" /> {cards.length} FRAGS
+                              <Zap className="size-2  text-cyan-400/30" /> {cards.length} CARDS
                             </span>
                           </div>
                         </div>
 
                         <div className="pt-2.5  border-t border-white/5 flex items-center justify-between">
-                           <span className="text-[6px]  font-black text-white/5 uppercase tracking-[0.2em]  italic group-hover:text-cyan-400/40 transition-colors">Tactical Deployment Available</span>
+                           <span className="text-[6px]  font-black text-white/5 uppercase tracking-[0.2em]  italic group-hover:text-cyan-400/40 transition-colors">Practice Available</span>
                            <ChevronRight className="size-2.5  text-white/10 group-hover:text-cyan-400 transition-all group-hover:translate-x-1" />
                         </div>
                       </motion.button>
@@ -253,7 +253,7 @@ export function Battle() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6 px-4 pb-20"
           >
-            {/* Mission Terminal Setup */}
+            {/* Duel Setup */}
             <div className="space-y-4 ">
               <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-3xl  relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
@@ -265,13 +265,13 @@ export function Battle() {
                   <div className="space-y-4 ">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6   rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px]  font-black text-red-500 italic shrink-0">01</div>
-                      <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Engagement Protocol</h3>
+                      <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Choose Duel Type</h3>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 ">
                       {[
-                        { id: 'writing', label: 'Semantic Sprint', icon: '✍️', desc: '90s linguistic overload', color: 'red' },
-                        { id: 'deck', label: 'Fragment Clash', icon: '🃏', desc: 'Neural deck combat', color: 'purple' },
+                        { id: 'writing', label: 'Writing Duel', icon: '✍️', desc: 'Type definitions or spellings quickly', color: 'red' },
+                        { id: 'deck', label: 'Deck Duel', icon: '🃏', desc: 'Duel using your flashcard decks', color: 'purple' },
                       ].map(mode => (
                         <button 
                           key={mode.id}
@@ -310,13 +310,13 @@ export function Battle() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-6 h-6   rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-[10px]  font-black text-cyan-400 italic shrink-0">02</div>
-                          <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Designate Target</h3>
+                          <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Select Opponent</h3>
                         </div>
 
                         <div className="grid grid-cols-1 gap-3 ">
                           {[
-                            { id: 'random', label: 'Neural Queue', icon: '🎲', desc: 'Scan for global peers' },
-                            { id: 'friend', label: 'Direct Strike', icon: '⚔️', desc: 'Target synced contact' },
+                            { id: 'random', label: 'Quick Match', icon: '🎲', desc: 'Search for active players' },
+                            { id: 'friend', label: 'Invite Friend', icon: '⚔️', desc: 'Challenge a friend directly' },
                           ].map(opp => (
                             <button 
                               key={opp.id}
@@ -354,14 +354,14 @@ export function Battle() {
                             >
                                <div className="flex flex-col  items-center justify-between gap-4 ">
                                   <div className="space-y-1 text-center ">
-                                     <h4 className="text-[9px]  font-black text-cyan-400 uppercase tracking-widest italic">Synchronizing...</h4>
-                                     <p className="text-[8px]  font-black text-white/20 uppercase italic max-w-xs leading-tight">Connecting to Neural Battlefront for peer matching.</p>
+                                     <h4 className="text-[9px]  font-black text-cyan-400 uppercase tracking-widest italic">Searching...</h4>
+                                     <p className="text-[8px]  font-black text-white/20 uppercase italic max-w-xs leading-tight">Connecting to matchmaking for a quick duel.</p>
                                   </div>
                                   <button 
                                     onClick={handleStartMatchmaking}
                                     className="w-full  px-8  py-3.5  rounded-xl  bg-cyan-500 text-black font-black text-[9px]  uppercase tracking-[0.4em] italic shadow-2xl hover:bg-cyan-400 transition-all active:scale-95 shrink-0"
                                   >
-                                    INITIATE QUEUE
+                                    FIND MATCH
                                   </button>
                                </div>
                             </motion.div>
@@ -394,7 +394,7 @@ export function Battle() {
                                       <div className="text-left min-w-0">
                                          <div className="text-[10px] font-black uppercase tracking-tight truncate">{friend.name}</div>
                                          <div className={cn("text-[6px] font-black uppercase tracking-widest italic", friend.isOnline ? "text-cyan-400" : "text-white/10")}>
-                                            {friend.isOnline ? 'LINK ACTIVE' : 'OFFLINE'}
+                                            {friend.isOnline ? 'ONLINE' : 'OFFLINE'}
                                          </div>
                                       </div>
                                     </button>
@@ -410,7 +410,7 @@ export function Battle() {
                                       : "bg-white/5 text-white/10 cursor-not-allowed opacity-50"
                                   )}
                                >
-                                  {isInviting ? "LOCKING NEURAL LINK..." : "STRIKE TARGET"}
+                                  {isInviting ? "SENDING CHALLENGE..." : "CHALLENGE FRIEND"}
                                </button>
                             </motion.div>
                           )}
@@ -422,16 +422,16 @@ export function Battle() {
               </div>
             </div>
 
-            {/* Combat Logs / Guidelines */}
+            {/* Duel Rules & Guidelines */}
             <div className="grid grid-cols-1 gap-4 ">
               <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-[1.5rem] ">
                 <h3 className="text-[8px]  font-black text-white/20 uppercase tracking-[0.5em] italic mb-6  flex items-center gap-3">
-                   <Target size={12} className="text-cyan-500/50" /> Combat Protocols
+                   <Target size={12} className="text-cyan-500/50" /> Duel Rules
                 </h3>
                 <div className="space-y-4 ">
                   {[
-                    { id: '01', title: 'SYNCHRONICITY', text: 'Seal lock before link.' },
-                    { id: '02', title: 'HONOUR BOND', text: 'Mutual validation required.' },
+                    { id: '01', title: 'GET READY', text: 'Make sure you are ready before searching.' },
+                    { id: '02', title: 'FAIR PLAY', text: 'Rate your opponent honestly after the match.' },
                   ].map(p => (
                     <div key={p.id} className="flex gap-3 ">
                       <span className="text-[10px]  font-black text-cyan-400 italic opacity-40 shrink-0">{p.id}</span>
@@ -447,11 +447,11 @@ export function Battle() {
               <div className="system-panel p-5  border-white/5 bg-white/[0.01] rounded-[1.5rem]  relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(239,68,68,0.03),transparent_60%)]" />
                 <h3 className="text-[8px]  font-black text-white/20 uppercase tracking-[0.5em] italic mb-6  flex items-center gap-3">
-                   <Swords size={12} className="text-red-500/50" /> Security Advisory
+                   <Swords size={12} className="text-red-500/50" /> Fair Play Advisory
                 </h3>
                 <div className="p-4  rounded-lg  bg-white/[0.01] border border-white/5">
                    <p className="text-[7px]  font-black text-white/10 uppercase italic leading-tight tracking-widest">
-                     Engagement requires neural stability. Protocol abortion leads to penalty.
+                     Entering a duel requires focus. Leaving in the middle will result in an automatic loss and XP penalty.
                    </p>
                 </div>
               </div>
@@ -478,7 +478,7 @@ export function Battle() {
               <div className="flex items-center justify-between mb-8 pt-4">
                 <div>
                   <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{selectedDeck.title}</h3>
-                  <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] italic mt-1">Select Combat Difficulty</p>
+                  <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] italic mt-1">Select Practice Difficulty</p>
                 </div>
                 <button onClick={() => setSelectedDeck(null)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/30 hover:text-white hover:bg-white/10 transition-all">
                   <ChevronRight size={24} className="rotate-90" />
