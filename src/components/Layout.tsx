@@ -96,18 +96,7 @@ export function Layout() {
           </header>
 
           <div className="relative w-full">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname.split('/')[1] || 'home'}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="w-full"
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
+            <Outlet />
           </div>
         </main>
       </motion.div>

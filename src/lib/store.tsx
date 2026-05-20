@@ -1798,7 +1798,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         *,
         p1:profiles!player1_id(name),
         p2:profiles!player2_id(name),
-        community_duel_votes:duel_votes(*)
+        community_duel_votes(*)
       `)
       .in('status', ['community_review', 'finished'])
       .order('created_at', { ascending: false })
