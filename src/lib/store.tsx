@@ -528,17 +528,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const userId = state.user.id;
     backfilledUserId.current = userId;
 
-    Promise.all([
-      state.decks.length > 0
-        ? supabase.from('decks').upsert(state.decks.map(deck => mapDeckToDb(deck, userId)))
-        : Promise.resolve({ error: null }),
-      state.cards.length > 0
-        ? supabase.from('cards').upsert(state.cards.map(card => mapCardToDb(card, userId)))
-        : Promise.resolve({ error: null }),
-    ]).then(([decksRes, cardsRes]) => {
-      if (decksRes.error) console.error("Failed to backfill local decks into Supabase:", decksRes.error);
-      if (cardsRes.error) console.error("Failed to backfill local cards into Supabase:", cardsRes.error);
-    });
+    const performBackfill = async () => {
+      try {
+        const localDecks = [...state.decks];
+        const localCards = [...state.cards];
+        
+        const deckIds = localDecks.map(d => d.id);
+        const cardIds = localCards.map(c => c.id);
+
+        const [existingDecksRes, existingCardsRes] = await Promise.all([
+          deckIds.length > 0 ? supabase.from('decks').select('id, user_id').in('id', deckIds) : Promise.resolve({ data: [], error: null }),
+          cardIds.length > 0 ? supabase.from('cards').select('id, user_id').in('id', cardIds) : Promise.resolve({ data: [], error: null })
+        ]);
+
+        if (existingDecksRes.error) {
+          console.error("Error checking existing decks in Supabase:", existingDecksRes.error);
+        }
+        if (existingCardsRes.error) {
+          console.error("Error checking existing cards in Supabase:", existingCardsRes.error);
+        }
+
+        const existingDecks = existingDecksRes.data || [];
+        const existingCards = existingCardsRes.data || [];
+
+        const deckIdRemap = new Map<string, string>();
+        const cardIdRemap = new Map<string, string>();
+
+        existingDecks.forEach(row => {
+          if (row.user_id !== userId) {
+            deckIdRemap.set(row.id, generateId());
+          }
+        });
+
+        existingCards.forEach(row => {
+          if (row.user_id !== userId) {
+            cardIdRemap.set(row.id, generateId());
+          }
+        });
+
+        let finalDecks = localDecks;
+        let finalCards = localCards;
+
+        if (deckIdRemap.size > 0 || cardIdRemap.size > 0) {
+          finalDecks = localDecks.map(d => ({
+            ...d,
+            id: deckIdRemap.get(d.id) || d.id
+          }));
+
+          finalCards = localCards.map(c => ({
+            ...c,
+            id: cardIdRemap.get(c.id) || c.id,
+            deckId: deckIdRemap.get(c.deckId) || c.deckId
+          }));
+
+          setState(prev => {
+            const remappedDecks = prev.decks.map(d => ({
+              ...d,
+              id: deckIdRemap.get(d.id) || d.id
+            }));
+            const remappedCards = prev.cards.map(c => ({
+              ...c,
+              id: cardIdRemap.get(c.id) || c.id,
+              deckId: deckIdRemap.get(c.deckId) || c.deckId
+            }));
+            const remappedStudy = prev.deckStudySessions.map(s => ({
+              ...s,
+              deckId: deckIdRemap.get(s.deckId) || s.deckId
+            }));
+            const remappedArena = prev.arenaSessions.map(a => ({
+              ...a,
+              deckId: deckIdRemap.get(a.deckId) || a.deckId
+            }));
+
+            return {
+              ...prev,
+              decks: remappedDecks,
+              cards: remappedCards,
+              deckStudySessions: remappedStudy,
+              arenaSessions: remappedArena
+            };
+          });
+        }
+
+        const [decksRes, cardsRes] = await Promise.all([
+          finalDecks.length > 0
+            ? supabase.from('decks').upsert(finalDecks.map(deck => mapDeckToDb(deck, userId)))
+            : Promise.resolve({ error: null }),
+          finalCards.length > 0
+            ? supabase.from('cards').upsert(finalCards.map(card => mapCardToDb(card, userId)))
+            : Promise.resolve({ error: null })
+        ]);
+
+        if (decksRes.error) console.error("Failed to backfill local decks into Supabase:", decksRes.error);
+        if (cardsRes.error) console.error("Failed to backfill local cards into Supabase:", cardsRes.error);
+
+      } catch (err) {
+        console.error("Failed executing resilient backfill sequence:", err);
+      }
+    };
+
+    performBackfill();
   }, [isLoading, state.user, state.decks, state.cards]);
 
   // ── User ──────────────────────────────────────
