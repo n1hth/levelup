@@ -142,6 +142,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
         schema: 'public', 
         table: 'duels'
       }, (payload: any) => {
+        if (!payload.new) return;
         const isMyDuel = payload.new.player1_id === state.user?.id || payload.new.player2_id === state.user?.id;
         if (isMyDuel && payload.new.status === 'setup') {
           // If we are already on the duel page, don't re-navigate

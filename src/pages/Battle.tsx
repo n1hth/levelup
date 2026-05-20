@@ -108,10 +108,10 @@ export function Battle() {
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse" />
-            <span className="text-[6px] font-black tracking-[0.4em] text-white/20 uppercase italic">Battle Hub Central</span>
+            <span className="text-[6px] font-black tracking-[0.4em] text-white/20 uppercase italic">Duel Center</span>
           </div>
           <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-2">
-            ARENA <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500">ENGAGEMENT</span>
+            ARENA <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500">STATS</span>
           </h2>
         </div>
 
@@ -145,7 +145,7 @@ export function Battle() {
           >
             {activeTab === 'practice' && <motion.div layoutId="tab-bg" className="absolute inset-0 bg-cyan-400/5 blur-lg" />}
             <Target size={14} />
-            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Practice Arenas</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Practice Mode</span>
           </button>
           <button
             onClick={() => setActiveTab('duels')}
@@ -158,7 +158,7 @@ export function Battle() {
           >
             {activeTab === 'duels' && <motion.div layoutId="tab-bg" className="absolute inset-0 bg-red-500/5 blur-lg" />}
             <Swords size={14} />
-            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">Active Duels</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.3em] italic relative z-10 transition-all group-active:scale-95">PvP Duels</span>
           </button>
         </div>
       </div>
@@ -265,7 +265,7 @@ export function Battle() {
                   <div className="space-y-4 ">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6   rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px]  font-black text-red-500 italic shrink-0">01</div>
-                      <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Choose Duel Type</h3>
+                      <h3 className="text-[8px]  font-black text-white/40 uppercase tracking-[0.4em] italic mb-0.5">Choose Duel Mode</h3>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 ">
@@ -315,7 +315,7 @@ export function Battle() {
 
                         <div className="grid grid-cols-1 gap-3 ">
                           {[
-                            { id: 'random', label: 'Quick Match', icon: '🎲', desc: 'Search for active players' },
+                            { id: 'random', label: 'Quick Duel', icon: '🎲', desc: 'Search for active players' },
                             { id: 'friend', label: 'Invite Friend', icon: '⚔️', desc: 'Challenge a friend directly' },
                           ].map(opp => (
                             <button 
@@ -355,13 +355,13 @@ export function Battle() {
                                <div className="flex flex-col  items-center justify-between gap-4 ">
                                   <div className="space-y-1 text-center ">
                                      <h4 className="text-[9px]  font-black text-cyan-400 uppercase tracking-widest italic">Searching...</h4>
-                                     <p className="text-[8px]  font-black text-white/20 uppercase italic max-w-xs leading-tight">Connecting to matchmaking for a quick duel.</p>
+                                     <p className="text-[8px]  font-black text-white/20 uppercase italic max-w-xs leading-tight">Finding an opponent...</p>
                                   </div>
                                   <button 
                                     onClick={handleStartMatchmaking}
                                     className="w-full  px-8  py-3.5  rounded-xl  bg-cyan-500 text-black font-black text-[9px]  uppercase tracking-[0.4em] italic shadow-2xl hover:bg-cyan-400 transition-all active:scale-95 shrink-0"
                                   >
-                                    FIND MATCH
+                                    FIND OPPONENT
                                   </button>
                                </div>
                             </motion.div>
@@ -478,7 +478,7 @@ export function Battle() {
               <div className="flex items-center justify-between mb-8 pt-4">
                 <div>
                   <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{selectedDeck.title}</h3>
-                  <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] italic mt-1">Select Practice Difficulty</p>
+                  <p className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] italic mt-1">Select Difficulty</p>
                 </div>
                 <button onClick={() => setSelectedDeck(null)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white/30 hover:text-white hover:bg-white/10 transition-all">
                   <ChevronRight size={24} className="rotate-90" />

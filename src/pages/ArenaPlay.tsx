@@ -254,7 +254,7 @@ export function ArenaPlay() {
             className="flex-1 flex flex-col items-center justify-center relative z-10"
           >
             <div className="px-6 py-2 bg-white/5 rounded-full border border-white/10 mb-8 backdrop-blur-xl">
-               <span className="text-[9px] font-black tracking-[0.5em] text-cyan-400 uppercase italic">Neural Sync Initialization</span>
+               <span className="text-[9px] font-black tracking-[0.5em] text-cyan-400 uppercase italic">Preparing Session...</span>
             </div>
             <motion.span
               key={countdownValue}
@@ -265,7 +265,7 @@ export function ArenaPlay() {
               className="text-[12rem] font-black text-white italic leading-none"
               style={{ textShadow: '0 0 100px rgba(34,211,238,0.5)' }}
             >
-              {countdownValue > 0 ? countdownValue : 'ENGAGE'}
+              {countdownValue > 0 ? countdownValue : 'START'}
             </motion.span>
           </motion.div>
         ) : (phase === 'question' || phase === 'reveal') && currentCard ? (
@@ -285,11 +285,11 @@ export function ArenaPlay() {
               </button>
 
               <div className="flex flex-col items-center">
-                <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/5 mb-3">
-                   <span className="text-[9px] font-black text-cyan-400/60 uppercase tracking-[0.4em] italic text-shadow-glow">
-                     FRAGMENT {currentCardIndex + 1} <span className="text-white/20">/</span> {shuffledCards.length}
-                   </span>
-                </div>
+                 <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/5 mb-3">
+                    <span className="text-[9px] font-black text-cyan-400/60 uppercase tracking-[0.4em] italic text-shadow-glow">
+                      CARD {currentCardIndex + 1} <span className="text-white/20">/</span> {shuffledCards.length}
+                    </span>
+                 </div>
                 <div className="flex items-center gap-6">
                   {currentStreak >= 2 && (
                     <motion.div
@@ -336,7 +336,7 @@ export function ArenaPlay() {
                   >
                     <div className="px-10 py-5 bg-gradient-to-r from-orange-600 to-red-600 rounded-[2rem] shadow-[0_15px_60px_rgba(234,88,12,0.5)] border border-orange-400/40">
                       <span className="text-2xl font-black text-white italic uppercase tracking-tighter">
-                        NEURAL OVERLOAD: {currentStreak}×
+                        COMBO STREAK: {currentStreak}×
                       </span>
                     </div>
                   </motion.div>
@@ -366,7 +366,7 @@ export function ArenaPlay() {
 
                   {phase === 'question' ? (
                     <>
-                      <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-10 italic">Neural Stimulus</span>
+                      <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.6em] mb-10 italic">Card Question</span>
                       <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase text-shadow-glow">{currentCard.front}</p>
                     </>
                   ) : (
@@ -375,22 +375,22 @@ export function ArenaPlay() {
                       className="w-full space-y-12"
                     >
                       <div>
-                        <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-5 italic">Stimulus Output</span>
+                        <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] mb-5 italic">Question</span>
                         <p className="text-xl font-black text-white/30 italic uppercase tracking-widest">{currentCard.front}</p>
                       </div>
                       
                       <div className="h-[1px] w-32 bg-white/10 mx-auto" />
 
                       <div>
-                        <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-6 italic text-shadow-glow">Neural Response</span>
+                        <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.6em] mb-6 italic text-shadow-glow">Answer</span>
                         <p className="text-4xl  font-black text-white italic tracking-tighter leading-tight uppercase">{currentCard.back}</p>
                       </div>
                     </motion.div>
                   )}
 
                   <div className="absolute bottom-10 left-16 right-16 flex justify-between items-center opacity-10">
-                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Protocol v4.0</div>
-                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Sync Stable</div>
+                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Study Mode</div>
+                     <div className="text-[9px] font-black tracking-[0.4em] text-white italic uppercase">Active Session</div>
                   </div>
                 </motion.div>
 
@@ -435,7 +435,7 @@ export function ArenaPlay() {
                     className="relative px-12 py-6 rounded-2xl bg-white text-black font-black text-[10px] uppercase tracking-[0.6em] italic shadow-2xl transition-all overflow-hidden flex items-center gap-6 group"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="relative z-10 group-hover:text-white transition-colors">Forge Neural Link</span>
+                    <span className="relative z-10 group-hover:text-white transition-colors">Reveal Answer</span>
                     <ChevronRight size={14} className="relative z-10 group-hover:text-white transition-all group-hover:translate-x-1" />
                   </motion.button>
                 </div>
@@ -449,13 +449,13 @@ export function ArenaPlay() {
                     onClick={() => handleGrade(false)}
                     className="flex-1 py-5 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 font-black text-[9px] uppercase tracking-[0.4em] italic hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all active:scale-95 flex items-center justify-center gap-3"
                   >
-                    <X size={14} strokeWidth={3} /> Re-Inject
+                    <X size={14} strokeWidth={3} /> Try Again
                   </button>
                   <button
                     onClick={() => handleGrade(true)}
                     className="flex-1 py-5 rounded-xl bg-cyan-500 text-black font-black text-[9px] uppercase tracking-[0.4em] italic hover:bg-cyan-400 transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(34,211,238,0.2)]"
                   >
-                    <Zap size={14} className="fill-current" /> Optimized
+                    <Zap size={14} className="fill-current" /> Remembered
                   </button>
                 </motion.div>
               )}
