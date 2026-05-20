@@ -488,27 +488,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('profiles').update({ onboarding_completed: true }).eq('id', profile.id).then(() => {});
         }
 
-        setState(prev => ({
-          ...prev,
-          user: {
-            id: profile.id,
-            name: profile.name,
-            school: profile.school,
-            orbHue,
-            onboardingCompleted: onboardingCompleted,
-            createdAt: profile.created_at,
-          },
-          totalXp: profile.total_xp,
-          streak: profile.streak,
-          momentum: profile.momentum,
-          focusSessions: focusRes.data || [],
-          // Merge local decks with Supabase decks to prevent loss
-          decks: [...remoteDecks, ...prev.decks.filter(ld => !remoteDecks.find(sd => sd.id === ld.id))],
-          cards: [...remoteCards, ...prev.cards.filter(lc => !remoteCards.find(sc => sc.id === lc.id))],
-          deckStudySessions: studyRes.data || [],
-          arenaSessions: arenaRes.data || [],
-          lastActiveDate: profile.last_active_date,
-        }));
+        setState(prev => {
+          const isSwitchingUsers = prev.user && 
+                                   prev.user.id !== 'local-operator' && 
+                                   prev.user.id !== 'debug-user' && 
+                                   prev.user.id !== profile.id;
+          
+          const finalDecks = isSwitchingUsers
+            ? remoteDecks
+            : [...remoteDecks, ...prev.decks.filter(ld => !remoteDecks.find(sd => sd.id === ld.id))];
+
+          const finalCards = isSwitchingUsers
+            ? remoteCards
+            : [...remoteCards, ...prev.cards.filter(lc => !remoteCards.find(sc => sc.id === lc.id))];
+
+          return {
+            ...prev,
+            user: {
+              id: profile.id,
+              name: profile.name,
+              school: profile.school,
+              orbHue,
+              onboardingCompleted: onboardingCompleted,
+              createdAt: profile.created_at,
+            },
+            totalXp: profile.total_xp,
+            streak: profile.streak,
+            momentum: profile.momentum,
+            focusSessions: focusRes.data || [],
+            decks: finalDecks,
+            cards: finalCards,
+            deckStudySessions: studyRes.data || [],
+            arenaSessions: arenaRes.data || [],
+            lastActiveDate: profile.last_active_date,
+          };
+        });
       }
     } catch (err) {
       console.error('Error syncing with Supabase:', err);
