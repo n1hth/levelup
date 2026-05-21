@@ -297,13 +297,13 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[clamp(2rem,5.2vw,5rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
+            className="text-[clamp(2.5rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
           >
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30">
-              Become More Than Yesterday.
+              Greatness Isn't Given.
             </span>
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500">
-              ASCEND.
+              It's Ascended.
             </span>
           </motion.h1>
 
