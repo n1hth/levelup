@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { QuickStart } from '@/src/components/QuickStart';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════
 // REVEAL — Fade in on scroll
@@ -297,7 +297,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[clamp(2.5rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
+            className="text-[clamp(1.75rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
           >
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30">
               Greatness Isn't Given.
@@ -375,9 +375,10 @@ export default function Landing() {
             </Reveal>
           </div>
 
-          {/* Showcase Layout: List + Shared Preview Container */}
-          <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
-            
+          {/* Showcase Layout: Dual Layout (Responsive Mobile Card vs Desktop Split Column) */}
+          
+          {/* 1. Desktop Layout (Large screens only) */}
+          <div className="hidden lg:flex flex-row gap-10 lg:gap-16 items-start w-full">
             {/* Left Column: Capability List */}
             <div className="w-full lg:w-1/2 space-y-0">
               {CAPABILITIES.map((cap, i) => {
@@ -416,7 +417,7 @@ export default function Landing() {
               <div className="border-t border-white/[0.04]" />
             </div>
 
-            {/* Right Column / Bottom: Shared Fixed aspect-ratio Image Showcase */}
+            {/* Right Column: Shared Fixed aspect-ratio Image Showcase */}
             <div className="w-full lg:w-1/2 lg:sticky lg:top-28">
               <Reveal delay={0.15}>
                 <div className="w-full aspect-[16/10] bg-[#05070e] border border-white/10 rounded-2xl relative overflow-hidden group/img shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-3xl">
@@ -444,7 +445,81 @@ export default function Landing() {
                 </div>
               </Reveal>
             </div>
+          </div>
 
+          {/* 2. Mobile & Tablet Carousel Layout (Below 1024px) */}
+          <div className="flex lg:hidden flex-col items-center gap-6 w-full">
+            <Reveal className="w-full">
+              {/* Unified Feature Card */}
+              <div className="w-full bg-white/[0.02] border border-white/10 p-5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-3xl shadow-xl">
+                {/* Top: Image Preview */}
+                <div className="w-full aspect-[16/10] bg-[#05070e] border border-white/5 rounded-2xl relative overflow-hidden mb-5">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-50" />
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeCapIndex}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 flex flex-col items-center justify-center p-4"
+                    >
+                      <div className="text-white/20 text-[9px] font-mono tracking-widest uppercase flex flex-col items-center gap-2 text-center select-none">
+                        <div className="w-6 h-6 rounded-full border-2 border-white/5 border-t-cyan-400 animate-spin" />
+                        <span>[ {CAPABILITIES[activeCapIndex].name.toUpperCase()} PREVIEW ]</span>
+                        <span className="text-[7px] text-white/10 tracking-widest mt-1">960 × 600px (16:10)</span>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Bottom: Feature Info */}
+                <div className="space-y-2 px-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-mono font-black text-cyan-400 bg-cyan-400/10 px-2.5 py-0.5 rounded-full border border-cyan-400/20 uppercase tracking-widest italic">
+                      {CAPABILITIES[activeCapIndex].id}
+                    </span>
+                    <h3 className="text-base font-black italic uppercase tracking-wider text-white">
+                      {CAPABILITIES[activeCapIndex].name}
+                    </h3>
+                  </div>
+                  <p className="text-[13px] text-white/50 leading-relaxed pl-0.5">
+                    {CAPABILITIES[activeCapIndex].brief}
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Navigation Dots & Chevron Arrows */}
+            <div className="flex items-center justify-between w-full px-4 mt-2">
+              <button
+                onClick={() => setActiveCapIndex((prev) => (prev - 1 + CAPABILITIES.length) % CAPABILITIES.length)}
+                className="p-3.5 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] active:scale-90 transition-all text-white/70 hover:text-white shadow-lg"
+                aria-label="Previous capability"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {/* Dots */}
+              <div className="flex items-center gap-2">
+                {CAPABILITIES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveCapIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${i === activeCapIndex ? 'w-5.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'w-1.5 bg-white/20'}`}
+                    aria-label={`Go to feature ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={() => setActiveCapIndex((prev) => (prev + 1) % CAPABILITIES.length)}
+                className="p-3.5 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] active:scale-90 transition-all text-white/70 hover:text-white shadow-lg"
+                aria-label="Next capability"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </section>
