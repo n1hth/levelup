@@ -20,7 +20,7 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     title: "SYSTEM INITIALIZED",
-    content: "Welcome to LevelUp. You have been selected by the System to level up your potential. Let's synchronize your interface.",
+    content: "Welcome to Ascend. You have been selected by the System to ascend your potential. Let's synchronize your interface.",
     position: 'center'
   },
   {

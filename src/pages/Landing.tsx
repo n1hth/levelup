@@ -268,7 +268,7 @@ export default function Landing() {
               }}
             />
             <span className="text-[13px] font-black tracking-[0.12em] uppercase italic">
-              Level<span className="text-cyan-400">Up</span>
+              Ascend
             </span>
           </div>
           <button
@@ -300,10 +300,10 @@ export default function Landing() {
             className="text-[clamp(3rem,8vw,7rem)] font-black italic tracking-[-0.04em] leading-[0.9] mb-5"
           >
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30">
-              Study Smarter.
+              Become More Than Yesterday.
             </span>
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500">
-              Level Up.
+              ASCEND.
             </span>
           </motion.h1>
 
@@ -314,8 +314,9 @@ export default function Landing() {
             transition={{ duration: 1, delay: 0.5 }}
             className="text-sm sm:text-base md:text-lg text-white/35 max-w-md md:max-w-lg leading-relaxed mb-10"
           >
-            The gamified study system that turns every session into a
-            rank-climbing, duel-winning, knowledge-building obsession.
+            Every session. Every review. Every victory.
+            <br />
+            Makes you stronger.
           </motion.p>
 
           {/* CTA */}
@@ -335,11 +336,11 @@ export default function Landing() {
             >
               {/* Shimmer sweep */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.12] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-              <span className="relative z-10">Get Lifetime Access</span>
+              <span className="relative z-10">BEGIN YOUR ASCENSION</span>
               <ArrowRight size={15} className="relative z-10 transition-transform group-hover:translate-x-0.5" />
             </button>
             <span className="text-[10px] text-white/20 tracking-[0.2em] font-medium uppercase">
-              $10 once · No subscription
+              Lifetime Access • Own It Forever
             </span>
           </motion.div>
         </div>
@@ -525,11 +526,11 @@ export default function Landing() {
               style={{ background: 'radial-gradient(circle at 35% 35%, white, oklch(0.86 0.4 220) 60%, oklch(0.15 0.55 220))' }}
             />
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-white/20 italic">
-              Level<span className="text-cyan-400/30">Up</span>
+              Ascend
             </span>
           </div>
           <p className="text-[9px] text-white/10 font-mono tracking-wider">
-            © 2025 LevelUp. All rights reserved.
+            © 2025 Ascend. All rights reserved.
           </p>
         </div>
       </footer>
