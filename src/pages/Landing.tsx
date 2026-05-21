@@ -375,64 +375,76 @@ export default function Landing() {
             </Reveal>
           </div>
 
-          {/* Capability list */}
-          <div className="space-y-0">
-            {CAPABILITIES.map((cap, i) => {
-              const isActive = i === activeCapIndex;
-              return (
-                <Reveal key={cap.id} delay={i * 0.06}>
-                  <div 
-                    onClick={() => setActiveCapIndex(i)}
-                    className={`group flex flex-col gap-4 py-6 md:py-7 border-t border-white/[0.04] cursor-pointer transition-colors duration-500 ${isActive ? 'bg-white/[0.02] border-white/[0.1] px-4 rounded-xl -mx-4' : 'hover:border-white/[0.08]'}`}
-                  >
-                    <div className="flex items-start sm:items-center gap-5 sm:gap-8">
-                      {/* Number */}
-                      <span className={`text-[11px] font-mono flex-shrink-0 pt-1 sm:pt-0 transition-colors duration-500 ${isActive ? 'text-cyan-400' : 'text-white/[0.1] group-hover:text-cyan-400/40'}`}>
-                        {cap.id}
-                      </span>
+          {/* Showcase Layout: List + Shared Preview Container */}
+          <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
+            
+            {/* Left Column: Capability List */}
+            <div className="w-full lg:w-1/2 space-y-0">
+              {CAPABILITIES.map((cap, i) => {
+                const isActive = i === activeCapIndex;
+                return (
+                  <Reveal key={cap.id} delay={i * 0.06}>
+                    <div 
+                      onClick={() => setActiveCapIndex(i)}
+                      className={`group flex flex-col gap-2.5 py-5 border-t border-white/[0.04] cursor-pointer transition-all duration-500 ${isActive ? 'bg-white/[0.02] border-white/[0.1] px-4 rounded-xl -mx-4' : 'hover:border-white/[0.08]'}`}
+                    >
+                      <div className="flex items-center gap-5">
+                        {/* Number */}
+                        <span className={`text-[11px] font-mono transition-colors duration-500 ${isActive ? 'text-cyan-400 font-bold' : 'text-white/[0.1] group-hover:text-cyan-400/40'}`}>
+                          {cap.id}
+                        </span>
 
-                      {/* Content */}
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-8">
-                        <h3 className={`text-lg sm:text-xl font-bold tracking-tight transition-colors duration-500 ${isActive ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
+                        {/* Title */}
+                        <h3 className={`text-lg font-bold tracking-tight transition-colors duration-500 ${isActive ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>
                           {cap.name}
                         </h3>
-                        <p className={`text-[13px] sm:text-right max-w-xs leading-relaxed transition-colors duration-500 flex-shrink-0 ${isActive ? 'text-white/60' : 'text-white/20 group-hover:text-white/35'}`}>
-                          {cap.brief}
-                        </p>
+
+                        {/* Arrow hint */}
+                        <div className={`ml-auto hidden sm:flex w-5 items-center justify-center transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0'}`}>
+                          <ArrowRight size={14} className="text-cyan-400/50" />
+                        </div>
                       </div>
 
-                      {/* Arrow hint */}
-                      <div className={`hidden sm:flex w-5 flex-shrink-0 items-center justify-center transition-all duration-500 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0'}`}>
-                        <ArrowRight size={14} className="text-cyan-400/50" />
-                      </div>
+                      {/* Brief description */}
+                      <p className={`text-[13px] leading-relaxed transition-colors duration-500 pl-8 ${isActive ? 'text-white/60' : 'text-white/20 group-hover:text-white/35'}`}>
+                        {cap.brief}
+                      </p>
                     </div>
+                  </Reveal>
+                );
+              })}
+              <div className="border-t border-white/[0.04]" />
+            </div>
 
-                    {/* Image Placeholder */}
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                          className="overflow-hidden"
-                        >
-                          <div className="w-full h-32 sm:h-48 mt-2 bg-[#060812] border border-white/10 rounded-xl flex flex-col items-center justify-center relative overflow-hidden group/img">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-50" />
-                            <div className="text-white/20 text-[10px] font-mono tracking-widest uppercase flex flex-col items-center gap-3">
-                              <div className="w-8 h-8 rounded-full border border-white/10 border-t-cyan-400 animate-spin" />
-                              <span>[ IMAGE_PLACEHOLDER ]</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </Reveal>
-              );
-            })}
-            {/* Bottom border */}
-            <div className="border-t border-white/[0.04]" />
+            {/* Right Column / Bottom: Shared Fixed aspect-ratio Image Showcase */}
+            <div className="w-full lg:w-1/2 lg:sticky lg:top-28">
+              <Reveal delay={0.15}>
+                <div className="w-full aspect-[16/10] bg-[#05070e] border border-white/10 rounded-2xl relative overflow-hidden group/img shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-3xl">
+                  {/* Glowing background hint */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-50" />
+                  
+                  {/* Inner dynamic content with smooth cross-fade */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeCapIndex}
+                      initial={{ opacity: 0, scale: 0.97, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 1.03, y: -4 }}
+                      transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+                      className="absolute inset-0 flex flex-col items-center justify-center p-6"
+                    >
+                      {/* Image Placeholder */}
+                      <div className="text-white/25 text-[10px] font-mono tracking-widest uppercase flex flex-col items-center gap-3 select-none text-center">
+                        <div className="w-7 h-7 rounded-full border-2 border-white/5 border-t-cyan-400 animate-spin" />
+                        <span>[ {CAPABILITIES[activeCapIndex].name.toUpperCase()} PREVIEW ]</span>
+                        <span className="text-[8px] text-white/10 tracking-[0.2em] font-sans font-medium mt-1">Recommended: 960 × 600px (16:10)</span>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </Reveal>
+            </div>
+
           </div>
         </div>
       </section>
