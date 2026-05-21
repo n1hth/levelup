@@ -481,8 +481,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('profiles').update({ orb_hue: orbHue }).eq('id', profile.id).then(() => {});
         }
 
-        // Self-healing Onboarding completed check: if user already has decks or cards, they completed onboarding!
-        let onboardingCompleted = profile.onboarding_completed || remoteDecks.length > 0 || remoteCards.length > 0;
+        // Self-healing Onboarding completed check: if user already has decks or cards, or their profile is older than 2 minutes, they completed onboarding!
+        const createdTime = profile.created_at ? new Date(profile.created_at).getTime() : Date.now();
+        const isExistingUser = (Date.now() - createdTime) > 2 * 60 * 1000; // 2 minutes
+        
+        let onboardingCompleted = profile.onboarding_completed || remoteDecks.length > 0 || remoteCards.length > 0 || isExistingUser;
         if (onboardingCompleted && !profile.onboarding_completed) {
           // Sync it back to the profile table in the background
           supabase.from('profiles').update({ onboarding_completed: true }).eq('id', profile.id).then(() => {});
