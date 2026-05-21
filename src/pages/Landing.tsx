@@ -451,7 +451,7 @@ export default function Landing() {
           <div className="flex lg:hidden flex-col items-center gap-6 w-full">
             <Reveal className="w-full">
               {/* Unified Feature Card */}
-              <div className="w-full bg-white/[0.02] border border-white/10 p-5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-3xl shadow-xl">
+              <div className="w-full bg-white/[0.02] border border-white/10 p-5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-3xl shadow-xl touch-pan-y">
                 {/* Top: Image Preview */}
                 <div className="w-full aspect-[16/10] bg-[#05070e] border border-white/5 rounded-2xl relative overflow-hidden mb-5">
                   <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-50" />
@@ -483,7 +483,7 @@ export default function Landing() {
                       {CAPABILITIES[activeCapIndex].name}
                     </h3>
                   </div>
-                  <p className="text-[13px] text-white/50 leading-relaxed pl-0.5">
+                  <p className="text-[13px] text-white/50 leading-relaxed pl-0.5 h-[60px] sm:h-[42px] overflow-hidden">
                     {CAPABILITIES[activeCapIndex].brief}
                   </p>
                 </div>
