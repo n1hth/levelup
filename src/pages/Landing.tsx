@@ -75,6 +75,11 @@ function Aurora() {
         @media (min-width: 768px) {
           .aurora-blob { filter: blur(160px); }
         }
+        @media (max-width: 767px) {
+          .aurora-blob {
+            animation: none !important;
+          }
+        }
         @keyframes drift1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
           33% { transform: translate(80px, -60px) scale(1.15); }
@@ -297,7 +302,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[clamp(1.75rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
+            className="text-[clamp(2.2rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
           >
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30">
               Progress Has A Shape.
@@ -312,7 +317,7 @@ export default function Landing() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="text-sm sm:text-base md:text-lg text-white/35 max-w-md md:max-w-lg leading-relaxed mb-10"
+            className="text-[16px] sm:text-base md:text-lg text-white/35 max-w-md md:max-w-lg leading-relaxed mb-10"
           >
             The evolution engine for ambitious minds.
           </motion.p>
@@ -474,14 +479,14 @@ export default function Landing() {
                 {/* Bottom: Feature Info */}
                 <div className="space-y-2 px-1">
                   <div className="flex items-center gap-3">
-                    <span className="text-[9px] font-mono font-black text-cyan-400 bg-cyan-400/10 px-2.5 py-0.5 rounded-full border border-cyan-400/20 uppercase tracking-widest italic">
+                    <span className="text-[10px] font-mono font-black text-cyan-400 bg-cyan-400/10 px-2.5 py-0.5 rounded-full border border-cyan-400/20 uppercase tracking-widest italic">
                       {CAPABILITIES[activeCapIndex].id}
                     </span>
-                    <h3 className="text-base font-black italic uppercase tracking-wider text-white">
+                    <h3 className="text-[17px] sm:text-base font-black italic uppercase tracking-wider text-white">
                       {CAPABILITIES[activeCapIndex].name}
                     </h3>
                   </div>
-                  <p className="text-[13px] text-white/50 leading-relaxed pl-0.5 h-[60px] sm:h-[42px] overflow-hidden">
+                  <p className="text-[15px] sm:text-[14px] text-white/50 leading-relaxed pl-0.5 h-[76px] sm:h-[48px] overflow-hidden">
                     {CAPABILITIES[activeCapIndex].brief}
                   </p>
                 </div>
