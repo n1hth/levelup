@@ -932,7 +932,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="text-[14px] font-black italic text-white tracking-[0.5em] drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"
                   >
-                    {evolutionTrigger === 'rank' ? 'RANK EVOLUTION' : 'LEVEL ASCENDED'}
+                    {evolutionTrigger === 'rank' ? 'RANK EVOLUTION' : 'LEVEL EVOLVED'}
                   </motion.span>
                   <div className="flex items-center gap-2 mt-2">
                      <span className="text-[10px] font-bold text-cyan-400 tracking-widest">{evolutionTrigger === 'rank' ? rank : `LEVEL ${xp.level}`}</span>
