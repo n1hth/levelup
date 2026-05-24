@@ -257,7 +257,7 @@ export default function Landing() {
     <div className="min-h-screen bg-[#030309] text-white font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30 selection:text-white">
 
       {/* ───────── NAV ───────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-5 sm:px-8 py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 px-5 sm:px-8 py-4 bg-[#030309]/80 backdrop-blur-md border-b border-white/[0.04] shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div
@@ -267,7 +267,7 @@ export default function Landing() {
                 boxShadow: '0 0 14px oklch(0.6 0.3 220 / 0.5)',
               }}
             />
-            <span className="text-[13px] font-black tracking-[0.12em] uppercase italic">
+            <span className="text-[15px] font-black tracking-[0.12em] uppercase italic">
               Orbis
             </span>
           </div>
@@ -589,7 +589,7 @@ export default function Landing() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.12] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-              <span className="relative z-10">Awaken Your System</span>
+              <span className="relative z-10">ENTER ORBIS</span>
               <ArrowRight size={15} className="relative z-10 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </Reveal>
