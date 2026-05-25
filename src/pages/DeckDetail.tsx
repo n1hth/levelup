@@ -57,88 +57,98 @@ export function DeckDetail() {
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <section className="relative">
-          <div className="flex flex-col  items-start  justify-between gap-8 border-b border-white/5 pb-8">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className={cn("px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest italic border bg-white/5 border-white/10 text-white")}>
-                  {deck.subject || 'General Subject'}
-                </div>
-                <div className="h-px w-8 bg-white/10" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">{stats.total} Cards</span>
+        {/* Compact Split Header & Stats Section */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 border-b border-white/5 pb-8">
+          
+          {/* Left Column: Icon & Meta Info (Title, Category, Tags, Description) */}
+          <div className="md:col-span-5 flex items-start gap-4">
+            {/* The 3D Gradient Icon */}
+            <div className={cn("w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_10px_30px_rgba(0,229,255,0.15)] shrink-0", deck.color || 'from-cyan-400 to-blue-500')}>
+               <Box size={28} className="drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" />
+            </div>
+
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest italic border bg-white/5 border-white/10 text-white">
+                  {deck.subject || 'General'}
+                </span>
+                <span className="text-[8.5px] font-mono font-black text-cyan-400/80 bg-cyan-400/10 px-2 py-0.5 rounded-md border border-cyan-400/20 uppercase tracking-widest italic">
+                  {stats.total} Cards
+                </span>
               </div>
               
-              <h1 className="text-5xl  font-black text-white tracking-tighter italic uppercase leading-none mb-6">
+              <h1 className="text-3xl font-black text-white tracking-tighter italic uppercase leading-none truncate">
                 {deck.title}
               </h1>
-              
-              <div className="flex items-center gap-3">
+
+              <div className="flex flex-wrap items-center gap-1">
                 {deck.tags.map(tag => (
-                  <span key={tag} className="text-[8px] font-black text-white/40 border border-white/10 px-3 py-1 rounded-full uppercase tracking-widest hover:text-white hover:border-white/20 transition-all cursor-default italic">
+                  <span key={tag} className="text-[7.5px] font-black text-white/40 border border-white/5 px-2 py-0.5 rounded-full uppercase tracking-widest hover:text-white hover:border-white/15 transition-all cursor-default italic">
                     #{tag}
                   </span>
                 ))}
               </div>
-            </div>
 
-            <div className={cn("w-20 h-20   rounded-3xl bg-gradient-to-br flex items-center justify-center text-white border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] shrink-0", deck.color || 'from-cyan-400 to-blue-500')}>
-               <Box size={32} className=" drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+              {deck.description && (
+                <p className="text-[10px] font-medium text-white/35 leading-relaxed italic max-w-sm pt-1">
+                  {deck.description}
+                </p>
+              )}
             </div>
           </div>
 
-          {deck.description && (
-            <p className="text-[11px] font-medium text-white/40 mt-6 leading-relaxed italic max-w-xl">
-              {deck.description}
-            </p>
-          )}
-        </section>
-
-        {/* Diagnostics Grid */}
-        <section className="grid grid-cols-2  gap-6">
-           <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cards</p>
-             <p className="text-2xl font-black text-white tracking-tighter italic">{stats.total}</p>
-           </div>
-           <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Due Today</p>
-             <p className={cn("text-2xl font-black tracking-tighter italic", stats.due > 0 ? "text-cyan-400" : "text-white/40")}>
-               {stats.due}
-             </p>
-           </div>
-           <div className="space-y-1">
-             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Mastery</p>
-             <p className="text-2xl font-black text-white tracking-tighter italic">{stats.mastery}%</p>
-           </div>
-           <div className="flex items-end pb-1">
-             <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                   initial={{ width: 0 }}
-                   animate={{ width: `${stats.mastery}%` }}
-                   className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
-                />
+          {/* Right Column: Diagnostics Stats & Study Raid Button */}
+          <div className="md:col-span-7 flex flex-col justify-between gap-5 bg-white/[0.015] border border-white/5 rounded-3xl p-5 backdrop-blur-2xl">
+             
+             {/* Diagnostics Stats */}
+             <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Total Cards</p>
+                  <p className="text-xl font-black text-white tracking-tighter italic">{stats.total}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Due Today</p>
+                  <p className={cn("text-xl font-black tracking-tighter italic", stats.due > 0 ? "text-cyan-400" : "text-white/40")}>
+                    {stats.due}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] italic">Mastery</p>
+                  <p className="text-xl font-black text-white tracking-tighter italic">{stats.mastery}%</p>
+                </div>
              </div>
-           </div>
-        </section>
 
-        {/* Sync Action */}
-        <section className="pt-4">
-           {stats.due > 0 ? (
-             <motion.button
-               whileHover={{ scale: 1.01 }}
-               whileTap={{ scale: 0.99 }}
-               onClick={() => navigate(`/study/${deck.id}`)}
-               className="w-full h-16 rounded-2xl bg-white text-black font-black text-[11px] uppercase tracking-[0.5em] italic flex items-center justify-center gap-4 shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-cyan-400 transition-colors"
-             >
-               <Zap size={18} fill="currentColor" />
-               Start Study Raid
-             </motion.button>
-           ) : (
-             <div className="w-full h-16 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center justify-center gap-4 group">
-                <div className="w-2 h-2 rounded-full bg-cyan-400/20 group-hover:bg-cyan-400 transition-colors" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic group-hover:text-white/40 transition-colors">Deck Mastered</span>
+             {/* Mastery progress bar */}
+             <div className="flex items-center gap-3">
+               <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${stats.mastery}%` }}
+                     className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
+                  />
+               </div>
              </div>
-           )}
+
+             {/* Action Button: Start Study Raid */}
+             <div className="pt-0.5">
+                {stats.due > 0 ? (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => navigate(`/study/${deck.id}`)}
+                    className="w-full h-11 rounded-xl bg-white text-black font-black text-[10px] uppercase tracking-[0.4em] italic flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(255,255,255,0.08)] hover:bg-cyan-400 transition-colors"
+                  >
+                    <Zap size={13} fill="currentColor" />
+                    Start Study Raid
+                  </motion.button>
+                ) : (
+                  <div className="w-full h-11 rounded-xl border border-white/5 bg-white/[0.01] flex items-center justify-center gap-3">
+                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/20" />
+                     <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em] italic">Deck Mastered</span>
+                  </div>
+                )}
+             </div>
+          </div>
         </section>
 
         {/* Explorer */}
@@ -210,15 +220,27 @@ export function DeckDetail() {
               {!confirmDelete ? (
                 <button
                   onClick={() => setConfirmDelete(true)}
-                  className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] hover:text-red-500 transition-colors italic underline underline-offset-4 decoration-white/5"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/40 text-[9px] font-black uppercase tracking-widest italic transition-all duration-300 active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.05)] pointer-events-auto"
                 >
+                  <Trash2 size={12} />
                   Delete Deck
                 </button>
               ) : (
-                <div className="flex items-center gap-4">
-                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest italic animate-pulse">Confirm?</span>
-                  <button onClick={() => setConfirmDelete(false)} className="text-[8px] font-black text-white/40 uppercase italic">Abort</button>
-                  <button onClick={handleDeleteDeck} className="px-4 py-1.5 rounded-full bg-red-600 text-white text-[8px] font-black uppercase italic shadow-lg shadow-red-600/20">Confirm Delete</button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-mono font-black text-red-500 uppercase tracking-widest italic animate-pulse">Confirm?</span>
+                  <button 
+                    onClick={() => setConfirmDelete(false)} 
+                    className="px-3.5 py-2 rounded-xl border border-white/5 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 text-[9px] font-black uppercase italic transition-all pointer-events-auto"
+                  >
+                    Abort
+                  </button>
+                  <button 
+                    onClick={handleDeleteDeck} 
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[9px] font-black uppercase italic shadow-lg shadow-red-600/30 hover:shadow-red-500/40 transition-all duration-300 pointer-events-auto active:scale-95"
+                  >
+                    <Trash2 size={12} />
+                    Confirm Delete
+                  </button>
                 </div>
               )}
            </div>
