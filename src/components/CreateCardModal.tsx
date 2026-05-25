@@ -52,35 +52,41 @@ export function CreateCardModal({ deckId, onClose }: CreateCardModalProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center px-4 "
-      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(16px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="w-full max-w-md bg-white rounded-[24px] p-6 relative shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
+        className="w-full max-w-md bg-[#0A0E17]/95 border border-white/10 rounded-[28px] p-6 relative shadow-[0_30px_80px_rgba(0,0,0,0.8),0_0_50px_rgba(6,182,212,0.15)] backdrop-blur-3xl"
       >
-        <div className="flex items-center justify-between mb-5">
+        {/* Glow accent */}
+        <div className="absolute inset-0 rounded-[28px] bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+
+        <div className="flex items-center justify-between mb-5 relative z-10">
           <div>
-            <h2 className="text-xl font-black text-blue-900 tracking-tighter uppercase drop-shadow-sm">Add Cards</h2>
+            <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/50 tracking-tighter uppercase italic">Add Cards</h2>
             {addedCount > 0 && (
-              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-0.5 drop-shadow-sm">
+              <p className="text-[10px] font-mono font-black text-emerald-400 uppercase tracking-widest mt-0.5 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
                 {addedCount} card{addedCount !== 1 ? 's' : ''} added ✓
               </p>
             )}
           </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors">
-            <X size={20} />
+          <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300">
+            <X size={18} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 p-1 border-2 border-blue-50 rounded-2xl mb-5 bg-blue-50/30">
+        <div className="grid grid-cols-2 gap-1.5 p-1 border border-white/5 rounded-2xl mb-6 bg-white/[0.02] relative z-10">
           {(['single', 'bulk'] as const).map(m => (
             <button key={m} onClick={() => setMode(m)}
-              className={cn("py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300",
-                mode === m ? "bg-blue-600 text-white shadow-lg" : "text-blue-500 hover:bg-white/40")}>
-              {m === 'single' ? <Plus size={16} /> : <Layers size={16} />}
+              className={cn("py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 pointer-events-auto",
+                mode === m 
+                  ? "bg-gradient-to-r from-cyan-500/80 to-blue-500/80 text-white shadow-[0_0_20px_rgba(34,211,238,0.25)] border border-cyan-400/20" 
+                  : "text-white/40 hover:bg-white/[0.03] hover:text-white/70 border border-transparent")}
+            >
+              {m === 'single' ? <Plus size={15} /> : <Layers size={15} />}
               <span className="text-[10px] font-black uppercase tracking-widest">{m === 'single' ? 'Single' : 'Bulk'}</span>
             </button>
           ))}
@@ -88,53 +94,88 @@ export function CreateCardModal({ deckId, onClose }: CreateCardModalProps) {
 
         <AnimatePresence mode="wait">
           {mode === 'single' ? (
-            <motion.div key="single" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
+            <motion.div key="single" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4 relative z-10">
               <div>
-                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-900 mb-2 block">Front</label>
-                <textarea placeholder="Question or term..." value={front} onChange={e => setFront(e.target.value)} rows={3} autoFocus
-                  className={cn("w-full bg-blue-50/20 border-2 rounded-2xl py-3 px-4 outline-none focus:bg-white transition-all text-blue-950 placeholder:text-blue-400 font-bold text-sm resize-none",
-                    errors.front ? "border-red-200" : "border-transparent focus:border-blue-400")} />
-                {errors.front && <p className="text-[9px] text-red-500 font-black mt-1 ml-1">{errors.front}</p>}
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/80 mb-2 block">Front</label>
+                <textarea 
+                  placeholder="Question or term..." 
+                  value={front} 
+                  onChange={e => setFront(e.target.value)} 
+                  rows={3} 
+                  autoFocus
+                  className={cn("w-full bg-white/[0.02] border border-white/10 rounded-2xl py-3 px-4 outline-none focus:bg-white/[0.04] text-white placeholder:text-white/20 font-medium text-sm resize-none transition-all",
+                    errors.front ? "border-red-500/50 focus:border-red-500" : "focus:border-cyan-400/50")} 
+                />
+                {errors.front && <p className="text-[9px] text-red-400 font-mono mt-1 ml-1">{errors.front}</p>}
               </div>
               <div>
-                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-900 mb-2 block">Back</label>
-                <textarea placeholder="Answer or definition..." value={back} onChange={e => setBack(e.target.value)} rows={3}
-                  className={cn("w-full bg-blue-50/20 border-2 rounded-2xl py-3 px-4 outline-none focus:bg-white transition-all text-blue-950 placeholder:text-blue-400 font-bold text-sm resize-none",
-                    errors.back ? "border-red-200" : "border-transparent focus:border-blue-400")} />
-                {errors.back && <p className="text-[9px] text-red-500 font-black mt-1 ml-1">{errors.back}</p>}
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400/80 mb-2 block">Back</label>
+                <textarea 
+                  placeholder="Answer or definition..." 
+                  value={back} 
+                  onChange={e => setBack(e.target.value)} 
+                  rows={3}
+                  className={cn("w-full bg-white/[0.02] border border-white/10 rounded-2xl py-3 px-4 outline-none focus:bg-white/[0.04] text-white placeholder:text-white/20 font-medium text-sm resize-none transition-all",
+                    errors.back ? "border-red-500/50 focus:border-red-500" : "focus:border-cyan-400/50")} 
+                />
+                {errors.back && <p className="text-[9px] text-red-400 font-mono mt-1 ml-1">{errors.back}</p>}
               </div>
-              <div className="flex gap-3">
-                <button onClick={handleAddSingle} className="btn-system flex-1 py-3 text-sm shadow-lg"><Plus size={16} /> Add Card</button>
-                <button onClick={onClose} className="px-5 py-3 rounded-2xl border-2 border-blue-50 bg-white text-blue-600 font-black text-sm hover:bg-blue-50 transition-all">Done</button>
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={handleAddSingle} 
+                  className="flex-1 py-3 rounded-2xl font-black text-sm tracking-[0.1em] uppercase text-white flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.35)]"
+                  style={{ background: 'linear-gradient(135deg, oklch(0.68 0.22 220) 0%, oklch(0.48 0.28 240) 100%)' }}
+                >
+                  <Plus size={15} /> Add Card
+                </button>
+                <button 
+                  onClick={onClose} 
+                  className="px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-white/80 font-black text-sm hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                >
+                  Done
+                </button>
               </div>
             </motion.div>
           ) : (
-            <motion.div key="bulk" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-              <div className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl p-3 leading-relaxed uppercase tracking-wider">
+            <motion.div key="bulk" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4 relative z-10">
+              <div className="text-[10px] font-black text-cyan-400/90 bg-cyan-400/5 border border-cyan-400/15 rounded-xl p-3 leading-relaxed uppercase tracking-wider font-mono">
                 Format: First line = Front, rest = Back.<br />Separate cards with a blank line.
               </div>
-              <textarea placeholder={`What is photosynthesis?\nPlants convert sunlight to energy.\n\nWhat is mitosis?\nCell division producing two identical cells.`}
-                value={bulkText} onChange={e => { setBulkText(e.target.value); setBulkPreview([]); }} rows={7}
-                className="w-full bg-blue-50/20 border-2 border-transparent rounded-2xl py-3 px-4 outline-none focus:border-blue-400 focus:bg-white transition-all text-blue-950 placeholder:text-blue-400 font-bold text-sm resize-none" />
+              <textarea 
+                placeholder={`What is photosynthesis?\nPlants convert sunlight to energy.\n\nWhat is mitosis?\nCell division producing two identical cells.`}
+                value={bulkText} 
+                onChange={e => { setBulkText(e.target.value); setBulkPreview([]); }} 
+                rows={7}
+                className="w-full bg-white/[0.02] border border-white/10 rounded-2xl py-3 px-4 outline-none focus:bg-white/[0.04] focus:border-cyan-400/50 text-white placeholder:text-white/20 font-medium text-sm resize-none transition-all" 
+              />
               {bulkPreview.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-blue-900 uppercase tracking-widest">{bulkPreview.length} cards detected:</p>
-                  <div className="space-y-1 max-h-32 overflow-y-auto no-scrollbar">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black text-cyan-400/80 uppercase tracking-widest font-mono">{bulkPreview.length} cards detected:</p>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto no-scrollbar">
                     {bulkPreview.slice(0, 3).map((c, i) => (
-                      <div key={i} className="text-[10px] text-blue-700 bg-blue-50/50 border border-blue-50 rounded-xl px-3 py-2 truncate font-bold">
-                        <span className="text-blue-500">{c.front.slice(0, 30)}…</span>
-                        <ChevronRight size={10} className="inline mx-1 text-blue-300" />
-                        {c.back.slice(0, 30)}
+                      <div key={i} className="text-[10px] text-white/70 bg-white/[0.02] border border-white/5 rounded-xl px-3 py-2.5 truncate font-bold flex items-center justify-between">
+                        <span className="text-cyan-400">{c.front.slice(0, 25)}…</span>
+                        <ChevronRight size={10} className="text-white/20 mx-1 shrink-0" />
+                        <span className="text-white/50">{c.back.slice(0, 25)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="flex gap-3">
-                <button onClick={bulkPreview.length === 0 ? handleBulkPreview : handleAddBulk} className="btn-system flex-1 py-3 text-sm shadow-lg">
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={bulkPreview.length === 0 ? handleBulkPreview : handleAddBulk} 
+                  className="flex-1 py-3 rounded-2xl font-black text-sm tracking-[0.1em] uppercase text-white flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.35)]"
+                  style={{ background: 'linear-gradient(135deg, oklch(0.68 0.22 220) 0%, oklch(0.48 0.28 240) 100%)' }}
+                >
                   {bulkPreview.length === 0 ? 'Preview' : `Add ${bulkPreview.length} Cards`}
                 </button>
-                <button onClick={onClose} className="px-5 py-3 rounded-2xl border-2 border-blue-50 bg-white text-blue-600 font-black text-sm hover:bg-blue-50 transition-all">Done</button>
+                <button 
+                  onClick={onClose} 
+                  className="px-6 py-3 rounded-2xl border border-white/10 bg-white/5 text-white/80 font-black text-sm hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                >
+                  Done
+                </button>
               </div>
             </motion.div>
           )}
