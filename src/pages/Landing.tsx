@@ -310,7 +310,7 @@ export default function Landing() {
               Progress Has A Shape.
             </span>
             <span 
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[0.88] sm:leading-[0.85] -mt-[0.11em] sm:-mt-[0.06em] pb-[0.15em] drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]"
+              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[0.88] sm:leading-[0.85] -mt-[0.24em] sm:-mt-[0.22em] pb-[0.15em] drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]"
               style={{ whiteSpace: 'nowrap' }}
             >
               This Is Yours.
