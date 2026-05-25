@@ -303,10 +303,16 @@ export default function Landing() {
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="font-black italic tracking-[-0.04em] mb-5 flex flex-col items-center gap-1.5 sm:gap-0"
           >
-            <span className="block whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 text-[clamp(1.65rem,5.6vw,5.8rem)] leading-[1.05] sm:leading-[0.95]">
+            <span 
+              className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 text-[clamp(1.45rem,5.6vw,5.8rem)] leading-[1.05] sm:leading-[0.95]"
+              style={{ whiteSpace: 'nowrap' }}
+            >
               Progress Has A Shape.
             </span>
-            <span className="block whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.4rem,8.2vw,5.8rem)] leading-[1.05] sm:leading-[0.95]">
+            <span 
+              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.15rem,8.2vw,5.8rem)] leading-[1.05] sm:leading-[0.95]"
+              style={{ whiteSpace: 'nowrap' }}
+            >
               This Is Yours.
             </span>
           </motion.h1>
