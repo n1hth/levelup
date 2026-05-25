@@ -301,16 +301,16 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-full font-black italic tracking-[-0.04em] mb-5 flex flex-col items-center gap-1.5 sm:gap-0 px-2 sm:px-0"
+            className="w-full max-w-full font-black italic tracking-[-0.06em] mb-5 flex flex-col items-center gap-0 px-2 sm:px-0"
           >
             <span 
-              className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[1.05] sm:leading-[0.95]"
+              className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[0.88] sm:leading-[0.85] drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]"
               style={{ whiteSpace: 'nowrap' }}
             >
               Progress Has A Shape.
             </span>
             <span 
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[1.05] sm:leading-[0.95]"
+              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.1rem,6.8vw,5.8rem)] leading-[0.88] sm:leading-[0.85] -mt-[0.08em] sm:-mt-[0.04em] drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]"
               style={{ whiteSpace: 'nowrap' }}
             >
               This Is Yours.
