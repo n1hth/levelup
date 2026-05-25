@@ -67,6 +67,7 @@ export function Profile() {
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSeverConfirm, setShowSeverConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   
   // Custom system toast notification states
@@ -691,7 +692,7 @@ export function Profile() {
                 DELETE DATA
               </button>
               <button
-                onClick={() => signOut()}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="py-3.5 rounded-xl border border-white/5 bg-white/[0.03] text-white/60 font-black text-[9px] uppercase tracking-[0.2em] italic hover:bg-white/[0.05] hover:text-white transition-all shadow-2xl"
               >
                 LOGOUT
@@ -797,6 +798,52 @@ export function Profile() {
                 </button>
                 <button
                   onClick={() => setShowResetConfirm(false)}
+                  className="w-full py-4 rounded-xl border border-white/10 bg-white/[0.05] text-white/60 font-black text-[10px] uppercase tracking-[0.3em] italic hover:text-white transition-all shadow-2xl mt-1.5"
+                >
+                  CANCEL
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Logout Confirmation Modal ═══ */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center px-6 bg-black/90 backdrop-blur-2xl"
+            onClick={e => e.target === e.currentTarget && setShowLogoutConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="system-panel p-8 max-w-sm w-full shadow-2xl border-white/10 bg-black relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.05] to-transparent pointer-events-none" />
+              <div className="text-center relative z-10">
+                <div className="w-16 h-16 rounded-[1.8rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                  <Orbit size={32} className="text-cyan-400 animate-spin" style={{ animationDuration: '6s' }} />
+                </div>
+                <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-3">Exit Orbis?</h3>
+                <p className="text-[9px] font-black text-white/30 mb-8 leading-relaxed uppercase tracking-[0.2em] italic">
+                  Do you really want to sign out of the evolution engine?
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 relative z-10">
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    setShowLogoutConfirm(false);
+                  }}
+                  className="w-full py-4 rounded-xl bg-cyan-400 text-black font-black text-[10px] uppercase tracking-[0.3em] italic hover:bg-cyan-300 transition-all shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+                >
+                  LOGOUT
+                </button>
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
                   className="w-full py-4 rounded-xl border border-white/10 bg-white/[0.05] text-white/60 font-black text-[10px] uppercase tracking-[0.3em] italic hover:text-white transition-all shadow-2xl mt-1.5"
                 >
                   CANCEL

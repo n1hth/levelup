@@ -61,6 +61,9 @@ function AppContent() {
   }
 
   if (!state.user) {
+    if (location.pathname !== '/') {
+      return <Navigate to="/" replace />;
+    }
     return <Landing />;
   }
 
