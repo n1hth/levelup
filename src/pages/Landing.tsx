@@ -297,17 +297,16 @@ export default function Landing() {
             <HeroOrb />
           </div>
 
-          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[clamp(2.2rem,6.2vw,5.8rem)] font-black italic tracking-[-0.04em] leading-[0.95] mb-5"
+            className="font-black italic tracking-[-0.04em] mb-5 flex flex-col items-center gap-1.5 sm:gap-0"
           >
-            <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30">
+            <span className="block whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/30 text-[clamp(1.65rem,5.6vw,5.8rem)] leading-[1.05] sm:leading-[0.95]">
               Progress Has A Shape.
             </span>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500">
+            <span className="block whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 text-[clamp(2.4rem,8.2vw,5.8rem)] leading-[1.05] sm:leading-[0.95]">
               This Is Yours.
             </span>
           </motion.h1>
@@ -363,10 +362,10 @@ export default function Landing() {
           {/* Header — split layout */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14 md:mb-20">
             <Reveal>
-              <h2 className="text-3xl sm:text-4xl md:text-[3.2rem] font-black italic tracking-[-0.03em] leading-[1.05]">
+              <h2 className="text-[clamp(1.75rem,5.8vw,3.2rem)] font-black italic tracking-[-0.03em] leading-[1.05]">
                 Six systems.
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+                <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 whitespace-nowrap">
                   One neural interface.
                 </span>
               </h2>
