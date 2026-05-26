@@ -47,16 +47,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
     }, 4500);
   };
 
-  const [cooldown, setCooldown] = useState(0);
-
-  useEffect(() => {
-    if (cooldown > 0) {
-      const t = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(t);
-    } else if (cooldown === 0) {
-      setRateLimitActive(false);
-    }
-  }, [cooldown]);
+  // Client-side rate-limit has been removed per user request. We only rely on Supabase backend limits.
 
   useEffect(() => {
     try {
@@ -174,10 +165,6 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       triggerNotification("Please enter your email address first.");
       return;
     }
-    if (cooldown > 0) {
-      triggerNotification(`Please wait ${cooldown} seconds before resending.`);
-      return;
-    }
     setIsSendingReset(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
@@ -185,7 +172,6 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       });
       if (error) throw error;
       triggerNotification("Password reset link sent to your email!", "success");
-      setCooldown(60);
       setRateLimitActive(false);
     } catch (err: any) {
       const errMsg = err.message?.toLowerCase() || '';
@@ -197,8 +183,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
         errMsg.includes('security') ||
         err.status === 429
       ) {
-        triggerNotification("Rate limit reached. Please wait 60 seconds.");
-        setCooldown(60);
+        triggerNotification("Rate limit reached. Please check your email or wait a moment.");
         setRateLimitActive(true);
       } else {
         triggerNotification(err.message || "Failed to send reset link.");
@@ -552,10 +537,10 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     <button
                       type="button"
                       onClick={handleResetPassword}
-                      disabled={isSendingReset || cooldown > 0}
+                      disabled={isSendingReset}
                       className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
                     >
-                      {isSendingReset ? "Sending Reset Link..." : cooldown > 0 ? `Try again in ${cooldown}s` : "Forgot / Set Password"}
+                      {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
                     </button>
 
                     <motion.button
@@ -661,10 +646,10 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       <button
                         type="button"
                         onClick={handleResetPassword}
-                        disabled={isSendingReset || cooldown > 0}
+                        disabled={isSendingReset}
                         className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
                       >
-                        {isSendingReset ? "Sending Reset Link..." : cooldown > 0 ? `Try again in ${cooldown}s` : "Forgot / Set Password"}
+                        {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
                       </button>
                     )}
 
