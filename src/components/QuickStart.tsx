@@ -37,6 +37,14 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
   const [canBypass, setCanBypass] = useState(false);
   const [prevUser, setPrevUser] = useState<{ email: string; name: string; username: string; orbHue: number } | null>(null);
   const [usePrevUser, setUsePrevUser] = useState(true);
+  const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const triggerNotification = (text: string, type: 'success' | 'error' = 'error') => {
+    setNotification({ text, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4500);
+  };
 
   useEffect(() => {
     try {
@@ -151,7 +159,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
   const handleResetPassword = async () => {
     if (!formData.email) {
-      alert("Please enter your email address first.");
+      triggerNotification("Please enter your email address first.");
       return;
     }
     setIsSendingReset(true);
@@ -160,9 +168,9 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
         redirectTo: window.location.origin,
       });
       if (error) throw error;
-      alert("Password reset link successfully sent to your email!");
+      triggerNotification("Password reset link successfully sent to your email!", "success");
     } catch (err: any) {
-      alert(err.message || "Failed to send reset link.");
+      triggerNotification(err.message || "Failed to send reset link.");
     } finally {
       setIsSendingReset(false);
     }
@@ -222,7 +230,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
         setPhase(0);
       }
     } catch (err: any) {
-      alert(err.message || "Authentication failed");
+      triggerNotification(err.message || "Authentication failed");
     }
   };
 
@@ -236,7 +244,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       });
       if (error) throw error;
     } catch (err: any) {
-      alert(err.message || "Google Authentication failed");
+      triggerNotification(err.message || "Google Authentication failed");
     }
   };
 
@@ -374,11 +382,30 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             exit={{ opacity: 0, x: -20 }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12"
           >
-            <div className="w-full max-w-sm relative bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <div className="w-full max-w-sm relative bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl overflow-hidden">
+              {/* Custom Inline Notification Banner */}
+              <AnimatePresence>
+                {notification && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className={cn(
+                      "absolute top-0 left-0 right-0 p-4 text-center text-[10px] font-black uppercase tracking-wider border-b z-50 shadow-2xl backdrop-blur-md",
+                      notification.type === 'success' 
+                        ? "bg-emerald-500/20 border-emerald-500/20 text-emerald-400" 
+                        : "bg-red-500/20 border-red-500/20 text-red-400"
+                    )}
+                  >
+                    {notification.text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 text-white/40 hover:text-white transition-all text-xs font-black p-2 hover:bg-white/5 rounded-xl border border-white/10"
+                  className="absolute top-4 right-4 text-white/40 hover:text-white transition-all text-xs font-black p-2 hover:bg-white/5 rounded-xl border border-white/10 z-10"
                 >
                   ✕
                 </button>
@@ -401,72 +428,84 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
               </div>
 
               <div className="space-y-4">
-                {prevUser && usePrevUser ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="system-panel p-6 border-white/10 bg-cyan-950/10 backdrop-blur-xl relative overflow-hidden flex flex-col items-center text-center mb-4"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none" />
-                    
-                    {/* Glowing Custom Orb Avatar */}
-                    <div className="relative w-20 h-20 mb-4 flex items-center justify-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute inset-0 rounded-full blur-[20px] pointer-events-none"
-                        style={{ 
-                          background: getOrbColors(prevUser.orbHue, 'idle').glow,
-                          width: 80,
-                          height: 80,
-                        }}
-                      />
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                        className="w-16 h-16 rounded-full relative overflow-hidden shadow-2xl z-10 border border-white/20"
-                        style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
-                      >
-                        <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/40 blur-[2px] -rotate-[35deg]" />
-                        <div className="absolute inset-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3)]" />
-                      </motion.div>
-                    </div>
-
-                    <div>
-                      <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS SESSION</div>
-                      <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">{prevUser.name}</h3>
-                      {prevUser.username && (
-                        <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">@{prevUser.username}</p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUsePrevUser(false);
-                        setFormData(prev => ({ ...prev, email: '' }));
-                        setAuthMode('signup');
-                      }}
-                      className="mt-4 text-[8px] font-black tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors uppercase italic border-t border-white/5 pt-3 w-full"
+                <AnimatePresence mode="wait">
+                  {prevUser && usePrevUser ? (
+                    <motion.div 
+                      key="prev-user-card"
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ duration: 0.25 }}
+                      className="system-panel p-6 border-white/10 bg-cyan-950/10 backdrop-blur-xl relative overflow-hidden flex flex-col items-center text-center mb-4"
                     >
-                      Use a different account
-                    </button>
-                  </motion.div>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
-                      <Mail size={18} />
-                    </div>
-                    <input
-                      required
-                      type="email"
-                      placeholder="Email"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
-                )}
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none" />
+                      
+                      {/* Glowing Custom Orb Avatar */}
+                      <div className="relative w-20 h-20 mb-4 flex items-center justify-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute inset-0 rounded-full blur-[20px] pointer-events-none"
+                          style={{ 
+                            background: getOrbColors(prevUser.orbHue, 'idle').glow,
+                            width: 80,
+                            height: 80,
+                          }}
+                        />
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                          className="w-16 h-16 rounded-full relative overflow-hidden shadow-2xl z-10 border border-white/20"
+                          style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
+                        >
+                          <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/40 blur-[2px] -rotate-[35deg]" />
+                          <div className="absolute inset-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3)]" />
+                        </motion.div>
+                      </div>
+
+                      <div>
+                        <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS SESSION</div>
+                        <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">{prevUser.name}</h3>
+                        {prevUser.username && (
+                          <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">@{prevUser.username}</p>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUsePrevUser(false);
+                          setFormData(prev => ({ ...prev, email: '' }));
+                          setAuthMode('login'); // Switch to standard Log In mode!
+                        }}
+                        className="mt-4 text-[8px] font-black tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors uppercase italic border-t border-white/5 pt-3 w-full"
+                      >
+                        Use a different account
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="generic-email-field"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.25 }}
+                      className="relative"
+                    >
+                      <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
+                        <Mail size={18} />
+                      </div>
+                      <input
+                        required
+                        type="email"
+                        placeholder="Email"
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
@@ -483,16 +522,22 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                   />
                 </div>
 
-                {(authMode === 'login' || (prevUser && usePrevUser)) && (
-                  <button
-                    type="button"
-                    onClick={handleResetPassword}
-                    disabled={isSendingReset}
-                    className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md"
-                  >
-                    {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
-                  </button>
-                )}
+                <AnimatePresence mode="wait">
+                  {(authMode === 'login' || (prevUser && usePrevUser)) && (
+                    <motion.button
+                      key="forgot-password-btn"
+                      initial={{ opacity: 0, height: 0, y: 5 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={{ opacity: 0, height: 0, y: 5 }}
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={isSendingReset}
+                      className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block"
+                    >
+                      {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
+                    </motion.button>
+                  )}
+                </AnimatePresence>
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -524,33 +569,42 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
               </div>
 
               {/* Small Switcher Link at Bottom */}
-              {!(prevUser && usePrevUser) && (
-                <div className="mt-6 text-center text-[10px] font-black uppercase tracking-wider text-white/40">
-                  {authMode === 'signup' ? (
-                    <>
-                      Already have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode('login')}
-                        className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
-                      >
-                        Log In
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      Don't have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode('signup')}
-                        className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
-                      >
-                        Sign Up
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {!(prevUser && usePrevUser) && (
+                  <motion.div 
+                    key={authMode === 'signup' ? "signup-switch" : "login-switch"}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-6 text-center text-[10px] font-black uppercase tracking-wider text-white/40"
+                  >
+                    {authMode === 'signup' ? (
+                      <>
+                        Already have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode('login')}
+                          className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
+                        >
+                          Log In
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Don't have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode('signup')}
+                          className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
+                        >
+                          Sign Up
+                        </button>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Returning Quick-select link */}
               {prevUser && !usePrevUser && (
