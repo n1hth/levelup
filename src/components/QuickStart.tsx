@@ -35,6 +35,24 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
   const { state, setUser, isUsernameAvailable } = useApp();
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [canBypass, setCanBypass] = useState(false);
+  const [prevUser, setPrevUser] = useState<{ email: string; name: string; username: string; orbHue: number } | null>(null);
+  const [usePrevUser, setUsePrevUser] = useState(true);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('orbis_previous_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email) {
+          setPrevUser(parsed);
+          setFormData(prev => ({ ...prev, email: parsed.email }));
+          setAuthMode('login');
+        }
+      }
+    } catch (e) {
+      console.error("[QuickStart] Failed to load previous user:", e);
+    }
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -351,33 +369,88 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
           >
             <div className="w-full max-w-sm">
               <div className="text-center mb-12">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="inline-block mb-6"
-                >
-                  <Hexagon size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
-                </motion.div>
+                {!(prevUser && usePrevUser) && (
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="inline-block mb-6"
+                  >
+                    <Hexagon size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
+                  </motion.div>
+                )}
                 <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                  ESTABLISH NEURAL LINK
+                  {prevUser && usePrevUser ? "RESTORE NEURAL LINK" : "ESTABLISH NEURAL LINK"}
                 </h2>
                 <div className="h-1 w-12 bg-cyan-400 mx-auto" />
               </div>
 
               <div className="space-y-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
-                    <Mail size={18} />
+                {prevUser && usePrevUser ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="system-panel p-6 border-white/10 bg-cyan-950/10 backdrop-blur-xl relative overflow-hidden flex flex-col items-center text-center mb-4"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none" />
+                    
+                    {/* Glowing Custom Orb Avatar */}
+                    <div className="relative w-20 h-20 mb-4 flex items-center justify-center">
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute inset-0 rounded-full blur-[20px] pointer-events-none"
+                        style={{ 
+                          background: getOrbColors(prevUser.orbHue, 'idle').glow,
+                          width: 80,
+                          height: 80,
+                        }}
+                      />
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                        className="w-16 h-16 rounded-full relative overflow-hidden shadow-2xl z-10 border border-white/20"
+                        style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
+                      >
+                        <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/40 blur-[2px] -rotate-[35deg]" />
+                        <div className="absolute inset-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3)]" />
+                      </motion.div>
+                    </div>
+
+                    <div>
+                      <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS OPERATOR DETECTED</div>
+                      <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">{prevUser.name}</h3>
+                      {prevUser.username && (
+                        <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">@{prevUser.username}</p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsePrevUser(false);
+                        setFormData(prev => ({ ...prev, email: '' }));
+                      }}
+                      className="mt-4 text-[8px] font-black tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors uppercase italic border-t border-white/5 pt-3 w-full"
+                    >
+                      Use a different account
+                    </button>
+                  </motion.div>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      required
+                      type="email"
+                      placeholder="NEURAL ID (EMAIL)"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest uppercase"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
                   </div>
-                  <input
-                    required
-                    type="email"
-                    placeholder="NEURAL ID (EMAIL)"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest uppercase"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
+                )}
+
                 <div className="relative">
                   <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
                     <Lock size={18} />
@@ -403,7 +476,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                   }}
                   className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
                 >
-                  ESTABLISH NEURAL LINK
+                  {prevUser && usePrevUser ? `LOG BACK IN AS ${prevUser.name}` : "ESTABLISH NEURAL LINK"}
                 </motion.button>
 
                 <div className="flex items-center gap-4 my-6">
@@ -422,7 +495,25 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                 </button>
               </div>
 
-              <div className="mt-8 text-center text-[9px] font-black tracking-widest text-blue-400/60 transition-all">
+              <div className="mt-8 text-center text-[9px] font-black tracking-widest text-blue-400/60 transition-all space-y-4">
+                {prevUser && !usePrevUser && (
+                  <div className="pt-4 border-t border-white/5">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setUsePrevUser(true);
+                        setFormData(prev => ({ ...prev, email: prevUser.email }));
+                      }} 
+                      className="text-cyan-400/60 hover:text-cyan-300 uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
+                    >
+                      <span 
+                        className="w-2 h-2 rounded-full animate-pulse" 
+                        style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
+                      />
+                      Log back in as {prevUser.name}
+                    </button>
+                  </div>
+                )}
                 <div className="pt-4 border-t border-white/5">
                   <button onClick={() => setPhase(2.5)} className="text-white/20 hover:text-white/40 uppercase tracking-widest">
                     Continue as Guest (Offline Mode)

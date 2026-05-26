@@ -491,6 +491,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           supabase.from('profiles').update({ onboarding_completed: true }).eq('id', profile.id).then(() => {});
         }
 
+        // Persist previous user info for quick re-login experience
+        if (session.user.email) {
+          localStorage.setItem('orbis_previous_user', JSON.stringify({
+            email: session.user.email,
+            name: profile.name,
+            username: profile.username || '',
+            orbHue: orbHue
+          }));
+        }
+
         setState(prev => {
           const isSwitchingUsers = prev.user && 
                                    prev.user.id !== 'local-operator' && 
