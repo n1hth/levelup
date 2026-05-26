@@ -151,7 +151,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
   const handleResetPassword = async () => {
     if (!formData.email) {
-      alert("Please enter your email Neural ID first.");
+      alert("Please enter your email address first.");
       return;
     }
     setIsSendingReset(true);
@@ -160,9 +160,9 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
         redirectTo: window.location.origin,
       });
       if (error) throw error;
-      alert("Access Cipher reset link successfully dispatched to your email!");
+      alert("Password reset link successfully sent to your email!");
     } catch (err: any) {
-      alert(err.message || "Failed to dispatch reset link.");
+      alert(err.message || "Failed to send reset link.");
     } finally {
       setIsSendingReset(false);
     }
@@ -182,7 +182,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
         if (signInError) {
           const errMsg = signInError.message.toLowerCase();
           if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
-            throw new Error("Invalid Access Cipher or email. If you registered via Google OAuth, you don't have a password set yet. Please sign in with Google, or click below to dispatch a Cipher Reset email.");
+            throw new Error("Invalid email or password. If you registered via Google, you don't have a password set yet. Please log in with Google, or click 'Forgot / Set Password' below to configure a password.");
           }
           throw signInError;
         }
@@ -209,13 +209,13 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
         if (signUpError) {
           if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
-            throw new Error("This Neural ID is already registered. Please switch to LOG IN mode or authenticate with Google.");
+            throw new Error("This email is already registered. Please switch to Log In or authenticate with Google.");
           }
           throw signUpError;
         }
 
         if (signUpData?.user && signUpData.user.identities?.length === 0) {
-          throw new Error("This Neural ID is already registered. Please switch to LOG IN mode or authenticate with Google.");
+          throw new Error("This email is already registered. Please switch to Log In or authenticate with Google.");
         }
 
         // Successful SignUp of a new user -> go to SYSTEM DETECTED (Phase 0)!
@@ -259,29 +259,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
       <AnimatePresence mode="wait">
         
-        {/* Close/Abort Button */}
-        {onClose && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
-            whileHover={{ opacity: 1, scale: 1.05 }}
-            onClick={onClose}
-            className="absolute top-8 left-8 z-50 text-[10px] font-black tracking-[0.4em] text-white uppercase italic px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md transition-all hover:border-red-500/30 hover:text-red-400"
-          >
-            {"<< "} ABORT SYSTEM LINK
-          </motion.button>
-        )}
-
-        {/* Global Skip Button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.2 }}
-          whileHover={{ opacity: 1, scale: 1.05 }}
-          onClick={forceBypass}
-          className="absolute top-8 right-8 z-50 text-[10px] font-black tracking-[0.4em] text-white uppercase italic px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md transition-all hover:border-cyan-400/30 hover:text-cyan-400"
-        >
-          SKIP INTEGRATION {">>"}
-        </motion.button>
+        
         
         {/* Phase 0: The Cold Open */}
         {phase === 0 && (
@@ -396,49 +374,33 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             exit={{ opacity: 0, x: -20 }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12"
           >
-            <div className="w-full max-w-sm">
-              <div className="text-center mb-12">
+            <div className="w-full max-w-sm relative bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 text-white/40 hover:text-white transition-all text-xs font-black p-2 hover:bg-white/5 rounded-xl border border-white/10"
+                >
+                  ✕
+                </button>
+              )}
+
+              <div className="text-center mb-8">
                 {!(prevUser && usePrevUser) && (
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="inline-block mb-6"
+                    className="inline-block mb-4"
                   >
-                    <Hexagon size={64} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
+                    <Hexagon size={48} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
                   </motion.div>
                 )}
-                <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                  {prevUser && usePrevUser ? "RESTORE NEURAL LINK" : "ESTABLISH NEURAL LINK"}
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
+                  {prevUser && usePrevUser ? "LOG BACK IN" : (authMode === 'login' ? "LOG IN" : "SIGN UP")}
                 </h2>
-                <div className="h-1 w-12 bg-cyan-400 mx-auto" />
+                <div className="h-0.5 w-8 bg-cyan-400 mx-auto" />
               </div>
 
               <div className="space-y-4">
-                {!(prevUser && usePrevUser) && (
-                  <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 mb-6 relative overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode('signup')}
-                      className={cn(
-                        "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] italic transition-all relative z-10",
-                        authMode === 'signup' ? "bg-cyan-500 text-black shadow-lg" : "text-white/40 hover:text-white"
-                      )}
-                    >
-                      CREATE PROTOCOL (SIGN UP)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode('login')}
-                      className={cn(
-                        "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] italic transition-all relative z-10",
-                        authMode === 'login' ? "bg-cyan-500 text-black shadow-lg" : "text-white/40 hover:text-white"
-                      )}
-                    >
-                      LINK PROTOCOL (LOG IN)
-                    </button>
-                  </div>
-                )}
-
                 {prevUser && usePrevUser ? (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -471,7 +433,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     </div>
 
                     <div>
-                      <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS OPERATOR DETECTED</div>
+                      <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS SESSION</div>
                       <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">{prevUser.name}</h3>
                       {prevUser.username && (
                         <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">@{prevUser.username}</p>
@@ -498,8 +460,8 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     <input
                       required
                       type="email"
-                      placeholder="NEURAL ID (EMAIL)"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest uppercase"
+                      placeholder="Email"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
@@ -514,24 +476,22 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     required
                     minLength={6}
                     type="password"
-                    placeholder="ACCESS CIPHER"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest"
+                    placeholder="Password"
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
                 </div>
 
                 {(authMode === 'login' || (prevUser && usePrevUser)) && (
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={handleResetPassword}
-                      disabled={isSendingReset}
-                      className="text-[8px] font-black uppercase tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors italic"
-                    >
-                      {isSendingReset ? "DISPATCHING..." : "FORGOT OR NEED TO SET CIPHER? DISPATCH RESET LINK"}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={isSendingReset}
+                    className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md"
+                  >
+                    {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
+                  </button>
                 )}
 
                 <motion.button
@@ -542,14 +502,14 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       handleAuthSubmit(e as any);
                     }
                   }}
-                  className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                  className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
                 >
-                  {prevUser && usePrevUser ? `LOG BACK IN AS ${prevUser.name}` : "ESTABLISH NEURAL LINK"}
+                  {prevUser && usePrevUser ? "Log In" : (authMode === 'login' ? "Log In" : "Sign Up")}
                 </motion.button>
 
                 <div className="flex items-center gap-4 my-6">
                   <div className="h-px flex-1 bg-white/10" />
-                  <span className="text-[8px] font-black text-blue-400/40 tracking-[0.2em]">OR PROVIDE EXTERNAL ID</span>
+                  <span className="text-[8px] font-black text-blue-400/40 tracking-[0.2em]">or</span>
                   <div className="h-px flex-1 bg-white/10" />
                 </div>
 
@@ -559,35 +519,58 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                   className="w-full flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 rounded-2xl py-4 transition-all active:scale-[0.98] group"
                 >
                   <GoogleIcon />
-                  <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">AUTHENTICATE WITH GOOGLE</span>
+                  <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
                 </button>
               </div>
 
-              <div className="mt-8 text-center text-[9px] font-black tracking-widest text-blue-400/60 transition-all space-y-4">
-                {prevUser && !usePrevUser && (
-                  <div className="pt-4 border-t border-white/5">
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setUsePrevUser(true);
-                        setFormData(prev => ({ ...prev, email: prevUser.email }));
-                      }} 
-                      className="text-cyan-400/60 hover:text-cyan-300 uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
-                    >
-                      <span 
-                        className="w-2 h-2 rounded-full animate-pulse" 
-                        style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
-                      />
-                      Log back in as {prevUser.name}
-                    </button>
-                  </div>
-                )}
-                <div className="pt-4 border-t border-white/5">
-                  <button onClick={() => setPhase(2.5)} className="text-white/20 hover:text-white/40 uppercase tracking-widest">
-                    Continue as Guest (Offline Mode)
+              {/* Small Switcher Link at Bottom */}
+              {!(prevUser && usePrevUser) && (
+                <div className="mt-6 text-center text-[10px] font-black uppercase tracking-wider text-white/40">
+                  {authMode === 'signup' ? (
+                    <>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('login')}
+                        className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
+                      >
+                        Log In
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('signup')}
+                        className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
+                      >
+                        Sign Up
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Returning Quick-select link */}
+              {prevUser && !usePrevUser && (
+                <div className="mt-4 pt-4 border-t border-white/5 text-center">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setUsePrevUser(true);
+                      setFormData(prev => ({ ...prev, email: prevUser.email }));
+                    }} 
+                    className="text-cyan-400/60 hover:text-cyan-300 text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 mx-auto font-black italic"
+                  >
+                    <span 
+                      className="w-2 h-2 rounded-full animate-pulse" 
+                      style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
+                    />
+                    Log back in as {prevUser.name}
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </motion.div>
         )}
