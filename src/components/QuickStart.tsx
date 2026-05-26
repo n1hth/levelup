@@ -197,54 +197,32 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
     e.preventDefault();
     if (!formData.email || !formData.password) return;
     try {
-      if (authMode === 'login' || (prevUser && usePrevUser)) {
-        // --- Explicit LOGIN Flow ---
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+      // --- Explicit LOGIN Flow ---
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-        if (signInError) {
-          const errMsg = signInError.message.toLowerCase();
-          if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
-            throw new Error("Invalid email or password. If you registered via Google, you don't have a password set yet. Please log in with Google, or click 'Forgot / Set Password' below to configure a password.");
-          }
-          throw signInError;
+      if (signInError) {
+        const errMsg = signInError.message.toLowerCase();
+        if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
+          throw new Error("Invalid email or password. If you registered via Google, you don't have a password set yet. Please log in with Google, or click 'Forgot Password?' below to configure a password.");
         }
+        throw signInError;
+      }
 
-        // Successful SignIn of an existing user!
-        if (signInData?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', signInData.user.id)
-            .single();
+      // Successful SignIn of an existing user!
+      if (signInData?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', signInData.user.id)
+          .single();
 
-          if (!profile || !profile.onboarding_completed) {
-            // New user who registered but didn't finish onboarding -> start them at Phase 0!
-            setPhase(0);
-          }
+        if (!profile || !profile.onboarding_completed) {
+          // New user who registered but didn't finish onboarding -> start them at Phase 0!
+          setPhase(0);
         }
-      } else {
-        // --- Explicit SIGNUP Flow ---
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (signUpError) {
-          if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
-            throw new Error("This email is already registered. Please switch to Log In or authenticate with Google.");
-          }
-          throw signUpError;
-        }
-
-        if (signUpData?.user && signUpData.user.identities?.length === 0) {
-          throw new Error("This email is already registered. Please switch to Log In or authenticate with Google.");
-        }
-
-        // Successful SignUp of a new user -> go to SYSTEM DETECTED (Phase 0)!
-        setPhase(0);
       }
     } catch (err: any) {
       triggerNotification(err.message || "Authentication failed");
@@ -573,7 +551,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={`standard-auth-${authMode}`}
+                    key="standard-auth-login"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -589,7 +567,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                         <Hexagon size={48} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
                       </motion.div>
                       <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                        {authMode === 'login' ? "LOG IN" : "SIGN UP"}
+                        LOG IN
                       </h2>
                       <div className="h-0.5 w-8 bg-cyan-400 mx-auto" />
                     </div>
@@ -608,63 +586,73 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       />
                     </div>
 
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
-                        <Lock size={18} />
-                      </div>
-                      <input
-                        required
-                        minLength={6}
-                        type="password"
-                        placeholder="Password"
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
-                        value={formData.password}
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      />
-                    </div>
+                    <AnimatePresence>
+                      {(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.4 }}
+                          className="space-y-4 overflow-hidden"
+                        >
+                          <div className="relative pt-2">
+                            <div className="absolute inset-y-0 left-4 top-2 flex items-center text-cyan-400">
+                              <Lock size={18} />
+                            </div>
+                            <input
+                              required
+                              minLength={6}
+                              type="password"
+                              placeholder="Password"
+                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
+                              value={formData.password}
+                              onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            />
+                          </div>
 
-                    {/* Rate Limit Alert */}
-                    {authMode === 'login' && rateLimitActive && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.6, ease: "easeInOut" }}
-                        className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
-                      >
-                        <div className="flex items-center gap-2 text-amber-400">
-                          <Shield size={14} className="animate-pulse" />
-                          <span>Security Cooldown</span>
-                        </div>
-                        <p className="text-white/60 leading-normal lowercase first-letter:uppercase">
-                          Supabase email limit reached. If you originally registered via Google, you do not have an email password yet. Simply click "Sign in with Google" below to log in instantly, then configure your password in settings!
-                        </p>
-                      </motion.div>
-                    )}
+                          {/* Rate Limit Alert */}
+                          {rateLimitActive && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.6, ease: "easeInOut" }}
+                              className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
+                            >
+                              <div className="flex items-center gap-2 text-amber-400">
+                                <Shield size={14} className="animate-pulse" />
+                                <span>Security Cooldown</span>
+                              </div>
+                              <p className="text-white/60 leading-normal lowercase first-letter:uppercase">
+                                Supabase email limit reached. If you originally registered via Google, you do not have an email password yet. Simply click "Sign in with Google" below to log in instantly, then configure your password in settings!
+                              </p>
+                            </motion.div>
+                          )}
 
-                    {authMode === 'login' && (
-                      <button
-                        type="button"
-                        onClick={handleResetPassword}
-                        disabled={isSendingReset}
-                        className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
-                      >
-                        {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
-                      </button>
-                    )}
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={(e) => {
+                              if (formData.email && formData.password.length >= 6) {
+                                handleAuthSubmit(e as any);
+                              }
+                            }}
+                            className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-2 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
+                          >
+                            Log In
+                          </motion.button>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        if (formData.email && formData.password.length >= 6) {
-                          handleAuthSubmit(e as any);
-                        }
-                      }}
-                      className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
-                    >
-                      {authMode === 'login' ? "Log In" : "Sign Up"}
-                    </motion.button>
+                          <button
+                            type="button"
+                            onClick={handleResetPassword}
+                            disabled={isSendingReset}
+                            className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
+                          >
+                            {isSendingReset ? "Sending Reset Link..." : "Forgot Password?"}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <div className="flex items-center gap-4 my-6">
                       <div className="h-px flex-1 bg-white/10" />
@@ -680,32 +668,6 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       <GoogleIcon />
                       <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
                     </button>
-
-                    <div className="mt-6 text-center text-[10px] font-black uppercase tracking-wider text-white/40">
-                      {authMode === 'signup' ? (
-                        <>
-                          Already have an account?{" "}
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode('login')}
-                            className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
-                          >
-                            Log In
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          Don't have an account?{" "}
-                          <button
-                            type="button"
-                            onClick={() => setAuthMode('signup')}
-                            className="text-cyan-400 hover:text-cyan-300 transition-colors ml-1 uppercase font-black"
-                          >
-                            Sign Up
-                          </button>
-                        </>
-                      )}
-                    </div>
 
                     {prevUser && (
                       <div className="mt-4 pt-4 border-t border-white/5 text-center">
