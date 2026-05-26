@@ -147,37 +147,46 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
     });
   };
 
+  const [isSendingReset, setIsSendingReset] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!formData.email) {
+      alert("Please enter your email Neural ID first.");
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      alert("Access Cipher reset link successfully dispatched to your email!");
+    } catch (err: any) {
+      alert(err.message || "Failed to dispatch reset link.");
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!formData.email || !formData.password) return;
     try {
-      // 1. Try to sign in first
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      if (authMode === 'login' || (prevUser && usePrevUser)) {
+        // --- Explicit LOGIN Flow ---
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      if (signInError) {
-        // If signIn fails with credentials mismatch or user not found, try to automatically sign them up!
-        const errMsg = signInError.message.toLowerCase();
-        if (errMsg.includes('invalid login credentials') || errMsg.includes('user not found') || errMsg.includes('does not exist')) {
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-          });
-          
-          if (signUpError) {
-            if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
-              throw new Error("Invalid access cipher for this Neural ID.");
-            }
-            throw signUpError;
+        if (signInError) {
+          const errMsg = signInError.message.toLowerCase();
+          if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
+            throw new Error("Invalid Access Cipher or email. If you registered via Google OAuth, you don't have a password set yet. Please sign in with Google, or click below to dispatch a Cipher Reset email.");
           }
-          
-          // Successful SignUp of a new user -> go to SYSTEM DETECTED (Phase 0)!
-          setPhase(0);
-        } else {
           throw signInError;
         }
-      } else {
+
         // Successful SignIn of an existing user!
         if (signInData?.user) {
           const { data: profile } = await supabase
@@ -191,6 +200,26 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             setPhase(0);
           }
         }
+      } else {
+        // --- Explicit SIGNUP Flow ---
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signUpError) {
+          if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
+            throw new Error("This Neural ID is already registered. Please switch to LOG IN mode or authenticate with Google.");
+          }
+          throw signUpError;
+        }
+
+        if (signUpData?.user && signUpData.user.identities?.length === 0) {
+          throw new Error("This Neural ID is already registered. Please switch to LOG IN mode or authenticate with Google.");
+        }
+
+        // Successful SignUp of a new user -> go to SYSTEM DETECTED (Phase 0)!
+        setPhase(0);
       }
     } catch (err: any) {
       alert(err.message || "Authentication failed");
@@ -385,6 +414,31 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
               </div>
 
               <div className="space-y-4">
+                {!(prevUser && usePrevUser) && (
+                  <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 mb-6 relative overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('signup')}
+                      className={cn(
+                        "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] italic transition-all relative z-10",
+                        authMode === 'signup' ? "bg-cyan-500 text-black shadow-lg" : "text-white/40 hover:text-white"
+                      )}
+                    >
+                      CREATE PROTOCOL (SIGN UP)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('login')}
+                      className={cn(
+                        "flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] italic transition-all relative z-10",
+                        authMode === 'login' ? "bg-cyan-500 text-black shadow-lg" : "text-white/40 hover:text-white"
+                      )}
+                    >
+                      LINK PROTOCOL (LOG IN)
+                    </button>
+                  </div>
+                )}
+
                 {prevUser && usePrevUser ? (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -429,6 +483,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       onClick={() => {
                         setUsePrevUser(false);
                         setFormData(prev => ({ ...prev, email: '' }));
+                        setAuthMode('signup');
                       }}
                       className="mt-4 text-[8px] font-black tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors uppercase italic border-t border-white/5 pt-3 w-full"
                     >
@@ -465,6 +520,19 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
                 </div>
+
+                {(authMode === 'login' || (prevUser && usePrevUser)) && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={isSendingReset}
+                      className="text-[8px] font-black uppercase tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors italic"
+                    >
+                      {isSendingReset ? "DISPATCHING..." : "FORGOT OR NEED TO SET CIPHER? DISPATCH RESET LINK"}
+                    </button>
+                  </div>
+                )}
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}

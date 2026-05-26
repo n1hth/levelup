@@ -73,6 +73,39 @@ export function Profile() {
   // Custom system toast notification states
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
+  // Access Cipher Setup States
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [newCipher, setNewCipher] = useState('');
+  const [isUpdatingCipher, setIsUpdatingCipher] = useState(false);
+
+  useEffect(() => {
+    if (isMe) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user && user.email) {
+          setUserEmail(user.email);
+        }
+      });
+    }
+  }, [isMe]);
+
+  const handleUpdateCipher = async () => {
+    if (!newCipher || newCipher.length < 6) {
+      showToast("Access Cipher must be at least 6 characters.", "error");
+      return;
+    }
+    setIsUpdatingCipher(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newCipher });
+      if (error) throw error;
+      showToast("Access Cipher established successfully!", "success");
+      setNewCipher('');
+    } catch (err: any) {
+      showToast(err.message || "Failed to update Access Cipher.", "error");
+    } finally {
+      setIsUpdatingCipher(false);
+    }
+  };
+
   const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => {
@@ -673,6 +706,37 @@ export function Profile() {
               <Orbit size={14} />
               START TOUR
             </button>
+          </motion.div>
+
+          {/* Access Cipher Setup */}
+          <motion.div variants={itemVariants} className="system-panel p-6 border-white/5 bg-white/[0.01]">
+            <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 flex items-center gap-3.5 italic">
+              <Lock size={14} className="text-cyan-400" /> Access Cipher (Password)
+            </h3>
+            <p className="text-[9px] font-black text-white/20 mb-4 leading-relaxed uppercase tracking-widest italic">
+              Establish or update your email login password. Highly recommended if you authenticated via Google OAuth.
+            </p>
+            {userEmail && (
+              <div className="text-[8px] font-black text-cyan-400/50 uppercase tracking-widest mb-4 italic">
+                Neural ID: <span className="text-white/70">{userEmail}</span>
+              </div>
+            )}
+            <div className="flex gap-2.5">
+              <input
+                type="password"
+                placeholder="NEW ACCESS CIPHER"
+                value={newCipher}
+                onChange={(e) => setNewCipher(e.target.value)}
+                className="flex-1 bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-cyan-200/20 font-black text-[10px] tracking-widest uppercase"
+              />
+              <button
+                disabled={isUpdatingCipher || !newCipher}
+                onClick={handleUpdateCipher}
+                className="px-5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 font-black text-[9px] uppercase tracking-[0.2em] italic hover:bg-cyan-500/10 hover:border-cyan-500/40 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center justify-center shadow-2xl shrink-0"
+              >
+                {isUpdatingCipher ? "SAVING..." : "SAVE CIPHER"}
+              </button>
+            </div>
           </motion.div>
 
           {/* Danger Zone */}
