@@ -145,6 +145,12 @@ export function ArenaDuel() {
     const fetchedMyTopicField = fetchedIsPlayer1 ? 'p1_topic' : 'p2_topic';
     const fetchedMyDeckField = fetchedIsPlayer1 ? 'p1_deck_id' : 'p2_deck_id';
     
+    if (d.status === 'declined' || d.status === 'cancelled') {
+      alert("The opponent has exited or the duel has ended.");
+      navigate('/battle');
+      return;
+    }
+    
     if (d.status === 'invited') {
       if (fetchedIsPlayer2) {
         console.log("[ArenaDuel] Automatically accepting duel invite for Player 2...");
@@ -633,7 +639,27 @@ export function ArenaDuel() {
       <header className="relative z-10 px-6 py-6 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-3xl">
         <div className="flex items-center gap-6">
           <button 
-            onClick={() => navigate('/battle')} 
+            onClick={async () => {
+              if (phase === 'REVIEW' || phase === 'WAITING' || phase === 'SEARCHING') {
+                if (duel?.id && phase !== 'REVIEW') {
+                  try { await updateDuel(duel.id, { status: 'declined' }); } catch (e) {}
+                }
+                navigate('/battle');
+                return;
+              }
+              const confirmExit = window.confirm("Are you sure you want to exit the duel? You will lose a minor amount of Honour (XP).");
+              if (confirmExit) {
+                if (duel?.id) {
+                  try {
+                    await addXp(-5);
+                    await updateDuel(duel.id, { status: 'declined' });
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }
+                navigate('/battle');
+              }
+            }} 
             className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center hover:bg-white/[0.08] hover:border-white/20 transition-all group"
           >
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />

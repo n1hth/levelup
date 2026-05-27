@@ -79,11 +79,23 @@ export function Orb({ onInteractionChange }: OrbProps) {
   }, [isOrbHidden]);
 
   const fetchNotifications = async () => {
-    const data = await getNotifications();
+    const rawData = await getNotifications();
+    
+    // Filter out duel_ready notifications if the user is already in that specific duel lobby
+    const data = rawData.filter((n: any) => {
+      if (n.type === 'duel_ready') {
+        const lobbyPath = `/duels/${n.duel_id || n.id.replace(':ready', '')}`;
+        if (location.pathname === lobbyPath || location.pathname === lobbyPath + '/') {
+          return false;
+        }
+      }
+      return true;
+    });
+
     const prevNotifs = notificationsRef.current;
     
     // Check for new notifications by ID
-    const newItems = data.filter(n => !prevNotifs.find(pn => pn.id === n.id));
+    const newItems = data.filter((n: any) => !prevNotifs.find(pn => pn.id === n.id));
     
     if (newItems.length > 0 && !isHiddenRef.current) {
       // Bright pulse on any new notification
@@ -91,7 +103,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
       setTimeout(() => setShowPulseWave(false), 1500);
 
       // Check specifically for duel or friend request events to show bubble
-      const newEvent = newItems.find(n => n.type === 'duel' || n.type === 'duel_ready' || n.type === 'duel_cancelled' || n.type === 'friend');
+      const newEvent = newItems.find((n: any) => n.type === 'duel' || n.type === 'duel_ready' || n.type === 'duel_cancelled' || n.type === 'friend');
       if (newEvent && !shownBubblesRef.current.has(newEvent.id)) {
         // Only show bubble if notification was created/updated in the last 45 seconds
         const isRecent = Date.now() - new Date(newEvent.timestamp).getTime() < 45 * 1000;
