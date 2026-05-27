@@ -104,6 +104,26 @@ export function Orb({ onInteractionChange }: OrbProps) {
   }, []); // Poll independently of state changes
 
   const handleAction = async (notif: any, action: 'accept' | 'decline') => {
+    if (notif.type === 'duel_cancelled') {
+      await dismissNotification(notif);
+      fetchNotifications();
+
+      if (action === 'accept' && notif.sender_id) {
+        setIsNavOpen(false);
+        navigate(`/social/chat/${notif.sender_id}`, {
+          state: {
+            duelRetry: {
+              duelId: notif.duel_id,
+              senderId: notif.sender_id,
+              senderName: notif.sender,
+              mode: notif.mode || 'writing'
+            }
+          }
+        });
+      }
+      return;
+    }
+
     if (action === 'accept') {
       if (notif.type === 'friend') {
         await acceptFriendRequest(notif.id);
@@ -429,7 +449,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
                         <div className="flex gap-2">
                           {notif.type === 'duel_cancelled' ? (
                             <button
-                              onClick={() => handleAction(notif, 'decline')}
+                              onClick={() => handleAction(notif, 'accept')}
                               className="flex-1 py-2 rounded-xl bg-red-500/15 text-red-300 hover:bg-red-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
                             >
                               Acknowledge

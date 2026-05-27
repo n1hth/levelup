@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Send, User, Check, CheckCheck } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronRight, Send, User, Swords, Timer, X } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';
 import { cn } from '@/src/lib/utils.ts';
 import { getOrbGradient, getOrbColors } from '@/src/lib/orb-color';
+import { createDuelRetryCardContent, parseDuelRetryCardContent, type DuelRetryCardPayload } from '@/src/lib/duel-retry-card';
 
 function SmallOrb({ hue = 200, state = 'idle', size = 36 }: { hue?: number; state?: string; size?: number }) {
   const palette = getOrbColors(hue, 'idle');
@@ -27,15 +28,111 @@ function SmallOrb({ hue = 200, state = 'idle', size = 36 }: { hue?: number; stat
   );
 }
 
+function getExpiryLabel(expiresAt: string, now: number) {
+  const remaining = new Date(expiresAt).getTime() - now;
+  if (remaining <= 0) return 'Expired';
+  return `${Math.ceil(remaining / 60000)}m left`;
+}
+
+function DuelRetryMessageCard({
+  payload,
+  isMe,
+  isExpired,
+  isStarting,
+  hasStarted,
+  expiryLabel,
+  accent,
+  onStart
+}: {
+  payload: DuelRetryCardPayload;
+  isMe: boolean;
+  isExpired: boolean;
+  isStarting: boolean;
+  hasStarted: boolean;
+  expiryLabel: string;
+  accent: string;
+  onStart: () => void;
+}) {
+  return (
+    <div className={cn(
+      "group relative w-[min(86vw,360px)] rounded-2xl border p-4 shadow-2xl transition-all",
+      isMe
+        ? "bg-white text-black border-white/20 rounded-tr-none"
+        : "bg-cyan-500/[0.06] text-white border-cyan-400/20 rounded-tl-none"
+    )}>
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+          isMe ? "bg-black text-white" : "bg-cyan-400/15 text-cyan-300"
+        )}>
+          <Swords size={17} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className={cn(
+            "text-[9px] font-black uppercase tracking-[0.2em] mb-1",
+            isMe ? "text-black/45" : "text-cyan-300/60"
+          )}>
+            Duel Retry Card
+          </div>
+          <div className={cn(
+            "text-[12px] font-black uppercase italic tracking-tight leading-snug break-words",
+            isMe ? "text-black" : "text-white"
+          )}>
+            {payload.message}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-2">
+        <div className={cn(
+          "flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest italic",
+          isExpired ? "text-red-400" : isMe ? "text-black/40" : "text-white/35"
+        )}>
+          <Timer size={11} />
+          {expiryLabel}
+        </div>
+        <div className="flex-1" />
+        {isMe ? (
+          <span className="text-[8px] font-black uppercase tracking-widest italic" style={{ color: isExpired ? '#f87171' : accent }}>
+            {isExpired ? 'Closed' : 'Waiting'}
+          </span>
+        ) : (
+          <button
+            onClick={onStart}
+            disabled={isExpired || isStarting || hasStarted}
+            className={cn(
+              "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.18em] transition-all active:scale-95 disabled:cursor-not-allowed",
+              isExpired
+                ? "bg-red-500/10 text-red-300/50"
+                : hasStarted
+                ? "bg-emerald-500/15 text-emerald-300"
+                : "bg-cyan-400 text-black hover:bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+            )}
+          >
+            {isExpired ? 'Expired' : hasStarted ? 'Invite Sent' : isStarting ? 'Sending' : 'Duel'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Chat() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { state, getMessages, sendMessage, setOrbHidden, getFriends, markMessagesAsRead, getOrbHue } = useApp();
+  const location = useLocation();
+  const { state, getMessages, sendMessage, setOrbHidden, getFriends, markMessagesAsRead, getOrbHue, createDuel } = useApp();
   const [messages, setMessages] = useState<any[]>([]);
   const [dmInput, setDmInput] = useState('');
   const [friend, setFriend] = useState<any>(null);
+  const [showDuelRetryComposer, setShowDuelRetryComposer] = useState(false);
+  const [duelRetryDraft, setDuelRetryDraft] = useState('You tried to duel. Can we run it now?');
+  const [now, setNow] = useState(Date.now());
+  const [startingCardId, setStartingCardId] = useState<string | null>(null);
+  const [startedCardIds, setStartedCardIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const retryInputRef = useRef<HTMLTextAreaElement>(null);
   
   const myHue = getOrbHue();
   const friendHue = friend?.orb_hue || 200;
@@ -46,6 +143,21 @@ export function Chat() {
     setOrbHidden(true);
     return () => setOrbHidden(false);
   }, [setOrbHidden]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const retry = (location.state as any)?.duelRetry;
+    if (!retry || !userId || retry.senderId !== userId) return;
+
+    setDuelRetryDraft('You tried to duel. Can we run it now?');
+    setShowDuelRetryComposer(true);
+    navigate(location.pathname, { replace: true, state: null });
+    setTimeout(() => retryInputRef.current?.focus(), 120);
+  }, [location.pathname, location.state, navigate, userId]);
 
   useEffect(() => {
     if (userId) {
@@ -106,7 +218,7 @@ export function Chat() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, showDuelRetryComposer]);
 
   useEffect(() => {
     if (userId && messages.length > 0) {
@@ -137,6 +249,44 @@ export function Chat() {
       
       // Force input to stay focused
       setTimeout(() => inputRef.current?.focus(), 10);
+    }
+  };
+
+  const handleSendDuelRetryCard = async () => {
+    if (!userId || !state.user) return;
+
+    const content = createDuelRetryCardContent(duelRetryDraft);
+    const createdAt = new Date().toISOString();
+    const tempId = `duel-retry-${Date.now()}`;
+
+    setShowDuelRetryComposer(false);
+    setMessages(prev => [...prev, {
+      id: tempId,
+      sender_id: state.user!.id,
+      receiver_id: userId,
+      content,
+      created_at: createdAt,
+      is_read: false
+    }]);
+
+    await sendMessage(userId, content);
+    setTimeout(() => inputRef.current?.focus(), 10);
+  };
+
+  const handleStartDuelFromCard = async (msg: any, payload: DuelRetryCardPayload) => {
+    if (!state.user || state.user.id === msg.sender_id) return;
+    if (new Date(payload.expiresAt).getTime() <= Date.now()) return;
+
+    const cardId = String(msg.id || payload.createdAt);
+    setStartingCardId(cardId);
+    try {
+      const duelId = await createDuel('writing', msg.sender_id);
+      if (!duelId) throw new Error('Could not create duel invite.');
+      setStartedCardIds(prev => new Set(prev).add(cardId));
+    } catch (err: any) {
+      alert(err?.message || 'Could not send duel invite.');
+    } finally {
+      setStartingCardId(null);
     }
   };
 
@@ -183,6 +333,9 @@ export function Chat() {
         {(messages || []).filter(Boolean).map((msg, i) => {
           const isMe = msg.sender_id === state.user?.id;
           const isLastMessage = i === messages.length - 1;
+          const duelRetryCard = parseDuelRetryCardContent(msg.content);
+          const cardId = String(msg.id || duelRetryCard?.createdAt || i);
+          const isExpired = duelRetryCard ? new Date(duelRetryCard.expiresAt).getTime() <= now : false;
           
           return (
             <motion.div 
@@ -191,14 +344,27 @@ export function Chat() {
               key={msg.id || i} 
               className={cn("flex flex-col", isMe ? "items-end" : "items-start")}
             >
-              <div className={cn(
-                "group relative max-w-[85%] px-5 py-4 rounded-2xl text-[11px] font-black uppercase italic tracking-tight leading-relaxed transition-all shadow-xl",
-                isMe 
-                  ? "bg-white text-black rounded-tr-none" 
-                  : "bg-white/[0.03] text-white/90 border border-white/5 rounded-tl-none"
-              )}>
-                {msg.content}
-              </div>
+              {duelRetryCard ? (
+                <DuelRetryMessageCard
+                  payload={duelRetryCard}
+                  isMe={isMe}
+                  isExpired={isExpired}
+                  isStarting={startingCardId === cardId}
+                  hasStarted={startedCardIds.has(cardId)}
+                  expiryLabel={getExpiryLabel(duelRetryCard.expiresAt, now)}
+                  accent={myPalette.accent}
+                  onStart={() => handleStartDuelFromCard(msg, duelRetryCard)}
+                />
+              ) : (
+                <div className={cn(
+                  "group relative max-w-[85%] px-5 py-4 rounded-2xl text-[11px] font-black uppercase italic tracking-tight leading-relaxed transition-all shadow-xl break-words",
+                  isMe 
+                    ? "bg-white text-black rounded-tr-none" 
+                    : "bg-white/[0.03] text-white/90 border border-white/5 rounded-tl-none"
+                )}>
+                  {msg.content}
+                </div>
+              )}
               <div className={cn("mt-1.5 flex items-center gap-1.5", isMe ? "justify-end" : "justify-start")}>
                 <span className="text-[7px] font-black text-white/10 uppercase tracking-widest italic">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -221,6 +387,53 @@ export function Chat() {
 
       {/* Input */}
       <div className="p-6 pb-10 bg-black border-t border-white/5">
+        <AnimatePresence>
+          {showDuelRetryComposer && (
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              className="mb-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-4 shadow-[0_0_24px_rgba(34,211,238,0.12)]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-400/15 text-cyan-300 flex items-center justify-center shrink-0">
+                  <Swords size={17} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-300/70">Missed Duel Reply</div>
+                    <button
+                      onClick={() => setShowDuelRetryComposer(false)}
+                      className="w-7 h-7 rounded-lg bg-white/[0.04] text-white/35 hover:text-white hover:bg-white/[0.08] flex items-center justify-center transition-all"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                  <textarea
+                    ref={retryInputRef}
+                    value={duelRetryDraft}
+                    onChange={e => setDuelRetryDraft(e.target.value)}
+                    rows={2}
+                    className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-[11px] font-black uppercase italic tracking-tight leading-relaxed text-white outline-none focus:border-cyan-300/30"
+                  />
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest italic text-white/35">
+                      <Timer size={11} />
+                      Expires after 15m
+                    </div>
+                    <div className="flex-1" />
+                    <button
+                      onClick={handleSendDuelRetryCard}
+                      className="px-4 py-2 rounded-xl bg-cyan-400 text-black text-[9px] font-black uppercase tracking-[0.18em] hover:bg-cyan-300 transition-all active:scale-95"
+                    >
+                      Send Card
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="relative flex items-center gap-4">
           <div className="flex-1 relative">
             <input 

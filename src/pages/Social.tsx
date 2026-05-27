@@ -26,6 +26,7 @@ import { getRankColor, getRankTitle } from '@/src/lib/xp.ts';
 import { cn } from '@/src/lib/utils.ts';
 import { supabase } from '@/src/lib/supabase';
 import { getOrbGradient, getOrbColors } from '@/src/lib/orb-color';
+import { getDuelRetryCardPreview } from '@/src/lib/duel-retry-card';
 
 const formatTimeAgo = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -868,7 +869,7 @@ export function Social() {
                           </div>
                           <div className="flex items-center justify-between">
                             <p className={cn("text-[10px] font-black uppercase italic truncate pr-4", isUnread ? "text-white" : "text-white/30")}>
-                              {friend.last_message ? friend.last_message.content : "Tap to start conversation..."}
+                              {friend.last_message ? getDuelRetryCardPreview(friend.last_message.content) : "Tap to start conversation..."}
                             </p>
                             {isUnread && (
                               <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />

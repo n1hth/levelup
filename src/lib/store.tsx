@@ -1510,6 +1510,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return {
             id: r.id,
             type: 'friend',
+            sender_id: r.user_id,
             sender: profile?.name || 'Unknown',
             username: profile?.username || 'unknown',
             orb_hue: profile?.orb_hue || 200,
@@ -1521,6 +1522,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return {
             id: r.id,
             type: 'duel',
+            sender_id: r.player1_id,
             sender: profile?.name || 'Unknown',
             username: profile?.username || 'unknown',
             message: 'requested to duel',
@@ -1533,10 +1535,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return {
             id: `${r.id}:cancelled`,
             type: 'duel_cancelled',
+            sender_id: r.player1_id,
             sender: profile?.name || 'Unknown',
             username: profile?.username || 'unknown',
             message: 'withdrew their duel challenge',
             duel_id: r.id,
+            mode: r.mode || 'writing',
             timestamp: r.updated_at || r.created_at
           };
         })
