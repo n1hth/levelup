@@ -213,6 +213,8 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
       // Successful SignIn of an existing user!
       if (signInData?.user) {
+        localStorage.setItem('orbis_saved_password', formData.password);
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('onboarding_completed')
@@ -231,6 +233,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
   const handleGoogleLogin = async () => {
     try {
+      localStorage.setItem('orbis_used_google_auth', 'true');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -240,6 +243,33 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       if (error) throw error;
     } catch (err: any) {
       triggerNotification(err.message || "Google Authentication failed");
+    }
+  };
+
+  const handleSavedUserLogin = async () => {
+    if (!prevUser) return;
+    try {
+      const isGoogle = localStorage.getItem('orbis_used_google_auth');
+      if (isGoogle === 'true') {
+        return handleGoogleLogin();
+      }
+      
+      const savedPass = localStorage.getItem('orbis_saved_password');
+      if (!savedPass) {
+        triggerNotification("Password not saved locally. Please log in normally.");
+        setUsePrevUser(false);
+        return;
+      }
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email: prevUser.email,
+        password: savedPass
+      });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      triggerNotification("Fast login failed. Please log in normally.");
+      setUsePrevUser(false);
     }
   };
 
@@ -261,6 +291,41 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       </div>
 
       <AnimatePresence mode="wait">
+        {/* Floating Quick Login for Returning Users */}
+        {phase === 2 && prevUser && usePrevUser && (
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.5 }}
+            className="fixed top-6 right-6 z-50 bg-black/60 backdrop-blur-xl border border-white/10 p-3 pr-4 rounded-full shadow-2xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group"
+            onClick={handleSavedUserLogin}
+          >
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <div 
+                className="absolute inset-0 rounded-full blur-[10px] opacity-50 group-hover:opacity-100 transition-opacity"
+                style={{ background: getOrbColors(prevUser.orbHue, 'idle').glow }}
+              />
+              <div 
+                className="w-8 h-8 rounded-full relative z-10 border border-white/20 shadow-inner"
+                style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
+              />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-white/40 group-hover:text-cyan-400 transition-colors">Log back in as</span>
+              <span className="text-xs font-bold text-white tracking-wider">{prevUser.name}</span>
+            </div>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setUsePrevUser(false);
+              }}
+              className="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/20 text-white/40 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
         
         
         
@@ -415,141 +480,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
               )}
 
               <AnimatePresence mode="wait">
-                {prevUser && usePrevUser ? (
-                  <motion.div
-                    key="prev-user-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
-                    className="space-y-4"
-                  >
-                    <div className="text-center mb-8">
-                      <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                        LOG BACK IN
-                      </h2>
-                      <div className="h-0.5 w-8 bg-cyan-400 mx-auto" />
-                    </div>
-
-                    <div className="system-panel p-6 border-white/10 bg-cyan-950/10 backdrop-blur-xl relative overflow-hidden flex flex-col items-center text-center mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none" />
-                      
-                      {/* Glowing Custom Orb Avatar */}
-                      <div className="relative w-20 h-20 mb-4 flex items-center justify-center">
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute inset-0 rounded-full blur-[20px] pointer-events-none"
-                          style={{ 
-                            background: getOrbColors(prevUser.orbHue, 'idle').glow,
-                            width: 80,
-                            height: 80,
-                          }}
-                        />
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                          className="w-16 h-16 rounded-full relative overflow-hidden shadow-2xl z-10 border border-white/20"
-                          style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
-                        >
-                          <div className="absolute top-[15%] left-[20%] w-[30%] h-[15%] rounded-full bg-white/40 blur-[2px] -rotate-[35deg]" />
-                          <div className="absolute inset-0 shadow-[inset_0_-4px_10px_rgba(0,0,0,0.3)]" />
-                        </motion.div>
-                      </div>
-
-                      <div>
-                        <div className="text-[7px] font-black text-cyan-400/60 uppercase tracking-[0.3em] mb-1">PREVIOUS SESSION</div>
-                        <h3 className="text-xl font-black italic tracking-tighter text-white uppercase">{prevUser.name}</h3>
-                        {prevUser.username && (
-                          <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">@{prevUser.username}</p>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUsePrevUser(false);
-                          setFormData(prev => ({ ...prev, email: '' }));
-                          setAuthMode('login'); // Switch to standard Log In mode!
-                        }}
-                        className="mt-4 text-[8px] font-black tracking-widest text-cyan-400/40 hover:text-cyan-300 transition-colors uppercase italic border-t border-white/5 pt-3 w-full"
-                      >
-                        Use a different account
-                      </button>
-                    </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
-                        <Lock size={18} />
-                      </div>
-                      <input
-                        required
-                        minLength={6}
-                        type="password"
-                        placeholder="Password"
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
-                        value={formData.password}
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      />
-                    </div>
-
-                    {/* Rate Limit Alert */}
-                    {rateLimitActive && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.6, ease: "easeInOut" }}
-                        className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
-                      >
-                        <div className="flex items-center gap-2 text-amber-400">
-                          <Shield size={14} className="animate-pulse" />
-                          <span>Security Cooldown</span>
-                        </div>
-                        <p className="text-white/60 leading-normal lowercase first-letter:uppercase">
-                          Supabase email limit reached. If you originally registered via Google, you do not have an email password yet. Simply click "Sign in with Google" below to log in instantly, then configure your password in settings!
-                        </p>
-                      </motion.div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={handleResetPassword}
-                      disabled={isSendingReset}
-                      className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
-                    >
-                      {isSendingReset ? "Sending Reset Link..." : "Forgot / Set Password"}
-                    </button>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        if (formData.email && formData.password.length >= 6) {
-                          handleAuthSubmit(e as any);
-                        }
-                      }}
-                      className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-4 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
-                    >
-                      Log In
-                    </motion.button>
-
-                    <div className="flex items-center gap-4 my-6">
-                      <div className="h-px flex-1 bg-white/10" />
-                      <span className="text-[8px] font-black text-blue-400/40 tracking-[0.2em]">or</span>
-                      <div className="h-px flex-1 bg-white/10" />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      className="w-full flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 rounded-2xl py-4 transition-all active:scale-[0.98] group"
-                    >
-                      <GoogleIcon />
-                      <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
-                    </button>
-                  </motion.div>
-                ) : (
+                {/* Removed inline prevUser panel so standard form is always shown */}
                   <motion.div
                     key="standard-auth-login"
                     initial={{ opacity: 0 }}
@@ -586,73 +517,61 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       />
                     </div>
 
-                    <AnimatePresence>
-                      {(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                          className="space-y-4 overflow-hidden"
-                        >
-                          <div className="relative pt-2">
-                            <div className="absolute inset-y-0 left-4 top-2 flex items-center text-cyan-400">
-                              <Lock size={18} />
-                            </div>
-                            <input
-                              required
-                              minLength={6}
-                              type="password"
-                              placeholder="Password"
-                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
-                              value={formData.password}
-                              onChange={(e) => setFormData({...formData, password: e.target.value})}
-                            />
-                          </div>
+                    <div className="relative pt-2">
+                      <div className="absolute inset-y-0 left-4 top-2 flex items-center text-cyan-400">
+                        <Lock size={18} />
+                      </div>
+                      <input
+                        required
+                        minLength={6}
+                        type="password"
+                        placeholder="Password"
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/[0.07] transition-all text-white placeholder:text-white/20 font-bold text-xs tracking-wider"
+                        value={formData.password}
+                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      />
+                    </div>
 
-                          {/* Rate Limit Alert */}
-                          {rateLimitActive && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.6, ease: "easeInOut" }}
-                              className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
-                            >
-                              <div className="flex items-center gap-2 text-amber-400">
-                                <Shield size={14} className="animate-pulse" />
-                                <span>Security Cooldown</span>
-                              </div>
-                              <p className="text-white/60 leading-normal lowercase first-letter:uppercase">
-                                Supabase email limit reached. If you originally registered via Google, you do not have an email password yet. Simply click "Sign in with Google" below to log in instantly, then configure your password in settings!
-                              </p>
-                            </motion.div>
-                          )}
+                    {/* Rate Limit Alert */}
+                    {rateLimitActive && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.6, ease: "easeInOut" }}
+                        className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
+                      >
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <Shield size={14} className="animate-pulse" />
+                          <span>Security Cooldown</span>
+                        </div>
+                        <p className="text-white/60 leading-normal lowercase first-letter:uppercase">
+                          Supabase email limit reached. If you originally registered via Google, you do not have an email password yet. Simply click "Sign in with Google" below to log in instantly, then configure your password in settings!
+                        </p>
+                      </motion.div>
+                    )}
 
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={(e) => {
-                              if (formData.email && formData.password.length >= 6) {
-                                handleAuthSubmit(e as any);
-                              }
-                            }}
-                            className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-2 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
-                          >
-                            Log In
-                          </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        if (formData.email && formData.password.length >= 6) {
+                          handleAuthSubmit(e as any);
+                        }
+                      }}
+                      className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-2 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
+                    >
+                      Log In
+                    </motion.button>
 
-                          <button
-                            type="button"
-                            onClick={handleResetPassword}
-                            disabled={isSendingReset}
-                            className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
-                          >
-                            {isSendingReset ? "Sending Reset Link..." : "Forgot Password?"}
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={isSendingReset}
+                      className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-cyan-400 hover:text-cyan-300 transition-all shadow-md overflow-hidden block disabled:opacity-50"
+                    >
+                      {isSendingReset ? "Sending Reset Link..." : "Forgot Password?"}
+                    </button>
 
                     <div className="flex items-center gap-4 my-6">
                       <div className="h-px flex-1 bg-white/10" />
@@ -668,27 +587,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       <GoogleIcon />
                       <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
                     </button>
-
-                    {prevUser && (
-                      <div className="mt-4 pt-4 border-t border-white/5 text-center">
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            setUsePrevUser(true);
-                            setFormData(prev => ({ ...prev, email: prevUser.email }));
-                          }} 
-                          className="text-cyan-400/60 hover:text-cyan-300 text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 mx-auto font-black italic"
-                        >
-                          <span 
-                            className="w-2 h-2 rounded-full animate-pulse" 
-                            style={{ background: getOrbGradient(prevUser.orbHue, 'idle', 'E') }}
-                          />
-                          Log back in as {prevUser.name}
-                        </button>
-                      </div>
-                    )}
                   </motion.div>
-                )}
               </AnimatePresence>
             </motion.div>
           </motion.div>
