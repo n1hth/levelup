@@ -21,6 +21,7 @@ import { Chat } from './pages/Chat.tsx';
 
 import { AppTour } from './components/AppTour.tsx';
 import Landing from './pages/Landing.tsx';
+import { PrivacyPolicy, TermsOfService } from './pages/Legal.tsx';
 
 function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
   const [password, setPassword] = useState('');
@@ -167,6 +168,9 @@ function AppContent() {
   }
 
   if (!state.user) {
+    if (location.pathname === '/privacy') return <PrivacyPolicy />;
+    if (location.pathname === '/terms') return <TermsOfService />;
+    
     if (location.pathname !== '/') {
       return <Navigate to="/" replace />;
     }
@@ -200,6 +204,9 @@ function AppContent() {
         
         {/* Isolated Full-Screen Routes */}
         <Route path="duels/:duelId" element={<ArenaDuel />} />
+        
+        <Route path="privacy" element={<PrivacyPolicy />} />
+        <Route path="terms" element={<TermsOfService />} />
         
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>

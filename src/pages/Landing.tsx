@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { QuickStart } from '@/src/components/QuickStart';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -249,6 +250,7 @@ const CAPABILITIES = [
 // ═══════════════════════════════════════════════════════════
 export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
+  const navigate = useNavigate();
   const [activeCapIndex, setActiveCapIndex] = useState(0);
 
   useEffect(() => {
@@ -624,9 +626,11 @@ export default function Landing() {
               Orbis
             </span>
           </div>
-          <p className="text-[9px] text-white/10 font-mono tracking-wider">
-            © 2025 Orbis. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4 text-[9px] text-white/10 font-mono tracking-wider">
+            <button onClick={() => navigate('/privacy')} className="hover:text-white/30 transition-colors uppercase">Privacy Policy</button>
+            <button onClick={() => navigate('/terms')} className="hover:text-white/30 transition-colors uppercase">Terms of Service</button>
+            <span className="hidden sm:inline">© 2025 Orbis. All rights reserved.</span>
+          </div>
         </div>
       </footer>
 
