@@ -159,6 +159,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
   };
 
   const [isSendingReset, setIsSendingReset] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleResetPassword = async () => {
     if (!formData.email) {
@@ -233,6 +234,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
   const handleGoogleLogin = async () => {
     try {
+      setIsGoogleLoading(true);
       localStorage.setItem('orbis_used_google_auth', 'true');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -240,8 +242,12 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
           redirectTo: window.location.origin,
         }
       });
-      if (error) throw error;
+      if (error) {
+        setIsGoogleLoading(false);
+        throw error;
+      }
     } catch (err: any) {
+      setIsGoogleLoading(false);
       triggerNotification(err.message || "Google Authentication failed");
     }
   };
@@ -286,8 +292,8 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
     <div className="min-h-screen w-screen bg-black text-white overflow-y-auto overflow-x-hidden relative font-sans flex flex-col">
       {/* Background Ambience - MOVED TO TOP */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 -left-1/4 w-full h-full bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 -right-1/4 w-full h-full bg-cyan-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-blue-900/10 to-transparent" />
+        <div className="absolute bottom-0 right-0 w-full h-[50vh] bg-gradient-to-t from-cyan-900/10 to-transparent" />
       </div>
 
       <AnimatePresence mode="wait">
@@ -336,7 +342,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             <motion.div 
@@ -378,7 +384,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             {/* Pulsing Orb */}
@@ -442,12 +448,12 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12"
           >
             <motion.div 
               layout
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="w-full max-w-sm relative bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl overflow-hidden"
             >
               {/* Custom Inline Notification Banner */}
@@ -457,7 +463,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     className={cn(
                       "absolute top-0 left-0 right-0 p-4 text-center text-[10px] font-black uppercase tracking-wider border-b z-50 shadow-2xl backdrop-blur-md",
                       notification.type === 'success' 
@@ -486,7 +492,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="space-y-4"
                   >
                     <div className="text-center mb-8">
@@ -538,7 +544,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.6, ease: "easeInOut" }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
                         className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider text-amber-300 space-y-2 text-left"
                       >
                         <div className="flex items-center gap-2 text-amber-400">
@@ -582,10 +588,17 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
-                      className="w-full flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 rounded-2xl py-4 transition-all active:scale-[0.98] group"
+                      disabled={isGoogleLoading}
+                      className="w-full flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 rounded-2xl py-4 transition-all active:scale-[0.98] group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <GoogleIcon />
-                      <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
+                      {isGoogleLoading ? (
+                        <span className="text-[10px] font-black tracking-widest text-white/50 animate-pulse">Redirecting...</span>
+                      ) : (
+                        <>
+                          <GoogleIcon />
+                          <span className="text-[10px] font-black tracking-widest text-white group-hover:text-blue-200 transition-colors">Sign in with Google</span>
+                        </>
+                      )}
                     </button>
                   </motion.div>
               </AnimatePresence>
@@ -600,7 +613,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-8 overflow-y-auto"
           >
             <div className="w-full max-w-sm text-center">
@@ -674,7 +687,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-6 overflow-hidden"
             >
               {/* Background pulse in user's color */}
@@ -782,7 +795,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 overflow-y-auto"
           >
             <div className="w-full max-w-sm relative">
@@ -858,7 +871,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 overflow-y-auto"
           >
             <div className="w-full max-w-sm space-y-4">
@@ -913,7 +926,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center overflow-y-auto"
           >
             <motion.div 
@@ -956,7 +969,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-8 overflow-y-auto"
           >
             {/* Particle Explosion Mockup (Radiating Rings) */}
