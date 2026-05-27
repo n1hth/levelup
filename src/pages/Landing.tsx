@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { QuickStart } from '@/src/components/QuickStart';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -627,8 +627,8 @@ export default function Landing() {
             </span>
           </div>
           <div className="flex items-center gap-4 text-[9px] text-white/10 font-mono tracking-wider">
-            <button onClick={() => navigate('/privacy')} className="hover:text-white/30 transition-colors uppercase">Privacy Policy</button>
-            <button onClick={() => navigate('/terms')} className="hover:text-white/30 transition-colors uppercase">Terms of Service</button>
+            <Link to="/privacy" className="hover:text-white/30 transition-colors uppercase">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white/30 transition-colors uppercase">Terms of Service</Link>
             <span className="hidden sm:inline">© 2025 Orbis. All rights reserved.</span>
           </div>
         </div>
