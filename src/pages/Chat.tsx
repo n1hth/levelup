@@ -117,6 +117,62 @@ function DuelRetryMessageCard({
   );
 }
 
+function DuelAcceptedMessageCard({
+  duelId,
+  isMe,
+  onJoin
+}: {
+  duelId: string;
+  isMe: boolean;
+  onJoin: () => void;
+}) {
+  return (
+    <div className={cn(
+      "group relative w-[min(86vw,360px)] rounded-2xl border p-4 shadow-2xl transition-all",
+      isMe
+        ? "bg-white text-black border-white/20 rounded-tr-none"
+        : "bg-emerald-500/[0.06] text-white border-emerald-400/20 rounded-tl-none"
+    )}>
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+          isMe ? "bg-black text-white" : "bg-emerald-400/15 text-emerald-400"
+        )}>
+          <Swords size={17} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className={cn(
+            "text-[9px] font-black uppercase tracking-[0.2em] mb-1",
+            isMe ? "text-black/45" : "text-emerald-400/60"
+          )}>
+            Duel Ready
+          </div>
+          <div className={cn(
+            "text-[12px] font-black uppercase italic tracking-tight leading-snug break-words",
+            isMe ? "text-black" : "text-white"
+          )}>
+            {isMe ? "You accepted the challenge." : "Opponent accepted your challenge."}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-end">
+        <button
+          onClick={onJoin}
+          className={cn(
+            "px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.18em] transition-all active:scale-95",
+            isMe
+              ? "bg-black text-white hover:bg-black/80"
+              : "bg-emerald-400 text-black hover:bg-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.25)]"
+          )}
+        >
+          Join Lobby
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Chat() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -335,6 +391,9 @@ export function Chat() {
           const isMe = msg.sender_id === state.user?.id;
           const isLastMessage = i === messages.length - 1;
           const duelRetryCard = parseDuelRetryCardContent(msg.content);
+          const duelAcceptedId = msg.content.startsWith('levelup:duel_accepted:') 
+            ? msg.content.split(':')[2] 
+            : null;
           const cardId = String(msg.id || duelRetryCard?.createdAt || i);
           const isExpired = duelRetryCard ? new Date(duelRetryCard.expiresAt).getTime() <= now : false;
           
@@ -355,6 +414,12 @@ export function Chat() {
                   expiryLabel={getExpiryLabel(duelRetryCard.expiresAt, now)}
                   accent={myPalette.accent}
                   onStart={() => handleStartDuelFromCard(msg, duelRetryCard)}
+                />
+              ) : duelAcceptedId ? (
+                <DuelAcceptedMessageCard
+                  duelId={duelAcceptedId}
+                  isMe={isMe}
+                  onJoin={() => navigate(`/duels/${duelAcceptedId}`)}
                 />
               ) : (
                 <div className={cn(

@@ -1489,6 +1489,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (duelErr) throw duelErr;
+      
+      if (duel && duel.player1_id) {
+        // Send a message to the chat so the sender can join
+        await supabase.from('messages').insert({
+          sender_id: state.user.id,
+          receiver_id: duel.player1_id,
+          content: `levelup:duel_accepted:${duel.id}`
+        });
+      }
+      
       return duel.id;
     } catch (err) {
       console.error("Accept duel failed:", err);
