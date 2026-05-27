@@ -160,6 +160,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
 
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
   const handleResetPassword = async () => {
     if (!formData.email) {
@@ -303,7 +304,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0, x: 50, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.5 }}
+            transition={isMobile ? { type: "tween", duration: 0.25, ease: "easeOut", delay: 0.5 } : { type: "spring", stiffness: 300, damping: 25, delay: 0.5 }}
             className="fixed top-6 right-6 z-50 bg-black/60 backdrop-blur-xl border border-white/10 p-3 pr-4 rounded-full shadow-2xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors group"
             onClick={handleSavedUserLogin}
           >
@@ -342,7 +343,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: isMobile ? 0.2 : 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             <motion.div 
@@ -384,30 +385,13 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: isMobile ? 0.2 : 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12 text-center"
           >
             {/* Pulsing Orb */}
             <div className="relative mb-20">
-               <motion.div 
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  opacity: [0.3, 0.6, 0.3]
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute inset-0 bg-blue-500 rounded-full blur-3xl scale-150"
-               />
-               <motion.div
-                animate={{ 
-                  boxShadow: [
-                    '0 0 20px rgba(59, 130, 246, 0.5)',
-                    '0 0 60px rgba(59, 130, 246, 0.8)',
-                    '0 0 20px rgba(59, 130, 246, 0.5)'
-                  ]
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-300 to-blue-600 relative z-10 border border-white/20"
-               />
+               <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl scale-150 animate-pulse-glow" />
+               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-300 to-blue-600 relative z-10 border border-white/20 system-pulse" />
             </div>
 
             <motion.h2 
@@ -448,7 +432,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: isMobile ? 0.2 : 0.3, ease: "easeInOut" }}
             className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-12"
           >
             <motion.div 

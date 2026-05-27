@@ -866,10 +866,8 @@ export function Orb({ onInteractionChange }: OrbProps) {
 
                   {/* B-Rank: Orbital Rings */}
                   {(rankTier === 'B' || rankTier === 'A' || rankTier === 'S') && (
-                    <motion.div 
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                      className="absolute -inset-1 border border-white/10 rounded-full border-dashed"
+                    <div 
+                      className="absolute -inset-1 border border-white/10 rounded-full border-dashed animate-spin-slow-15"
                     />
                   )}
                 </div>
@@ -1085,15 +1083,11 @@ export function Orb({ onInteractionChange }: OrbProps) {
                 />
                 
                 {/* Orbital Rings */}
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-12 border border-white/5 rounded-full"
+                <div 
+                  className="absolute -inset-12 border border-white/5 rounded-full animate-spin-slow-10"
                 />
-                <motion.div 
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-8 border border-white/10 rounded-full"
+                <div 
+                  className="absolute -inset-8 border border-white/10 rounded-full [animation-direction:reverse] animate-spin-slow-15"
                 />
               </motion.div>
 

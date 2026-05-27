@@ -6,6 +6,16 @@
   --color-system-bg: #030712;
   --color-system-border: rgba(255, 255, 255, 0.1);
   --radius-system: 24px;
+  --animate-spin-slow: spin 4s linear infinite;
+  --animate-spin-slow-10: spin 10s linear infinite;
+  --animate-spin-slow-15: spin 15s linear infinite;
+  --animate-spin-slow-20: spin 20s linear infinite;
+  --animate-pulse-glow: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
 :root {

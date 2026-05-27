@@ -10,12 +10,13 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
+  const isMobile = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false;
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: isMobile ? 12 : 24 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: isMobile ? 0.3 : 0.7, delay: isMobile ? delay * 0.5 : delay, ease: "easeOut" }}
       className={className}
     >
       {children}
