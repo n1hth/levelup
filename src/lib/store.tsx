@@ -1472,8 +1472,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getNotifications = useCallback(async () => {
     if (!state.user) return [];
     try {
-      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
-
       const { data: friendReqsRaw } = await supabase
         .from('friends')
         .select('*')
@@ -1544,14 +1542,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         })
       ];
       
-      const clearedAt = parseInt(localStorage.getItem('notifications_cleared_at') || '0', 10);
-
       return notifications
-        .filter(n => {
-           const isDismissed = dismissedIds.includes(n.id) || dismissedIds.includes((n as any).duel_id);
-           const isBeforeClear = new Date(n.timestamp).getTime() <= clearedAt;
-           return !isDismissed && !isBeforeClear;
-        })
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (err) {
       console.error("Fetch notifications failed:", err);
@@ -1562,13 +1553,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const dismissNotification = useCallback(async (notification: any) => {
     if (!state.user) return;
     try {
-      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
-      if (!dismissedIds.includes(notification.id)) {
-        dismissedIds.push(notification.id);
-        if (notification.duel_id) dismissedIds.push(notification.duel_id);
-        localStorage.setItem('dismissed_notifications', JSON.stringify(dismissedIds));
-      }
-
       if (notification.type === 'friend') {
         await supabase
           .from('friends')
@@ -1582,8 +1566,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .eq('id', notification.duel_id || notification.id)
           .eq('player2_id', state.user.id)
           .eq('status', 'invited');
+      } else if (notification.type === 'duel_cancelled') {
+        await supabase
+          .from('duels')
+          .update({ status: 'declined' })
+          .eq('id', notification.duel_id || notification.id.replace(':cancelled', ''))
+          .eq('player2_id', state.user.id)
+          .eq('status', 'cancelled');
       }
-      // Note: No database update needed for duel_cancelled, handled securely via local storage
     } catch (err) {
       console.error("Dismiss notification failed:", err);
     }
@@ -1592,14 +1582,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearNotifications = useCallback(async () => {
     if (!state.user) return;
     try {
-      // Record the clear timestamp to filter out any existing notifications locally
-      localStorage.setItem('notifications_cleared_at', Date.now().toString());
-
-      await Promise.all([
+      const results = await Promise.allSettled([
         supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
         supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending'),
-        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited')
+        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited'),
+        supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'cancelled')
       ]);
+
+      results.forEach((result) => {
+        if (result.status === 'rejected') {
+          console.error("Clear notification request failed:", result.reason);
+        } else if (result.value.error) {
+          console.error("Clear notification update failed:", result.value.error);
+        }
+      });
     } catch (err) {
       console.error("Clear notifications failed:", err);
     }
