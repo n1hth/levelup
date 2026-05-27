@@ -109,7 +109,7 @@ function DuelRetryMessageCard({
                 : "bg-cyan-400 text-black hover:bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.25)]"
             )}
           >
-            {isExpired ? 'Expired' : hasStarted ? 'Invite Sent' : isStarting ? 'Sending' : 'Duel'}
+            {isExpired ? 'Expired' : hasStarted ? 'Opening' : isStarting ? 'Sending' : 'Duel'}
           </button>
         )}
       </div>
@@ -283,6 +283,7 @@ export function Chat() {
       const duelId = await createDuel('writing', msg.sender_id);
       if (!duelId) throw new Error('Could not create duel invite.');
       setStartedCardIds(prev => new Set(prev).add(cardId));
+      navigate(`/duels/${duelId}`);
     } catch (err: any) {
       alert(err?.message || 'Could not send duel invite.');
     } finally {

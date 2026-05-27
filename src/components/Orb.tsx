@@ -53,6 +53,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const notificationsRef = useRef<any[]>([]);
   const shownBubblesRef = useRef<Set<string>>(new Set());
+  const isHiddenRef = useRef(isOrbHidden);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,6 +68,16 @@ export function Orb({ onInteractionChange }: OrbProps) {
     else onInteractionChange?.('none');
   }, [isHolding, isInsightOpen, isNavOpen, onInteractionChange]);
 
+  useEffect(() => {
+    isHiddenRef.current = isOrbHidden;
+    if (isOrbHidden) {
+      setIsNavOpen(false);
+      setIsInsightOpen(false);
+      setShowBubble(false);
+      setShowPulseWave(false);
+    }
+  }, [isOrbHidden]);
+
   const fetchNotifications = async () => {
     const data = await getNotifications();
     const prevNotifs = notificationsRef.current;
@@ -74,13 +85,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
     // Check for new notifications by ID
     const newItems = data.filter(n => !prevNotifs.find(pn => pn.id === n.id));
     
-    if (newItems.length > 0) {
+    if (newItems.length > 0 && !isHiddenRef.current) {
       // Bright pulse on any new notification
       setShowPulseWave(true);
       setTimeout(() => setShowPulseWave(false), 1500);
 
       // Check specifically for duel or friend request events to show bubble
-      const newEvent = newItems.find(n => n.type === 'duel' || n.type === 'duel_cancelled' || n.type === 'friend');
+      const newEvent = newItems.find(n => n.type === 'duel' || n.type === 'duel_ready' || n.type === 'duel_cancelled' || n.type === 'friend');
       if (newEvent && !shownBubblesRef.current.has(newEvent.id)) {
         // Only show bubble if notification was created/updated in the last 45 seconds
         const isRecent = Date.now() - new Date(newEvent.timestamp).getTime() < 45 * 1000;
@@ -104,6 +115,17 @@ export function Orb({ onInteractionChange }: OrbProps) {
   }, []); // Poll independently of state changes
 
   const handleAction = async (notif: any, action: 'accept' | 'decline') => {
+    if (notif.type === 'duel_ready') {
+      if (action === 'accept') {
+        setIsNavOpen(false);
+        navigate(`/duels/${notif.duel_id || notif.id.replace(':ready', '')}`);
+      } else {
+        await dismissNotification(notif);
+        fetchNotifications();
+      }
+      return;
+    }
+
     if (notif.type === 'duel_cancelled') {
       await dismissNotification(notif);
       fetchNotifications();
@@ -386,7 +408,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
       {/* FIXED NOTIFICATION BENTO BOX — TOP HALF       */}
       {/* ═══════════════════════════════════════════════ */}
       <AnimatePresence>
-        {isNavOpen && (
+        {isNavOpen && !isOrbHidden && (
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -454,6 +476,13 @@ export function Orb({ onInteractionChange }: OrbProps) {
                             >
                               Acknowledge
                             </button>
+                          ) : notif.type === 'duel_ready' ? (
+                            <button
+                              onClick={() => handleAction(notif, 'accept')}
+                              className="flex-1 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 text-[9px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+                            >
+                              Join
+                            </button>
                           ) : (
                             <button 
                               onClick={() => handleAction(notif, 'accept')}
@@ -497,7 +526,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
       {/* BACKDROP + PULSE + ORB CONTAINER               */}
       {/* ═══════════════════════════════════════════════ */}
       <AnimatePresence>
-        {(isHolding || isInsightOpen || isNavOpen) && (
+        {!isOrbHidden && (isHolding || isInsightOpen || isNavOpen) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -510,7 +539,7 @@ export function Orb({ onInteractionChange }: OrbProps) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showPulseWave && (
+        {showPulseWave && !isOrbHidden && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0, x: '-50%' }}
             animate={{ 
@@ -965,40 +994,57 @@ export function Orb({ onInteractionChange }: OrbProps) {
       {/* DUEL REQUEST BUBBLE                             */}
       {/* ═══════════════════════════════════════════════ */}
       <AnimatePresence>
-        {showBubble && latestDuelNotif && !isNavOpen && (
+        {showBubble && latestDuelNotif && !isNavOpen && !isOrbHidden && (
           <motion.div
-            initial={{ opacity: 0, y: 20, x: '-50%', scale: 0.8 }}
+            initial={{ opacity: 0, y: 20, x: '-50%', scale: 0.96 }}
             animate={{ opacity: 1, y: -110, x: '-50%', scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5, y: -130, x: '-50%' }}
+            exit={{ opacity: 0, y: -130, x: '-50%', scale: 0.96 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             style={{ willChange: 'transform' }}
-            className="fixed bottom-0 left-1/2 z-[100] cursor-pointer"
+            className="fixed bottom-0 left-1/2 z-[140] w-[calc(100vw-32px)] max-w-[360px] cursor-pointer"
             onClick={() => setIsNavOpen(true)}
           >
-            <div className="bg-cyan-500/10 border border-cyan-400/30 backdrop-blur-3xl rounded-2xl px-5 py-3 flex items-center gap-4 shadow-[0_0_30px_rgba(6,182,212,0.2)] group">
-               <div className="w-8 h-8 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#070b12]/95 px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                  latestDuelNotif.type === 'friend'
+                    ? "bg-emerald-400/15 text-emerald-300"
+                    : latestDuelNotif.type === 'duel_cancelled'
+                    ? "bg-red-400/15 text-red-300"
+                    : "bg-cyan-400/15 text-cyan-300"
+                )}>
                   {latestDuelNotif.type === 'friend' ? (
-                    <UserPlus size={16} className="text-cyan-400" />
+                    <UserPlus size={16} />
                   ) : (
-                    <Swords size={16} className="text-cyan-400" />
+                    <Swords size={16} />
                   )}
-               </div>
-               <div className="flex flex-col">
-                  <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[8px] font-black uppercase tracking-[0.22em] text-white/35">
                     {latestDuelNotif.type === 'friend'
                       ? 'Friend Request'
                       : latestDuelNotif.type === 'duel_cancelled'
                       ? 'Missed Challenge'
-                      : 'Incoming Challenge'}
-                  </span>
-                  <span className="text-[11px] font-black text-white uppercase italic tracking-tight">
+                      : latestDuelNotif.type === 'duel_ready'
+                      ? 'Duel Accepted'
+                      : 'Duel Invite'}
+                  </div>
+                  <div className="mt-1 truncate text-[12px] font-black uppercase italic tracking-tight text-white">
                     {latestDuelNotif.type === 'friend'
                       ? `${latestDuelNotif.sender} wants to connect`
                       : latestDuelNotif.type === 'duel_cancelled'
                       ? `${latestDuelNotif.sender} withdrew challenge`
-                      : `${latestDuelNotif.sender} issued a duel`}
-                  </span>
-               </div>
-               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-cyan-900/20 border-r border-b border-cyan-400/30 rotate-45 backdrop-blur-3xl" />
+                      : latestDuelNotif.type === 'duel_ready'
+                      ? `${latestDuelNotif.sender} accepted your duel`
+                      : `${latestDuelNotif.sender} is waiting for you`}
+                  </div>
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-white/45">
+                  Open
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

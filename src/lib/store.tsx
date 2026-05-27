@@ -6,6 +6,9 @@ import { generateOrbHue } from './orb-color';
 import { supabase } from './supabase';
 import { type Session } from '@supabase/supabase-js';
 
+const DUEL_INVITE_TTL_MS = 15 * 60 * 1000;
+const DUEL_JOIN_TTL_MS = 2 * 60 * 1000;
+
 // ═══════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════
@@ -1453,11 +1456,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const acceptDuelInvite = useCallback(async (duelId: string) => {
     if (!state.user) return null;
     try {
-      // Update the duel status to 'setup'
+      const { data: invite, error: inviteErr } = await supabase
+        .from('duels')
+        .select('id, status, created_at, player2_id')
+        .eq('id', duelId)
+        .maybeSingle();
+
+      if (inviteErr) throw inviteErr;
+      if (!invite || invite.player2_id !== state.user.id) return null;
+
+      if (invite.status !== 'invited') {
+        return invite.status === 'setup' ? invite.id : null;
+      }
+
+      const createdTime = new Date(invite.created_at).getTime();
+      if (Number.isFinite(createdTime) && Date.now() - createdTime > DUEL_INVITE_TTL_MS) {
+        await supabase
+          .from('duels')
+          .update({ status: 'declined' })
+          .eq('id', duelId)
+          .eq('status', 'invited');
+        return null;
+      }
+
       const { data: duel, error: duelErr } = await supabase
         .from('duels')
-        .update({ status: 'setup' })
+        .update({ status: 'setup', updated_at: new Date().toISOString() })
         .eq('id', duelId)
+        .eq('player2_id', state.user.id)
+        .eq('status', 'invited')
         .select()
         .single();
 
@@ -1478,13 +1505,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('friend_id', state.user.id)
         .eq('status', 'pending');
 
-      const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+      const inviteCutoff = new Date(Date.now() - DUEL_INVITE_TTL_MS).toISOString();
+      const joinCutoff = new Date(Date.now() - DUEL_JOIN_TTL_MS).toISOString();
 
       const { data: duelReqsRaw } = await supabase
         .from('duels')
         .select('*')
         .eq('player2_id', state.user.id)
-        .eq('status', 'invited');
+        .eq('status', 'invited')
+        .gte('created_at', inviteCutoff);
+
+      const { data: readyDuelsRaw } = await supabase
+        .from('duels')
+        .select('*')
+        .eq('player1_id', state.user.id)
+        .eq('status', 'setup')
+        .gte('updated_at', joinCutoff);
 
       const { data: cancelledDuelsRaw } = await supabase
         .from('duels')
@@ -1497,6 +1533,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const senderIds = Array.from(new Set([
         ...(friendReqsRaw || []).map(r => r.user_id),
         ...(duelReqsRaw || []).map(r => r.player1_id),
+        ...(readyDuelsRaw || []).map(r => r.player2_id),
         ...(cancelledDuelsRaw || []).map(r => r.player1_id)
       ]));
 
@@ -1528,6 +1565,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             message: 'requested to duel',
             duel_id: r.id,
             timestamp: r.created_at
+          };
+        }),
+        ...(readyDuelsRaw || []).map(r => {
+          const profile = (senderProfiles || []).find(p => p.id === r.player2_id);
+          return {
+            id: `${r.id}:ready`,
+            type: 'duel_ready',
+            sender_id: r.player2_id,
+            sender: profile?.name || 'Unknown',
+            username: profile?.username || 'unknown',
+            message: 'accepted your duel',
+            duel_id: r.id,
+            timestamp: r.updated_at || r.created_at
           };
         }),
         ...(cancelledDuelsRaw || []).map(r => {
@@ -1577,6 +1627,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .eq('id', notification.duel_id || notification.id.replace(':cancelled', ''))
           .eq('player2_id', state.user.id)
           .eq('status', 'cancelled');
+      } else if (notification.type === 'duel_ready') {
+        await supabase
+          .from('duels')
+          .update({ status: 'declined' })
+          .eq('id', notification.duel_id || notification.id.replace(':ready', ''))
+          .eq('player1_id', state.user.id)
+          .eq('status', 'setup');
       }
     } catch (err) {
       console.error("Dismiss notification failed:", err);
@@ -1590,6 +1647,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('friends').update({ status: 'declined' }).eq('friend_id', state.user.id).eq('status', 'pending'),
         supabase.from('duel_requests').update({ status: 'declined' }).eq('receiver_id', state.user.id).eq('status', 'pending'),
         supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'invited'),
+        supabase.from('duels').update({ status: 'declined' }).eq('player1_id', state.user.id).eq('status', 'setup'),
         supabase.from('duels').update({ status: 'declined' }).eq('player2_id', state.user.id).eq('status', 'cancelled')
       ]);
 

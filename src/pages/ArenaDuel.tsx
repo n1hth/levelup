@@ -64,6 +64,7 @@ export function ArenaDuel() {
   const [duel, setDuel] = useState<any>(null);
   const [phase, setPhase] = useState<DuelPhase>(isSearching ? 'SEARCHING' : 'LOBBY');
   const [timeLeft, setTimeLeft] = useState(90);
+  const [inviteTimeLeft, setInviteTimeLeft] = useState(15 * 60);
   const [localTopic, setLocalTopic] = useState('');
   const [answer, setAnswer] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -323,6 +324,33 @@ export function ArenaDuel() {
     return () => clearInterval(t);
   }, [phase]);
 
+  // ── Friendly invites can wait up to 15 minutes before acceptance ──
+  useEffect(() => {
+    if (phase !== 'WAITING' || !duel?.id || !duel?.created_at) return;
+
+    let didExpire = false;
+    const createdTime = new Date(duel.created_at).getTime();
+
+    const tick = async () => {
+      const remaining = Math.max(0, 15 * 60 - Math.floor((Date.now() - createdTime) / 1000));
+      setInviteTimeLeft(remaining);
+
+      if (remaining === 0 && !didExpire) {
+        didExpire = true;
+        try {
+          await updateDuel(duel.id, { status: 'declined' });
+        } catch (err) {
+          console.error('Failed to expire duel invite:', err);
+        }
+        navigate('/battle', { replace: true });
+      }
+    };
+
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [phase, duel?.id, duel?.created_at, updateDuel, navigate]);
+
   // ── Actions ──
   const handleCommitTopic = async () => {
     if (!duel || !localTopic.trim()) return;
@@ -549,8 +577,12 @@ export function ArenaDuel() {
           <span className="text-[9px] font-black tracking-[0.8em] text-purple-400/60 uppercase italic">Invite Sent</span>
           <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">Waiting <span className="text-purple-400">Room</span></h2>
           <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.4em] italic leading-relaxed max-w-xs mx-auto">
-            Challenge sent to <span className="text-white">{opponent?.name || 'Player'}</span>.<br/>Waiting for them to join...
+            Challenge sent to <span className="text-white">{opponent?.name || 'Player'}</span>.<br/>They have 15 minutes to accept.
           </p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-purple-400/15 bg-purple-400/10 px-4 py-2 text-[9px] font-black uppercase tracking-[0.25em] text-purple-200/80">
+            <Timer size={12} />
+            {Math.ceil(inviteTimeLeft / 60)}m left
+          </div>
         </div>
 
         <button 
