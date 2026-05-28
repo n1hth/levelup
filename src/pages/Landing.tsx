@@ -253,6 +253,18 @@ export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
   const navigate = useNavigate();
   const [activeCapIndex, setActiveCapIndex] = useState(0);
+  const [countryCode, setCountryCode] = useState<string>('US');
+
+  useEffect(() => {
+    fetch('https://api.country.is')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.country) {
+          setCountryCode(data.country);
+        }
+      })
+      .catch(err => console.error('Failed to fetch country:', err));
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -338,7 +350,9 @@ export default function Landing() {
             className="flex flex-col items-center gap-3"
           >
             <button
-              onClick={() => setShowAuth(true)}
+              onClick={() => {
+                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="group relative flex items-center gap-3 px-9 py-4 rounded-full font-bold text-sm tracking-[0.1em] uppercase overflow-hidden transition-transform duration-300 hover:scale-[1.04] active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, oklch(0.68 0.22 220) 0%, oklch(0.48 0.28 240) 100%)',
@@ -538,7 +552,7 @@ export default function Landing() {
       {/* ─────────────────────────────────────────────────── */}
       {/*  CLOSE — Pricing + Final CTA                        */}
       {/* ─────────────────────────────────────────────────── */}
-      <section className="relative py-24 md:py-32 px-6 overflow-hidden">
+      <section id="pricing" className="relative py-24 md:py-32 px-6 overflow-hidden">
         {/* Subtle aurora echo */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
           <div
@@ -563,7 +577,9 @@ export default function Landing() {
 
           <Reveal delay={0.1}>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight leading-[1] mb-5">
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50">$10.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50">
+                {countryCode === 'IN' ? '₹399.' : '$10.'}
+              </span>
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">Lifetime.</span>
             </h2>
@@ -594,7 +610,14 @@ export default function Landing() {
           {/* CTA */}
           <Reveal delay={0.25}>
             <button
-              onClick={() => setShowAuth(true)}
+              onClick={() => {
+                const link = countryCode === 'IN' ? 'PAYMENT_LINK_INR' : 'PAYMENT_LINK_USD';
+                if (link.startsWith('PAYMENT_LINK')) {
+                  alert('Please configure the payment links in the source code first.');
+                } else {
+                  window.location.href = link;
+                }
+              }}
               className="group relative flex items-center justify-center gap-3 w-full py-4.5 rounded-full font-bold text-sm tracking-[0.12em] uppercase overflow-hidden transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, oklch(0.68 0.22 220), oklch(0.48 0.28 240))',
