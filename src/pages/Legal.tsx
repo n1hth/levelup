@@ -44,7 +44,7 @@ export const PrivacyPolicy = () => (
     <p>Our application may contain links to third-party websites or services. We are not responsible for the privacy practices or content of these third-party sites. We use services like Supabase for authentication and database management; their privacy policies apply to the data they process on our behalf.</p>
     
     <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">5. Contact Us</h2>
-    <p>If you have any questions about this Privacy Policy, please contact us at privacy@orbis.com.</p>
+    <p>If you have any questions about this Privacy Policy, please contact us at nihithrajanala@gmail.com.</p>
   </PageContainer>
 );
 
