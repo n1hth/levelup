@@ -44,9 +44,7 @@ export function Battle() {
   const handleInviteFriend = async (friendId: string) => {
     setIsInviting(true);
     const mode = duelMode;
-    const deckId = mode === 'deck' ? eligibleDecks[0]?.id : undefined;
-    
-    const duelId = await createDuel(mode as any, friendId, deckId);
+    const duelId = await createDuel(mode as any, friendId, undefined);
     if (!duelId) {
       alert("System Error: Failed to initialize combat link.");
       setIsInviting(false);
