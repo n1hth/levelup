@@ -104,15 +104,11 @@ export const ContactUs = () => (
     <div className="mt-8 space-y-4">
       <div>
         <h3 className="font-bold text-white mb-1">Email Support</h3>
-        <p>support@orbis.com</p>
+        <p>nihithrajanala@gmail.com</p>
       </div>
       <div>
         <h3 className="font-bold text-white mb-1">Business Hours</h3>
         <p>Monday - Friday: 9:00 AM - 6:00 PM (IST)</p>
-      </div>
-      <div>
-        <h3 className="font-bold text-white mb-1">Operating Address</h3>
-        <p>Orbis Technologies<br/>Level 5, Innovation Hub<br/>Bangalore, Karnataka 560001<br/>India</p>
       </div>
     </div>
   </PageContainer>
