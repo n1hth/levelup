@@ -103,7 +103,7 @@ export function Dashboard() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none">
-              {greeting.text.split(' ')[0]} <span className="text-cyan-400">{state.user?.name?.split(' ')[0] || 'HUNTER'}</span>
+              {greeting.text} <span className="text-cyan-400">{state.user?.name?.split(' ')[0] || 'HUNTER'}</span>
             </h1>
             <p className="text-[7px] font-black text-white/30 tracking-[0.4em] uppercase italic mt-1">{motivation}</p>
           </div>
