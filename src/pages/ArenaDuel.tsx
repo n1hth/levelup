@@ -477,13 +477,13 @@ export function ArenaDuel() {
 
   // Load cards if in deck mode and trial phase
   useEffect(() => {
-    if (duel?.mode === 'deck' && phase === 'TRIAL' && duel[myDeckField]) {
-      supabase.from('cards').select('*').eq('deck_id', duel[myDeckField]).limit(10)
+    if (duel?.mode === 'deck' && phase === 'TRIAL' && duel[theirDeckField]) {
+      supabase.from('cards').select('*').eq('deck_id', duel[theirDeckField]).limit(10)
         .then(({ data }) => {
           if (data) setCards(data.map(mapCardFromDb));
         });
     }
-  }, [duel?.mode, phase, duel?.[myDeckField]]);
+  }, [duel?.mode, phase, duel?.[theirDeckField], theirDeckField]);
 
   // ════════════════════════════════════════
   //  RENDER: SEARCHING

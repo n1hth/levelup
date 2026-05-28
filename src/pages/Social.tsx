@@ -489,15 +489,14 @@ export function Social() {
                               setIsSendingDuel(true);
                               try {
                                 const eligibleDecks = state.decks.filter((d: any) => getDeckCards(d.id).length >= 5);
-                                const deckId = selectedMode === 'deck' ? eligibleDecks[0]?.id : undefined;
 
-                                if (selectedMode === 'deck' && !deckId) {
+                                if (selectedMode === 'deck' && eligibleDecks.length === 0) {
                                   alert("Create a deck with at least 5 cards before initiating a Deck Duel.");
                                   setIsSendingDuel(false);
                                   return;
                                 }
 
-                                const duelId = await createDuel(selectedMode as any, selectedFriend.id, deckId);
+                                const duelId = await createDuel(selectedMode as any, selectedFriend.id, undefined);
                                 if (!duelId) {
                                   alert("System Error: Failed to initialize combat link.");
                                   setIsSendingDuel(false);
