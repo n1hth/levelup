@@ -650,10 +650,13 @@ export default function Landing() {
               Orbis
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[9px] text-white/10 font-mono tracking-wider">
+          <div className="flex flex-wrap items-center gap-4 text-[9px] text-white/10 font-mono tracking-wider justify-end sm:justify-start">
+            <Link to="/contact" className="hover:text-white/30 transition-colors uppercase">Contact Us</Link>
+            <Link to="/refund" className="hover:text-white/30 transition-colors uppercase">Refund Policy</Link>
+            <Link to="/shipping" className="hover:text-white/30 transition-colors uppercase">Shipping Policy</Link>
             <Link to="/privacy" className="hover:text-white/30 transition-colors uppercase">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-white/30 transition-colors uppercase">Terms of Service</Link>
-            <span className="hidden sm:inline">© 2025 Orbis. All rights reserved.</span>
+            <span className="hidden sm:inline w-full sm:w-auto mt-2 sm:mt-0 text-center sm:text-left">© 2025 Orbis. All rights reserved.</span>
           </div>
         </div>
       </footer>

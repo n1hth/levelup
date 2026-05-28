@@ -67,3 +67,53 @@ export const TermsOfService = () => (
     <p>We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.</p>
   </PageContainer>
 );
+
+export const RefundPolicy = () => (
+  <PageContainer title="Cancellation & Refund Policy">
+    <p className="text-cyan-400 font-black tracking-widest text-[10px] uppercase">Last updated: {new Date().toLocaleDateString()}</p>
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">1. Digital Goods</h2>
+    <p>Orbis provides digital software and services. Due to the nature of digital goods, all sales are final and non-refundable once the purchase is completed and access is granted, unless otherwise required by law.</p>
+    
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">2. Exceptions</h2>
+    <p>If you experience technical issues that prevent you from accessing the service, please contact our support team within 7 days of purchase. We will evaluate refund requests for technical failures on a case-by-case basis.</p>
+    
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">3. Cancellation</h2>
+    <p>If you have purchased a lifetime license, it cannot be cancelled after purchase. If we offer subscriptions in the future, you may cancel at any time, but no prorated refunds will be provided for the remaining billing cycle.</p>
+  </PageContainer>
+);
+
+export const ShippingPolicy = () => (
+  <PageContainer title="Shipping & Delivery Policy">
+    <p className="text-cyan-400 font-black tracking-widest text-[10px] uppercase">Last updated: {new Date().toLocaleDateString()}</p>
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">1. Delivery Method</h2>
+    <p>Orbis is a purely digital platform. We do not ship physical goods or products.</p>
+    
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">2. Accessing Your Purchase</h2>
+    <p>Upon successful payment verification, your account will instantly be granted access to the purchased features. You will receive an email confirmation containing your transaction details and instructions on how to log in.</p>
+    
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">3. Delivery Timelines</h2>
+    <p>Delivery of digital access is immediate. In rare cases where payment processing is delayed by the gateway, access may take up to 24 hours to be provisioned. If you do not receive access within this timeframe, please contact support.</p>
+  </PageContainer>
+);
+
+export const ContactUs = () => (
+  <PageContainer title="Contact Us">
+    <h2 className="text-xl font-black italic tracking-tight text-white mt-8 mb-4">Get in Touch</h2>
+    <p>We are here to help with any questions, technical issues, or feedback you might have.</p>
+    
+    <div className="mt-8 space-y-4">
+      <div>
+        <h3 className="font-bold text-white mb-1">Email Support</h3>
+        <p>support@orbis.com</p>
+      </div>
+      <div>
+        <h3 className="font-bold text-white mb-1">Business Hours</h3>
+        <p>Monday - Friday: 9:00 AM - 6:00 PM (IST)</p>
+      </div>
+      <div>
+        <h3 className="font-bold text-white mb-1">Operating Address</h3>
+        <p>Orbis Technologies<br/>Level 5, Innovation Hub<br/>Bangalore, Karnataka 560001<br/>India</p>
+      </div>
+    </div>
+  </PageContainer>
+);
