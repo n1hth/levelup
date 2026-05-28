@@ -531,11 +531,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             totalXp: profile.total_xp,
             streak: profile.streak,
             momentum: profile.momentum,
-            focusSessions: focusRes.data || [],
+            focusSessions: (focusRes.data || []).map((row: any) => ({
+              id: row.id,
+              userId: row.user_id,
+              actualDuration: row.actual_duration,
+              targetDuration: row.target_duration,
+              completedAt: row.completed_at,
+              isCompleted: row.is_completed,
+              pauseCount: row.pause_count,
+              noPauseChallenge: row.no_pause_challenge,
+              totalTimePaused: row.total_time_paused,
+              xpEarned: row.xp_earned
+            })),
             decks: finalDecks,
             cards: finalCards,
-            deckStudySessions: studyRes.data || [],
-            arenaSessions: arenaRes.data || [],
+            deckStudySessions: (studyRes.data || []).map((row: any) => ({
+              id: row.id,
+              userId: row.user_id,
+              deckId: row.deck_id,
+              cardsReviewed: row.cards_reviewed,
+              accuracy: row.accuracy,
+              duration: row.duration,
+              xpEarned: row.xp_earned,
+              completedAt: row.completed_at
+            })),
+            arenaSessions: (arenaRes.data || []).map((row: any) => ({
+              id: row.id,
+              userId: row.user_id,
+              deckId: row.deck_id,
+              difficulty: row.difficulty,
+              totalCards: row.total_cards,
+              correctCount: row.correct_count,
+              wrongCount: row.wrong_count,
+              avgResponseTime: row.avg_response_time,
+              bestStreak: row.best_streak,
+              xpEarned: row.xp_earned,
+              completedAt: row.completed_at
+            })),
             lastActiveDate: profile.last_active_date,
           };
         });

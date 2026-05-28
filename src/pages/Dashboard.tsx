@@ -261,7 +261,12 @@ export function Dashboard() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end shrink-0 pl-2">
-                  <span className="text-[13px] font-black text-yellow-400 italic tabular-nums leading-none">+{act.xp} XP</span>
+                  <span className={cn(
+                    "text-[13px] font-black italic tabular-nums leading-none",
+                    act.xp >= 0 ? "text-yellow-400" : "text-red-400"
+                  )}>
+                    {act.xp >= 0 ? '+' : ''}{act.xp} XP
+                  </span>
                   <span className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] mt-1">{getRelativeTime(act.timestamp)}</span>
                 </div>
               </div>
