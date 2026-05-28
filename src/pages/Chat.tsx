@@ -339,6 +339,10 @@ export function Chat() {
       const duelId = await createDuel('writing', msg.sender_id);
       if (!duelId) throw new Error('Could not create duel invite.');
       setStartedCardIds(prev => new Set(prev).add(cardId));
+      
+      // Send message so the original sender can join via chat
+      await sendMessage(msg.sender_id, `levelup:duel_accepted:${duelId}`);
+      
       navigate(`/duels/${duelId}`);
     } catch (err: any) {
       alert(err?.message || 'Could not send duel invite.');

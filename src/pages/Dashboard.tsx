@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Timer, BookOpen, Zap, Flame, Clock, Target, ChevronRight, Activity, Trophy, Sparkles, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { Timer, BookOpen, Zap, Flame, Clock, Target, ChevronRight, Activity, Trophy, Sparkles, TrendingUp, TrendingDown, Calendar, Swords } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { getRankColor } from '@/src/lib/xp.ts';
 import { cn, getRelativeTime } from '@/src/lib/utils.ts';
@@ -230,6 +230,48 @@ export function Dashboard() {
               <span className="text-[6px] font-black text-white/20 uppercase tracking-widest">{s.label}</span>
             </div>
           ))}
+        </motion.div>
+
+        {/* Recent Activity / XP History */}
+        <motion.div variants={itemVariants} className="col-span-12 mt-2">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-yellow-400" />
+              <h3 className="text-[9px] font-black text-white/40 italic tracking-[0.3em] uppercase">XP History</h3>
+            </div>
+            <span className="text-[8px] font-black text-yellow-400/50 uppercase tracking-[0.2em] tabular-nums">LAST 5</span>
+          </div>
+          <div className="space-y-2">
+            {activity.slice(0, 5).map((act) => (
+              <div key={act.id} className="system-panel p-4 rounded-xl flex items-center justify-between bg-white/[0.01] border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center border shadow-inner",
+                    act.type === 'focus' ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400" :
+                    act.type === 'study' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                    "bg-red-500/10 border-red-500/20 text-red-400"
+                  )}>
+                    {act.type === 'focus' ? <Timer size={14} /> :
+                     act.type === 'study' ? <BookOpen size={14} /> :
+                     <Swords size={14} />}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-[11px] font-black uppercase tracking-widest italic text-white truncate">{act.title}</h4>
+                    <p className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em] truncate">{act.subtitle}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end shrink-0 pl-2">
+                  <span className="text-[13px] font-black text-yellow-400 italic tabular-nums leading-none">+{act.xp} XP</span>
+                  <span className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] mt-1">{getRelativeTime(act.timestamp)}</span>
+                </div>
+              </div>
+            ))}
+            {activity.length === 0 && (
+              <div className="text-center py-8 text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic border border-white/5 rounded-2xl border-dashed">
+                No recent activity
+              </div>
+            )}
+          </div>
         </motion.div>
 
       </div>
