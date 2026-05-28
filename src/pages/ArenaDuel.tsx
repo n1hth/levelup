@@ -63,6 +63,7 @@ export function ArenaDuel() {
   
   const [duel, setDuel] = useState<any>(null);
   const [phase, setPhase] = useState<DuelPhase>(isSearching ? 'SEARCHING' : 'LOBBY');
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [inviteTimeLeft, setInviteTimeLeft] = useState(15 * 60);
   const [localTopic, setLocalTopic] = useState('');
@@ -626,6 +627,61 @@ export function ArenaDuel() {
   // ════════════════════════════════════════
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col overflow-hidden z-[150] font-sans">
+      {/* Exit Confirmation Modal */}
+      <AnimatePresence>
+        {showExitConfirm && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => setShowExitConfirm(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-sm bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent pointer-events-none" />
+              <div className="relative z-10 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle size={24} />
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight italic mb-2">Abandon Duel?</h3>
+                <p className="text-white/50 text-[11px] font-bold uppercase tracking-widest leading-relaxed mb-8">
+                  Exiting now will forfeit the match and cost you <span className="text-red-400">5 Honour XP</span>.
+                </p>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowExitConfirm(false)}
+                    className="flex-1 py-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 text-[10px] font-black uppercase tracking-widest italic transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      setShowExitConfirm(false);
+                      if (duel?.id) {
+                        try {
+                          await addXp(-5);
+                          await updateDuel(duel.id, { status: 'declined' });
+                        } catch (e) { console.error(e); }
+                      }
+                      navigate('/battle');
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 text-[10px] font-black uppercase tracking-widest italic transition-all"
+                  >
+                    Exit Duel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Background FX */}
       <div className={cn(
         "absolute inset-0 pointer-events-none transition-all duration-1000 blur-[120px] opacity-20",
@@ -647,18 +703,7 @@ export function ArenaDuel() {
                 navigate('/battle');
                 return;
               }
-              const confirmExit = window.confirm("Are you sure you want to exit the duel? You will lose a minor amount of Honour (XP).");
-              if (confirmExit) {
-                if (duel?.id) {
-                  try {
-                    await addXp(-5);
-                    await updateDuel(duel.id, { status: 'declined' });
-                  } catch (e) {
-                    console.error(e);
-                  }
-                }
-                navigate('/battle');
-              }
+              setShowExitConfirm(true);
             }} 
             className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center hover:bg-white/[0.08] hover:border-white/20 transition-all group"
           >
