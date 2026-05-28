@@ -64,6 +64,7 @@ export function ArenaDuel() {
   const [duel, setDuel] = useState<any>(null);
   const [phase, setPhase] = useState<DuelPhase>(isSearching ? 'SEARCHING' : 'LOBBY');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [opponentExited, setOpponentExited] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [inviteTimeLeft, setInviteTimeLeft] = useState(15 * 60);
   const [localTopic, setLocalTopic] = useState('');
@@ -147,8 +148,7 @@ export function ArenaDuel() {
     const fetchedMyDeckField = fetchedIsPlayer1 ? 'p1_deck_id' : 'p2_deck_id';
     
     if (d.status === 'declined' || d.status === 'cancelled') {
-      alert("The opponent has exited or the duel has ended.");
-      navigate('/battle');
+      setOpponentExited(true);
       return;
     }
     
@@ -682,6 +682,52 @@ export function ArenaDuel() {
         )}
       </AnimatePresence>
 
+      {/* Opponent Exited / Duel Ended Modal */}
+      <AnimatePresence>
+        {opponentExited && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => {
+                setOpponentExited(false);
+                navigate('/battle');
+              }}
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-sm bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none" />
+              <div className="relative z-10 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle size={24} />
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight italic mb-2">Duel Ended</h3>
+                <p className="text-white/50 text-[11px] font-bold uppercase tracking-widest leading-relaxed mb-8">
+                  The opponent has exited or the duel has ended.
+                </p>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => {
+                      setOpponentExited(false);
+                      navigate('/battle');
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-widest italic transition-all"
+                  >
+                    Acknowledge
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Background FX */}
       <div className={cn(
         "absolute inset-0 pointer-events-none transition-all duration-1000 blur-[120px] opacity-20",
@@ -696,7 +742,7 @@ export function ArenaDuel() {
         <div className="flex items-center gap-6">
           <button 
             onClick={async () => {
-              if (phase === 'REVIEW' || phase === 'WAITING' || phase === 'SEARCHING') {
+              if (phase === 'REVIEW' || (phase as any) === 'WAITING' || (phase as any) === 'SEARCHING') {
                 if (duel?.id && phase !== 'REVIEW') {
                   try { await updateDuel(duel.id, { status: 'declined' }); } catch (e) {}
                 }
