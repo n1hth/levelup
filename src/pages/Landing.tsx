@@ -639,24 +639,30 @@ export default function Landing() {
       </section>
 
       {/* ─────────── FOOTER ─────────── */}
-      <footer className="py-8 px-6 border-t border-white/[0.03]">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ background: 'radial-gradient(circle at 35% 35%, white, oklch(0.86 0.4 220) 60%, oklch(0.15 0.55 220))' }}
-            />
-            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-white/20 italic">
-              Orbis
-            </span>
+      <footer className="py-12 px-6 border-t border-white/[0.03]">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8 text-[11px] text-white/40 font-mono tracking-wider">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ background: 'radial-gradient(circle at 35% 35%, white, oklch(0.86 0.4 220) 60%, oklch(0.15 0.55 220))' }}
+              />
+              <span className="text-xs font-bold tracking-[0.15em] uppercase text-white">
+                ORBIS
+              </span>
+            </div>
+            <p className="text-white/35">Owned and operated by Nandika Rajanala</p>
+            <p className="text-white/35">Contact: <a href="mailto:nihithrajanala@gmail.com" className="hover:text-white transition-colors">nihithrajanala@gmail.com</a></p>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-[10px] text-white/40 font-mono tracking-wider justify-end sm:justify-start">
-            <Link to="/contact" className="hover:text-white transition-colors uppercase">Contact Us</Link>
-            <Link to="/refund" className="hover:text-white transition-colors uppercase">Refund Policy</Link>
-            <Link to="/shipping" className="hover:text-white transition-colors uppercase">Shipping Policy</Link>
-            <Link to="/privacy" className="hover:text-white transition-colors uppercase">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-white transition-colors uppercase">Terms of Service</Link>
-            <span className="hidden sm:inline w-full sm:w-auto mt-2 sm:mt-0 text-center sm:text-left">© 2025 Orbis. All rights reserved.</span>
+          <div className="flex flex-col items-start md:items-end gap-4">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <Link to="/privacy" className="hover:text-white transition-colors uppercase">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors uppercase">Terms of Service</Link>
+              <Link to="/refund" className="hover:text-white transition-colors uppercase">Refund Policy</Link>
+              <Link to="/shipping" className="hover:text-white transition-colors uppercase">Shipping Policy</Link>
+              <Link to="/contact" className="hover:text-white transition-colors uppercase">Contact Us</Link>
+            </div>
+            <p className="text-[10px] text-white/20">© 2026 ORBIS. All rights reserved.</p>
           </div>
         </div>
       </footer>
