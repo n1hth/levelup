@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, BookOpen, Sparkles, LayoutGrid } from 'lucide-react';
+import { Plus, Search, Filter, BookOpen, Sparkles, LayoutGrid, Trash2, AlertTriangle } from 'lucide-react';
 import { useApp } from '@/src/lib/store.tsx';
 import { DeckCard } from '@/src/components/DeckCard.tsx';
 import { CreateDeckModal } from '@/src/components/CreateDeckModal.tsx';
@@ -12,6 +12,7 @@ export function Decks() {
   const { state, getDeckStats } = useApp();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [filterSubject, setFilterSubject] = useState('');
 
   const subjects = [...new Set(state.decks.map(d => d.subject))].filter(Boolean);
@@ -60,12 +61,23 @@ export function Decks() {
              </h1>
            </div>
            
-           <button
-             onClick={() => setShowCreate(true)}
-             className="flex items-center justify-center w-12 h-12   bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-           >
-             <Plus size={24} className="stroke-[3]" />
-           </button>
+           <div className="flex items-center gap-4 shrink-0">
+             {state.decks.length > 0 && (
+               <button
+                 onClick={() => setShowDeleteAllConfirm(true)}
+                 className="flex items-center justify-center w-12 h-12 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full hover:bg-red-500/20 transition-all active:scale-95 group shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                 title="Delete All Decks"
+               >
+                 <Trash2 size={20} className="stroke-[2]" />
+               </button>
+             )}
+             <button
+               onClick={() => setShowCreate(true)}
+               className="flex items-center justify-center w-12 h-12 bg-white text-black rounded-full hover:bg-cyan-400 transition-all active:scale-95 group shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+             >
+               <Plus size={24} className="stroke-[3]" />
+             </button>
+           </div>
         </header>
 
         {/* Search & Intelligence Controls */}
@@ -136,6 +148,11 @@ export function Decks() {
             onCreated={(id) => { setShowCreate(false); navigate(`/decks/${id}`); }}
           />
         )}
+        {showDeleteAllConfirm && (
+          <DeleteAllConfirmModal
+            onClose={() => setShowDeleteAllConfirm(false)}
+          />
+        )}
       </AnimatePresence>
     </>
   );
@@ -167,5 +184,65 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
           <Sparkles size={16} fill="currentColor" /> Create New Deck
         </button>
       </motion.div>
+  );
+}
+
+function DeleteAllConfirmModal({ onClose }: { onClose: () => void }) {
+  const { deleteAllDecks } = useApp();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAllDecks();
+      onClose();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete decks');
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="w-full max-w-sm bg-[#050608] border border-red-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+      >
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-20" />
+        
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20 text-red-500">
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-white italic uppercase tracking-tight">Delete All Decks?</h2>
+            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">This action is irreversible</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-white/60 mb-8 italic">
+          Are you sure you want to delete <strong className="text-red-400">all your decks and cards</strong>? All study history for these decks will be lost.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="flex-1 py-3 px-4 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-[11px] font-black uppercase tracking-widest transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            {isDeleting ? 'Deleting...' : 'Delete All'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }

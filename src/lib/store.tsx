@@ -116,6 +116,7 @@ interface AppContextType {
   addDeck: (deck: Omit<Deck, 'id' | 'createdAt' | 'lastStudiedAt'>) => Promise<Deck>;
   updateDeck: (id: string, patch: Partial<Omit<Deck, 'id' | 'createdAt'>>) => Promise<void>;
   deleteDeck: (id: string) => Promise<void>;
+  deleteAllDecks: () => Promise<void>;
   // Cards
   addCard: (card: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>) => Promise<Card>;
   addCards: (cards: Omit<Card, 'id' | 'createdAt' | keyof CardSM2>[]) => Promise<Card[]>;
@@ -889,6 +890,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       supabase.from('cards').delete().eq('deck_id', id)
     ]);
   }, []);
+
+  const deleteAllDecks = useCallback(async () => {
+    setState(prev => ({
+      ...prev,
+      decks: [],
+      cards: []
+    }));
+
+    if (state.user) {
+      await Promise.all([
+        supabase.from('decks').delete().eq('user_id', state.user.id),
+        supabase.from('cards').delete().eq('user_id', state.user.id)
+      ]);
+    }
+  }, [state.user]);
 
   // ── Cards ─────────────────────────────────────
 
@@ -2059,7 +2075,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }), [
     state, isLoading, session, setUser, resetUser, deleteAccount, signOut, addXp, getLevel, getRank, getXpProgressData,
     addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
-    addDeck, updateDeck, deleteDeck, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
+    addDeck, updateDeck, deleteDeck, deleteAllDecks, addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
     addDeckStudySession, getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
     getTodayXp, getTodayDeckSessions, getTodayCardsReviewed, getDailyMissions, getRecentActivity, getAllDueCards,
     addArenaSession, getArenaStats, getDeckArenaHistory, getWeeklyInsights, getMilestones, getOrbHue, 
