@@ -2059,7 +2059,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser, resetUser, deleteAccount, signOut,
     addXp, getLevel, getRank, getXpProgress: getXpProgressData,
     addFocusSession, getTodayFocusTime, getTodaySessionCount, getLongestSession, getFocusStreak, getWeeklyFocusData,
-    addDeck, updateDeck, deleteDeck,
+    addDeck, updateDeck, deleteDeck, deleteAllDecks,
     addCard, addCards, updateCard, deleteCard, getDeckCards, getDueCards, getDeckStats, reviewCard,
     addDeckStudySession,
     getTotalFocusTime, getTotalCardsStudied, getTotalCardsMastered, getStudyHeatmap, getAchievements,
