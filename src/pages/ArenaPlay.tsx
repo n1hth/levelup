@@ -65,6 +65,7 @@ export function ArenaPlay() {
   const [finalArenaXp, setFinalArenaXp] = useState(0);
 
   const cardStartTimeRef = useRef(Date.now());
+  const isProcessingRef = useRef(false);
 
   // ── Countdown ──
   useEffect(() => {
@@ -97,8 +98,14 @@ export function ArenaPlay() {
   }, [phase]);
 
   const handleGrade = useCallback(async (correct: boolean) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     const currentCard = shuffledCards[currentCardIndex];
-    if (!currentCard) return;
+    if (!currentCard) {
+      isProcessingRef.current = false;
+      return;
+    }
 
     const responseTime = (Date.now() - cardStartTimeRef.current) / 1000;
     setResponseTimes(prev => [...prev, responseTime]);
@@ -171,6 +178,7 @@ export function ArenaPlay() {
       setCardTimeLeft(timeLimit);
       setPhase('question');
       cardStartTimeRef.current = Date.now();
+      isProcessingRef.current = false;
     }
   }, [currentCardIndex, shuffledCards, currentStreak, bestStreak, correctCount, wrongCount, totalXpEarned, responseTimes, timeLimit, diff, deckId, reviewCard, addXp, addArenaSession]);
 

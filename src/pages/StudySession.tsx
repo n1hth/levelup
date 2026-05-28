@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Zap, X } from 'lucide-react';
@@ -25,6 +25,7 @@ export function StudySession() {
   const [showSummary, setShowSummary] = useState(false);
   const [levelResult, setLevelResult] = useState<any | null>(null);
   const [sessionStartTime] = useState(Date.now());
+  const isProcessingRef = useRef(false);
 
   // Build queue from due cards
   useEffect(() => {
@@ -39,7 +40,13 @@ export function StudySession() {
   const isLastCard = currentIndex >= queue.length - 1;
 
   const handleRate = useCallback(async (rating: Rating) => {
-    if (!currentCard) return;
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
+    if (!currentCard) {
+      isProcessingRef.current = false;
+      return;
+    }
 
     const xp = reviewCard(currentCard.id, rating);
     setSessionXp(prev => prev + xp);
@@ -63,7 +70,10 @@ export function StudySession() {
       });
       setShowSummary(true);
     } else {
-      setTimeout(() => setCurrentIndex(i => i + 1), 300);
+      setTimeout(() => {
+        setCurrentIndex(i => i + 1);
+        isProcessingRef.current = false;
+      }, 300);
     }
   }, [currentCard, isLastCard, sessionXp, ratedCount, correctCount, id, reviewCard, addXp, addDeckStudySession]);
 

@@ -886,6 +886,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
     await Promise.all([
+      supabase.from('arena_sessions').update({ deck_id: null }).eq('deck_id', id),
+      supabase.from('deck_study_sessions').update({ deck_id: null }).eq('deck_id', id)
+    ]).catch(console.error);
+
+    await Promise.all([
       supabase.from('decks').delete().eq('id', id),
       supabase.from('cards').delete().eq('deck_id', id)
     ]);
@@ -899,6 +904,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
     if (state.user) {
+      await Promise.all([
+        supabase.from('arena_sessions').update({ deck_id: null }).eq('user_id', state.user.id),
+        supabase.from('deck_study_sessions').update({ deck_id: null }).eq('user_id', state.user.id)
+      ]).catch(console.error);
+
       await Promise.all([
         supabase.from('decks').delete().eq('user_id', state.user.id),
         supabase.from('cards').delete().eq('user_id', state.user.id)
@@ -1177,7 +1187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.totalXp, state.focusSessions, state.deckStudySessions, state.cards]);
 
   const getRecentActivity = useCallback(() => {
-    const focusEvents = state.focusSessions.slice(0, 10).map(s => ({
+    const focusEvents = state.focusSessions.map(s => ({
       id: s.id,
       type: 'focus' as const,
       title: s.isCompleted ? 'Focus Session Complete' : 'Focus Session',
@@ -1185,7 +1195,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       xp: s.xpEarned,
       timestamp: s.completedAt,
     }));
-    const deckEvents = state.deckStudySessions.slice(0, 10).map(s => {
+    const deckEvents = state.deckStudySessions.map(s => {
       const deck = state.decks.find(d => d.id === s.deckId);
       return {
         id: s.id,
@@ -1196,7 +1206,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: s.completedAt,
       };
     });
-    const arenaEvents = state.arenaSessions.slice(0, 10).map(s => {
+    const arenaEvents = state.arenaSessions.map(s => {
       const deck = state.decks.find(d => d.id === s.deckId);
       return {
         id: s.id,
@@ -1208,8 +1218,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
     });
     return [...focusEvents, ...deckEvents, ...arenaEvents]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 5);
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [state.focusSessions, state.deckStudySessions, state.arenaSessions, state.decks]);
 
   // ── Arenas ────────────────────────────────────
