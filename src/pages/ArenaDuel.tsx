@@ -65,6 +65,8 @@ export function ArenaDuel() {
   const [phase, setPhase] = useState<DuelPhase>(isSearching ? 'SEARCHING' : 'LOBBY');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [opponentExited, setOpponentExited] = useState(false);
+  const [deckAnswerInput, setDeckAnswerInput] = useState('');
+  const [deckAnswerSubmitted, setDeckAnswerSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [inviteTimeLeft, setInviteTimeLeft] = useState(15 * 60);
   const [localTopic, setLocalTopic] = useState('');
@@ -407,6 +409,8 @@ export function ArenaDuel() {
     const newScore = correct ? score + 1 : score;
     setScore(newScore);
     setIsFlipped(false);
+    setDeckAnswerInput('');
+    setDeckAnswerSubmitted(false);
 
     if (currentCardIndex + 1 >= cards.length) {
       setHasFinishedDeck(true);
@@ -825,7 +829,7 @@ export function ArenaDuel() {
               </div>
 
               {duel.mode === 'deck' ? (
-                <div className="grid gap-4 overflow-y-auto max-h-[500px] pr-2 pb-6 custom-scrollbar">
+                <div className="flex flex-col gap-4 overflow-y-auto max-h-[500px] pr-2 pb-6 custom-scrollbar">
                   {isLoading ? (
                     <div className="text-center py-24">
                       <Loader2 size={32} className="text-purple-500 animate-spin mx-auto mb-4" />
@@ -837,7 +841,7 @@ export function ArenaDuel() {
                       onClick={() => handleSelectDeck(deck.id)}
                       disabled={isSyncing || !!duel[myDeckField]}
                       className={cn(
-                        "w-full p-6 rounded-3xl border-2 transition-all flex items-center gap-6 text-left relative overflow-hidden group",
+                        "w-full p-6 rounded-3xl border-2 transition-all flex shrink-0 items-center gap-6 text-left relative overflow-hidden group",
                         duel[myDeckField] === deck.id 
                           ? "bg-purple-600/20 border-purple-400 text-white shadow-[0_0_50px_rgba(168,85,247,0.2)]" 
                           : "bg-white/[0.02] border-white/5 hover:border-purple-500/40 hover:bg-white/[0.04]"
@@ -955,7 +959,7 @@ export function ArenaDuel() {
                   </div>
 
                   {cards[currentCardIndex] ? (
-                    <div className="flex-1 relative cursor-pointer select-none group" style={{ perspective: '2000px' }} onClick={() => setIsFlipped(!isFlipped)}>
+                    <div className="flex-1 relative select-none group" style={{ perspective: '2000px' }}>
                       {/* Glow effect */}
                       <div className="absolute -inset-10 bg-purple-500/5 blur-[80px] rounded-full opacity-50 transition-opacity" />
                       
@@ -972,7 +976,7 @@ export function ArenaDuel() {
                         >
                           <div className="absolute top-10 left-10 text-[9px] font-black text-purple-400 uppercase tracking-[0.5em] italic">Question</div>
                           <div className="text-3xl font-black uppercase italic tracking-tighter text-white underline decoration-purple-500/20 underline-offset-8 decoration-4">{cards[currentCardIndex].front}</div>
-                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] animate-pulse italic">Tap to Flip</div>
+                          <div className="absolute bottom-10 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] italic">Answer Locked</div>
                         </div>
                         {/* Back */}
                         <div 
@@ -991,21 +995,54 @@ export function ArenaDuel() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-6 px-2 pb-4">
-                    <button
-                      onClick={() => handleAnswerDeck(false)}
-                      className="py-6 rounded-3xl bg-white/[0.03] border border-white/10 text-[12px] font-black uppercase tracking-[0.4em] italic text-white/40 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all active:scale-95 shadow-xl"
-                    >
-                      Forgot
-                    </button>
-                    <button
-                      onClick={() => handleAnswerDeck(true)}
-                      className="py-6 rounded-3xl bg-purple-600 text-white text-[12px] font-black uppercase tracking-[0.4em] italic shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:bg-purple-500 active:scale-95 transition-all overflow-hidden relative group"
-                    >
-                      Remembered
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    </button>
-                  </div>
+                  {!deckAnswerSubmitted ? (
+                    <div className="flex flex-col gap-4 px-2 pb-4">
+                      <input
+                        type="text"
+                        value={deckAnswerInput}
+                        onChange={(e) => setDeckAnswerInput(e.target.value)}
+                        placeholder="Type your answer here..."
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 text-center text-white font-black italic focus:border-purple-500/50 outline-none transition-all placeholder:text-white/20"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && deckAnswerInput.trim()) {
+                            setDeckAnswerSubmitted(true);
+                            setIsFlipped(true);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          setDeckAnswerSubmitted(true);
+                          setIsFlipped(true);
+                        }}
+                        disabled={!deckAnswerInput.trim()}
+                        className="w-full py-4 rounded-2xl bg-purple-600 text-white text-[12px] font-black uppercase tracking-[0.4em] italic shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        Check Answer
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 px-2 pb-4">
+                      <div className="text-center mb-2">
+                        <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] italic block mb-1">You Answered:</span>
+                        <div className="text-lg font-black text-white italic truncate px-4">{deckAnswerInput}</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => handleAnswerDeck(false)}
+                          className="py-4 rounded-2xl bg-white/[0.03] border border-white/10 text-[12px] font-black uppercase tracking-[0.4em] italic text-white/40 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all shadow-xl"
+                        >
+                          Forgot
+                        </button>
+                        <button
+                          onClick={() => handleAnswerDeck(true)}
+                          className="py-4 rounded-2xl bg-purple-600 text-white text-[12px] font-black uppercase tracking-[0.4em] italic shadow-[0_10px_40px_rgba(168,85,247,0.3)] hover:bg-purple-500 transition-all"
+                        >
+                          Remembered
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
