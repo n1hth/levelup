@@ -21,6 +21,7 @@ import { Chat } from './pages/Chat.tsx';
 
 import { AppTour } from './components/AppTour.tsx';
 import Landing from './pages/Landing.tsx';
+import { Signup } from './pages/Signup.tsx';
 import { PrivacyPolicy, TermsOfService, RefundPolicy, ShippingPolicy, ContactUs } from './pages/Legal.tsx';
 
 function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
@@ -217,6 +218,7 @@ function AppContent() {
     if (location.pathname === '/refund') return <RefundPolicy />;
     if (location.pathname === '/shipping') return <ShippingPolicy />;
     if (location.pathname === '/contact') return <ContactUs />;
+    if (location.pathname === '/signup') return <Signup />;
     
     if (location.pathname !== '/') {
       return <Navigate to="/" replace />;

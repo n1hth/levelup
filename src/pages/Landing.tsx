@@ -629,7 +629,7 @@ export default function Landing() {
           {/* CTA */}
           <Reveal delay={0.25}>
             <button
-              onClick={() => setShowAuth('signup')}
+              onClick={() => navigate('/signup')}
               className="group relative flex items-center justify-center gap-3 w-full py-4.5 rounded-full font-bold text-sm tracking-[0.12em] uppercase overflow-hidden transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, oklch(0.68 0.22 220), oklch(0.48 0.28 240))',
