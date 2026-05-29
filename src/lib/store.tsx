@@ -558,13 +558,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             focusSessions: (focusRes.data || []).map((row: any) => ({
               id: row.id,
               userId: row.user_id,
+              plannedDuration: row.target_duration || row.planned_duration || 0,
               actualDuration: row.actual_duration,
-              targetDuration: row.target_duration,
               completedAt: row.completed_at,
               isCompleted: row.is_completed,
               pauseCount: row.pause_count,
               noPauseChallenge: row.no_pause_challenge,
-              totalTimePaused: row.total_time_paused,
               xpEarned: row.xp_earned
             })),
             decks: finalDecks,

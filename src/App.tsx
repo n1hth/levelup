@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from '@/src/lib/store.tsx';
 import { supabase } from '@/src/lib/supabase';
-import { Lock, Orbit } from 'lucide-react';
+import { Lock, Orbit, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layout } from './components/Layout.tsx';
 import { Focus } from './pages/Focus.tsx';
@@ -113,6 +113,57 @@ function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
 
 function PaymentRequired() {
   const { signOut, state, session } = useApp();
+  const [paymentVerificationStatus, setPaymentVerificationStatus] = useState<'idle' | 'verifying' | 'success' | 'failed'>('idle');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      const verifyPayment = async () => {
+        setPaymentVerificationStatus('verifying');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.user) {
+          setPaymentVerificationStatus('failed');
+          return;
+        }
+
+        // Clean up the URL parameter immediately
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Poll public.profiles up to 15 times (30 seconds total) for the webhook to update has_paid
+        let attempts = 0;
+        const maxAttempts = 15;
+        const intervalId = setInterval(async () => {
+          attempts++;
+          try {
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('has_paid')
+              .eq('id', currentSession.user.id)
+              .maybeSingle();
+
+            if (data?.has_paid === true) {
+              clearInterval(intervalId);
+              setPaymentVerificationStatus('success');
+              
+              // Sync the auth user metadata as well just to keep it in sync on client
+              await supabase.auth.updateUser({ data: { has_paid: true } });
+              
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else if (attempts >= maxAttempts) {
+              clearInterval(intervalId);
+              setPaymentVerificationStatus('failed');
+            }
+          } catch (e) {
+            console.error("Verification poll error:", e);
+          }
+        }, 2000);
+      };
+      verifyPayment();
+    }
+  }, []);
 
   const handlePaymentRedirect = () => {
     const userId = state.user?.id || '';
@@ -120,6 +171,95 @@ function PaymentRequired() {
     const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
     window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}&metadata_user_id=${userId}&email=${encodeURIComponent(email)}`;
   };
+
+  if (paymentVerificationStatus !== 'idle') {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#030309] overflow-hidden relative font-sans text-white">
+        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '700ms' }} />
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-sm bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl text-center relative z-10"
+        >
+          {paymentVerificationStatus === 'verifying' && (
+            <>
+              <div className="relative mb-8 mx-auto w-24 h-24">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 animate-pulse" />
+                <div className="w-24 h-24 rounded-full border border-white/5 bg-white/[0.02] flex items-center justify-center p-2">
+                  <div className="w-full h-full rounded-full border-2 border-cyan-500 border-t-transparent animate-spin shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
+                </div>
+              </div>
+              <h3 className="text-xl font-black italic tracking-tighter uppercase mb-2 text-white">
+                Verifying License
+              </h3>
+              <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest italic mb-6">
+                Securing transaction records...
+              </p>
+              <p className="text-xs text-white/50 leading-relaxed uppercase font-bold tracking-wider">
+                The system is establishing your license link. This process usually completes in 1 to 5 seconds as we sync with Dodo Payments.
+              </p>
+            </>
+          )}
+
+          {paymentVerificationStatus === 'success' && (
+            <>
+              <div className="relative mb-8 mx-auto w-24 h-24">
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl scale-125 animate-pulse" />
+                <div className="w-24 h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                  <Shield size={44} className="text-emerald-400" />
+                </div>
+              </div>
+              <h3 className="text-xl font-black italic tracking-tighter uppercase mb-2 text-emerald-400">
+                License Secured
+              </h3>
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest italic mb-6">
+                Awakening sequence ready
+              </p>
+              <p className="text-xs text-white/50 leading-relaxed uppercase font-bold tracking-wider">
+                Your operator license has been successfully synced with the database. Activating system protocols...
+              </p>
+            </>
+          )}
+
+          {paymentVerificationStatus === 'failed' && (
+            <>
+              <div className="relative mb-8 mx-auto w-24 h-24">
+                <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl scale-125 animate-pulse" />
+                <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                  <div className="text-red-400 font-bold text-4xl leading-none">!</div>
+                </div>
+              </div>
+              <h3 className="text-xl font-black italic tracking-tighter uppercase mb-2 text-red-400">
+                Sync Delayed
+              </h3>
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest italic mb-6">
+                Connection pending
+              </p>
+              <p className="text-xs text-white/50 leading-relaxed uppercase font-bold tracking-wider mb-6">
+                We are having trouble detecting your payment. It might take up to 24 hours to sync in rare cases.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 font-black text-xs tracking-widest uppercase transition-all text-white"
+                >
+                  Retry Verification
+                </button>
+                <button
+                  onClick={() => setPaymentVerificationStatus('idle')}
+                  className="w-full py-4 rounded-2xl bg-transparent font-black text-xs tracking-widest uppercase transition-all text-white/50 hover:text-white"
+                >
+                  Go Back
+                </button>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#030309] overflow-hidden relative font-sans text-white">
