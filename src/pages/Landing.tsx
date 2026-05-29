@@ -3,6 +3,7 @@ import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePres
 import { useNavigate, Link } from 'react-router-dom';
 import { QuickStart } from '@/src/components/QuickStart';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '@/src/lib/supabase';
 
 // ═══════════════════════════════════════════════════════════
 // REVEAL — Fade in on scroll
@@ -250,7 +251,7 @@ const CAPABILITIES = [
 // MAIN
 // ═══════════════════════════════════════════════════════════
 export default function Landing() {
-  const [showAuth, setShowAuth] = useState(false);
+  const [showAuth, setShowAuth] = useState<'login' | 'signup' | null>(null);
   const navigate = useNavigate();
   const [activeCapIndex, setActiveCapIndex] = useState(0);
   const [countryCode, setCountryCode] = useState<string>('US');
@@ -277,9 +278,17 @@ export default function Landing() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
-      setShowAuth(true);
-      // Clean up the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
+      const verifyPayment = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await supabase.auth.updateUser({ data: { has_paid: true } });
+        }
+        // Clean up the URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Reload to force App.tsx to evaluate the updated state and start Onboarding
+        window.location.reload();
+      };
+      verifyPayment();
     }
   }, []);
 
@@ -302,7 +311,7 @@ export default function Landing() {
             </span>
           </div>
           <button
-            onClick={() => setShowAuth(true)}
+            onClick={() => setShowAuth('login')}
             className="text-[11px] font-bold tracking-[0.15em] uppercase px-5 py-2 rounded-full border border-white/[0.08] hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-300"
           >
             Sign In
@@ -620,10 +629,7 @@ export default function Landing() {
           {/* CTA */}
           <Reveal delay={0.25}>
             <button
-              onClick={() => {
-                const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
-                window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
-              }}
+              onClick={() => setShowAuth('signup')}
               className="group relative flex items-center justify-center gap-3 w-full py-4.5 rounded-full font-bold text-sm tracking-[0.12em] uppercase overflow-hidden transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, oklch(0.68 0.22 220), oklch(0.48 0.28 240))',
@@ -680,7 +686,7 @@ export default function Landing() {
           animate={{ opacity: 1 }}
           className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center overflow-auto"
         >
-          <QuickStart initialPhase={2} onClose={() => setShowAuth(false)} />
+          <QuickStart initialPhase={2} initialAuthMode={showAuth} onClose={() => setShowAuth(null)} />
         </motion.div>
       )}
     </div>

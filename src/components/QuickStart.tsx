@@ -22,9 +22,9 @@ import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
 import { generateOrbHue, getOrbColors, getOrbGradient } from '@/src/lib/orb-color';
 
-export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: number; onClose?: () => void }) {
+export function QuickStart({ initialPhase = 0, initialAuthMode = 'signup', onClose }: { initialPhase?: number; initialAuthMode?: 'signup' | 'login'; onClose?: () => void }) {
   const [phase, setPhase] = useState(initialPhase);
-  const [authMode, setAuthMode] = useState<'signup' | 'login'>('signup');
+  const [authMode, setAuthMode] = useState<'signup' | 'login'>(initialAuthMode);
   const [generatedHue, setGeneratedHue] = useState<number | null>(null);
   const [formData, setFormData] = useState({ 
     email: '', 
@@ -237,19 +237,34 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
     e.preventDefault();
     if (!formData.email || !formData.password) return;
     try {
-      // --- Explicit LOGIN Flow ---
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      if (authMode === 'signup') {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      if (signInError) {
-        const errMsg = signInError.message.toLowerCase();
-        if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
-          throw new Error("Invalid email or password. If you registered via Google, you don't have a password set yet. Please log in with Google, or click 'Forgot Password?' below to configure a password.");
+        if (signUpError) throw signUpError;
+
+        if (signUpData?.user) {
+          // Success! Redirect to Dodo payments since they haven't paid yet.
+          const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
+          window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+          return;
         }
-        throw signInError;
-      }
+      } else {
+        // --- Explicit LOGIN Flow ---
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          const errMsg = signInError.message.toLowerCase();
+          if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('not found')) {
+            throw new Error("Invalid email or password. If you are new, please use 'Enter Orbis' to sign up.");
+          }
+          throw signInError;
+        }
 
       // Successful SignIn of an existing user!
       if (signInData?.user) {
@@ -265,6 +280,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
           // New user who registered but didn't finish onboarding -> start them at Phase 0!
           setPhase(0);
         }
+      }
       }
     } catch (err: any) {
       triggerNotification(err.message || "Authentication failed");
@@ -526,7 +542,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                         <Hexagon size={48} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
                       </motion.div>
                       <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
-                        LOG IN
+                        {authMode === 'signup' ? 'SIGN UP' : 'LOG IN'}
                       </h2>
                       <div className="h-0.5 w-8 bg-cyan-400 mx-auto" />
                     </div>
@@ -589,7 +605,7 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                       }}
                       className="w-full btn-system py-5 font-black text-xs tracking-widest uppercase mt-2 bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
                     >
-                      Log In
+                      {authMode === 'signup' ? 'Sign Up' : 'Log In'}
                     </motion.button>
 
                     <button

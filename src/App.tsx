@@ -108,6 +108,50 @@ function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+function PaymentRequired() {
+  const handlePaymentRedirect = () => {
+    const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
+    window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+  };
+
+  useEffect(() => {
+    // Automatically redirect them after a short delay so they know what's happening
+    const timer = setTimeout(() => {
+      handlePaymentRedirect();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#030309] overflow-hidden relative font-sans text-white">
+      <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '700ms' }} />
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center relative z-10 px-6 max-w-md"
+      >
+        <div className="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6">
+          <Lock size={32} className="text-cyan-400" />
+        </div>
+        <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-4 text-white">
+          Payment Required
+        </h2>
+        <p className="text-sm font-medium text-white/50 mb-8 leading-relaxed">
+          Your account is registered but requires an active license to access Orbis. You are being securely redirected to checkout...
+        </p>
+        <button
+          onClick={handlePaymentRedirect}
+          className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-black text-xs tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
+        >
+          Proceed to Checkout Now
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 function AppContent() {
   const { state, isLoading, session } = useApp();
   const location = useLocation();
@@ -178,6 +222,10 @@ function AppContent() {
       return <Navigate to="/" replace />;
     }
     return <Landing />;
+  }
+
+  if (!state.user.hasPaid) {
+    return <PaymentRequired />;
   }
 
   if (!state.user.onboardingCompleted) {

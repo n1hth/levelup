@@ -19,6 +19,7 @@ export interface User {
   school?: string;
   orbHue?: number;
   onboardingCompleted?: boolean;
+  hasPaid?: boolean;
   createdAt: string;
 }
 
@@ -527,6 +528,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               school: profile.school,
               orbHue,
               onboardingCompleted: onboardingCompleted,
+              hasPaid: session.user.user_metadata?.has_paid === true,
               createdAt: profile.created_at,
             },
             totalXp: profile.total_xp,
