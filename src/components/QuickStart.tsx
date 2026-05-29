@@ -291,6 +291,7 @@ export function QuickStart({ initialPhase = 0, initialAuthMode = 'signup', onClo
     try {
       setIsGoogleLoading(true);
       localStorage.setItem('orbis_used_google_auth', 'true');
+      localStorage.setItem('orbis_auth_intent', 'login');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

@@ -26,12 +26,17 @@ export function Signup() {
     setErrorMsg(null);
 
     try {
+      localStorage.setItem('orbis_auth_intent', 'signup');
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
       });
 
       if (error) throw error;
+      
+      if (data?.user?.identities && data.user.identities.length === 0) {
+        throw new Error("User already exists. Please log in instead.");
+      }
 
       if (data?.user) {
         // Start redirect transition
@@ -48,6 +53,7 @@ export function Signup() {
       setIsGoogleLoading(true);
       setErrorMsg(null);
       localStorage.setItem('orbis_used_google_auth', 'true');
+      localStorage.setItem('orbis_auth_intent', 'signup');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

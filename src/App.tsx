@@ -110,18 +110,12 @@ function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
 }
 
 function PaymentRequired() {
+  const { signOut } = useApp();
+
   const handlePaymentRedirect = () => {
     const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
     window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
   };
-
-  useEffect(() => {
-    // Automatically redirect them after a short delay so they know what's happening
-    const timer = setTimeout(() => {
-      handlePaymentRedirect();
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#030309] overflow-hidden relative font-sans text-white">
@@ -140,13 +134,19 @@ function PaymentRequired() {
           Payment Required
         </h2>
         <p className="text-sm font-medium text-white/50 mb-8 leading-relaxed">
-          Your account is registered but requires an active license to access Orbis. You are being securely redirected to checkout...
+          Your account is registered but requires an active license to access Orbis. Click below to proceed to checkout.
         </p>
         <button
           onClick={handlePaymentRedirect}
-          className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-black text-xs tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
+          className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-black text-xs tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black mb-4"
         >
           Proceed to Checkout Now
+        </button>
+        <button
+          onClick={() => signOut()}
+          className="w-full py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 font-black text-xs tracking-widest uppercase transition-all text-white/50 hover:text-white"
+        >
+          Cancel & Sign Out
         </button>
       </motion.div>
     </div>

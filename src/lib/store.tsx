@@ -489,6 +489,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Self-healing Onboarding completed check: if user already has decks or cards, or their profile is older than 2 minutes, they completed onboarding!
         const createdTime = profile.created_at ? new Date(profile.created_at).getTime() : Date.now();
         const isExistingUser = (Date.now() - createdTime) > 2 * 60 * 1000; // 2 minutes
+
+        const intent = localStorage.getItem('orbis_auth_intent');
+        if (intent) {
+          localStorage.removeItem('orbis_auth_intent');
+          if (intent === 'login' && !isExistingUser) {
+            await supabase.auth.signOut();
+            alert("User does not exist. Please sign up instead.");
+            window.location.href = '/signup';
+            return;
+          } else if (intent === 'signup' && isExistingUser) {
+            await supabase.auth.signOut();
+            alert("User already exists. Please log in instead.");
+            window.location.href = '/';
+            return;
+          }
+        }
         
         let onboardingCompleted = profile.onboarding_completed || remoteDecks.length > 0 || remoteCards.length > 0 || isExistingUser;
         if (onboardingCompleted && !profile.onboarding_completed) {
