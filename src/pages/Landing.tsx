@@ -273,6 +273,16 @@ export default function Landing() {
     return () => clearInterval(timer);
   }, []);
 
+  // Check for payment success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      setShowAuth(true);
+      // Clean up the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#030309] text-white font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30 selection:text-white">
 
@@ -611,12 +621,8 @@ export default function Landing() {
           <Reveal delay={0.25}>
             <button
               onClick={() => {
-                const link = countryCode === 'IN' ? 'PAYMENT_LINK_INR' : 'PAYMENT_LINK_USD';
-                if (link.startsWith('PAYMENT_LINK')) {
-                  alert('Please configure the payment links in the source code first.');
-                } else {
-                  window.location.href = link;
-                }
+                const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
+                window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
               }}
               className="group relative flex items-center justify-center gap-3 w-full py-4.5 rounded-full font-bold text-sm tracking-[0.12em] uppercase overflow-hidden transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               style={{
