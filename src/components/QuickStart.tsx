@@ -36,6 +36,26 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [canBypass, setCanBypass] = useState(false);
   const [prevUser, setPrevUser] = useState<{ email: string; name: string; username: string; orbHue: number } | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+
+  useEffect(() => {
+    const checkGoogleUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const provider = user.app_metadata.provider || user.app_metadata.providers?.[0];
+          if (provider === 'google' || localStorage.getItem('orbis_used_google_auth') === 'true') {
+            setIsGoogleUser(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check Google OAuth provider:", err);
+      }
+    };
+    checkGoogleUser();
+  }, []);
   const [usePrevUser, setUsePrevUser] = useState(true);
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [rateLimitActive, setRateLimitActive] = useState(false);
@@ -192,6 +212,24 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
       }
     } finally {
       setIsSendingReset(false);
+    }
+  };
+
+  const handleConfigurePassword = async () => {
+    if (tempPassword.length < 6) {
+      triggerNotification("Password must be at least 6 characters.");
+      return;
+    }
+    setIsSettingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: tempPassword });
+      if (error) throw error;
+      triggerNotification("Access key initialized successfully!", "success");
+      setPhase(3.5);
+    } catch (err: any) {
+      triggerNotification(err.message || "Failed to configure password.");
+    } finally {
+      setIsSettingPassword(false);
     }
   };
 
@@ -651,12 +689,94 @@ export function QuickStart({ initialPhase = 0, onClose }: { initialPhase?: numbe
                   // Generate the user's unique orb hue
                   const hue = generateOrbHue(formData.username + formData.name + Date.now());
                   setGeneratedHue(hue);
-                  setPhase(3.5);
+                  if (isGoogleUser) {
+                    setPhase(2.7);
+                  } else {
+                    setPhase(3.5);
+                  }
                 }}
                 className="w-full btn-system py-4 md:py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity"
               >
                 CONFIRM IDENTITY
               </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Phase 2.7: Google User Password Setup */}
+        {phase === 2.7 && (
+          <motion.div
+            key="phase2.7"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 py-8 overflow-y-auto"
+          >
+            <div className="w-full max-w-sm text-center">
+              {/* Custom Inline Notification Banner */}
+              <AnimatePresence>
+                {notification && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className={cn(
+                      "absolute top-0 left-0 right-0 p-4 text-center text-[10px] font-black uppercase tracking-wider border-b z-50 shadow-2xl backdrop-blur-md",
+                      notification.type === 'success' 
+                        ? "bg-emerald-500/20 border-emerald-500/20 text-emerald-400" 
+                        : "bg-red-500/20 border-red-500/20 text-red-400"
+                    )}
+                  >
+                    {notification.text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="mb-6 md:mb-10">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-3 md:mb-4">
+                  <Lock size={24} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase mb-1.5 md:mb-2">Neural Access Key</h2>
+                <p className="text-[9px] md:text-[10px] font-black tracking-widest text-cyan-400/60 uppercase">Configure a traditional login password</p>
+              </div>
+
+              <p className="text-xs text-white/45 mb-6 leading-relaxed text-left font-medium">
+                Establish a secure secondary password to unlock your Orbis profile on any interface, even without using Google OAuth.
+              </p>
+
+              <div className="relative mb-6 md:mb-8">
+                <div className="absolute inset-y-0 left-4 flex items-center text-cyan-400">
+                  <Lock size={16} />
+                </div>
+                <input
+                  required
+                  autoFocus
+                  type="password"
+                  placeholder="NEW PASSWORD (MIN 6 CHARS)"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 md:py-5 pl-12 pr-4 outline-none focus:border-cyan-400 focus:bg-white/10 transition-all text-white placeholder:text-cyan-200/30 font-black text-xs tracking-[0.2em] uppercase"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  disabled={tempPassword.length < 6 || isSettingPassword}
+                  onClick={handleConfigurePassword}
+                  className="w-full btn-system py-4 md:py-5 font-black text-xs tracking-widest uppercase disabled:opacity-30 transition-opacity bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black"
+                >
+                  {isSettingPassword ? 'INITIALIZING KEY...' : 'INITIALIZE ACCESS KEY'}
+                </button>
+
+                <button
+                  onClick={() => setPhase(3.5)}
+                  className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] italic text-white/40 hover:text-white transition-all shadow-md"
+                >
+                  SKIP FOR NOW
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
