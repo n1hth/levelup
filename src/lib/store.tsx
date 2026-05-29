@@ -505,7 +505,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             await supabase.auth.signOut();
             setAuthErrorModal({
               message: "User already exists. Please log in instead.",
-              redirect: '/'
+              redirect: '/login'
             });
             return;
           }
