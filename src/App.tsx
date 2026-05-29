@@ -61,8 +61,9 @@ function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-sm bg-[#06060c]/90 border border-white/10 p-8 rounded-3xl shadow-2xl relative z-10 text-center"
       >
-        <div className="w-16 h-16 rounded-[1.8rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6 shadow-2xl">
-          <Orbit size={32} className="text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
+        <div className="relative mb-6 mx-auto w-16 h-16">
+           <div className="absolute inset-0 bg-cyan-500 rounded-full blur-xl scale-150 animate-pulse" />
+           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-600 relative z-10 border border-white/20 shadow-[0_0_30px_rgba(34,211,238,0.5)]" />
         </div>
 
         <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
@@ -127,8 +128,9 @@ function PaymentRequired() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center relative z-10 px-6 max-w-md"
       >
-        <div className="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6">
-          <Lock size={32} className="text-cyan-400" />
+        <div className="relative mb-6 mx-auto w-20 h-20">
+           <div className="absolute inset-0 bg-cyan-500 rounded-full blur-xl scale-150 animate-pulse" />
+           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-600 relative z-10 border border-white/20 shadow-[0_0_40px_rgba(34,211,238,0.5)]" />
         </div>
         <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-4 text-white">
           Payment Required

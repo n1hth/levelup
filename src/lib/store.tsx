@@ -394,6 +394,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isOrbHidden, setOrbHidden] = useState(false);
   const [rankUpTrigger, setRankUpTrigger] = useState(0);
+  const [authErrorModal, setAuthErrorModal] = useState<{ message: string, redirect: string } | null>(null);
 
   const triggerRankUpCinematic = useCallback(() => {
     setRankUpTrigger(prev => prev + 1);
@@ -495,13 +496,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('orbis_auth_intent');
           if (intent === 'login' && !isExistingUser) {
             await supabase.auth.signOut();
-            alert("User does not exist. Please sign up instead.");
-            window.location.href = '/signup';
+            setAuthErrorModal({
+              message: "User does not exist. Please sign up instead.",
+              redirect: '/signup'
+            });
             return;
           } else if (intent === 'signup' && isExistingUser) {
             await supabase.auth.signOut();
-            alert("User already exists. Please log in instead.");
-            window.location.href = '/';
+            setAuthErrorModal({
+              message: "User already exists. Please log in instead.",
+              redirect: '/'
+            });
             return;
           }
         }
@@ -2116,6 +2121,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={contextValue}>
       {children}
+      {authErrorModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-[#06060c] border border-white/10 p-6 rounded-3xl shadow-2xl text-center relative overflow-hidden">
+            <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '700ms' }} />
+            
+            <div className="relative mb-6 mx-auto w-16 h-16">
+               <div className="absolute inset-0 bg-cyan-500 rounded-full blur-xl scale-150 animate-pulse" />
+               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-600 relative z-10 border border-white/20 shadow-[0_0_30px_rgba(34,211,238,0.5)]" />
+            </div>
+            
+            <h2 className="text-xl font-black italic uppercase text-white mb-2 relative z-10">Authentication Error</h2>
+            <p className="text-sm font-medium text-white/50 mb-6 relative z-10">{authErrorModal.message}</p>
+            <button
+              onClick={() => {
+                window.location.href = authErrorModal.redirect;
+              }}
+              className="w-full py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-black text-xs tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)] text-black relative z-10"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </AppContext.Provider>
   );
 }

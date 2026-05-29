@@ -95,8 +95,9 @@ export function Signup() {
             className="w-full max-w-sm relative z-10"
           >
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-[1.8rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,211,238,0.15)] relative">
-                <Orbit size={32} className="text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
+              <div className="relative mb-6 mx-auto w-16 h-16">
+                 <div className="absolute inset-0 bg-cyan-500 rounded-full blur-xl scale-150 animate-pulse" />
+                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-600 relative z-10 border border-white/20 shadow-[0_0_30px_rgba(34,211,238,0.5)]" />
               </div>
               <h1 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white drop-shadow-lg">
                 ENTER ORBIS

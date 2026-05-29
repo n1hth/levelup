@@ -535,13 +535,10 @@ export function QuickStart({ initialPhase = 0, initialAuthMode = 'signup', onClo
                     className="space-y-4"
                   >
                     <div className="text-center mb-8">
-                      <motion.div 
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                        className="inline-block mb-4"
-                      >
-                        <Hexagon size={48} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
-                      </motion.div>
+                      <div className="relative mb-6 mx-auto w-16 h-16 inline-block">
+                         <div className="absolute inset-0 bg-cyan-500 rounded-full blur-xl scale-150 animate-pulse" />
+                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-600 relative z-10 border border-white/20 shadow-[0_0_30px_rgba(34,211,238,0.5)]" />
+                      </div>
                       <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2 text-white">
                         {authMode === 'signup' ? 'SIGN UP' : 'LOG IN'}
                       </h2>
