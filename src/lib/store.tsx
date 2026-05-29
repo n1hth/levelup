@@ -549,7 +549,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               school: profile.school,
               orbHue,
               onboardingCompleted: onboardingCompleted,
-              hasPaid: session.user.user_metadata?.has_paid === true,
+              hasPaid: profile.has_paid === true || session.user.user_metadata?.has_paid === true,
               createdAt: profile.created_at,
             },
             totalXp: profile.total_xp,

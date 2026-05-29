@@ -9,10 +9,18 @@ export function Signup() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [createdUser, setCreatedUser] = useState<{ id: string; email: string } | null>(null);
 
-  const handlePaymentRedirect = () => {
+  const handlePaymentRedirect = (userId?: string, email?: string) => {
     const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
-    window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+    let url = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+    if (userId) {
+      url += `&metadata_user_id=${userId}`;
+    }
+    if (email) {
+      url += `&email=${encodeURIComponent(email)}`;
+    }
+    window.location.href = url;
   };
 
   const handleEmailSignup = async (e: React.FormEvent) => {
@@ -39,6 +47,7 @@ export function Signup() {
       }
 
       if (data?.user) {
+        setCreatedUser({ id: data.user.id, email: data.user.email || '' });
         // Start redirect transition
         setIsRedirecting(true);
       }
@@ -70,13 +79,13 @@ export function Signup() {
 
   // Automatically execute the redirect after a short delay
   useEffect(() => {
-    if (isRedirecting) {
+    if (isRedirecting && createdUser) {
       const timer = setTimeout(() => {
-        handlePaymentRedirect();
+        handlePaymentRedirect(createdUser.id, createdUser.email);
       }, 3500);
       return () => clearTimeout(timer);
     }
-  }, [isRedirecting]);
+  }, [isRedirecting, createdUser]);
 
   return (
     <div className="min-h-screen bg-[#030309] text-white font-sans antialiased overflow-x-hidden selection:bg-cyan-500/30 flex items-center justify-center p-6 relative">
@@ -208,7 +217,7 @@ export function Signup() {
             </p>
             
             <button
-              onClick={handlePaymentRedirect}
+              onClick={() => handlePaymentRedirect(createdUser?.id, createdUser?.email)}
               className="px-6 py-3 rounded-full border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.05] text-[10px] font-black tracking-widest uppercase text-white/40 hover:text-white transition-all"
             >
               Click here if you are not redirected

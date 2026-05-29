@@ -112,11 +112,13 @@ function PasswordResetPage({ onComplete }: { onComplete: () => void }) {
 }
 
 function PaymentRequired() {
-  const { signOut } = useApp();
+  const { signOut, state, session } = useApp();
 
   const handlePaymentRedirect = () => {
+    const userId = state.user?.id || '';
+    const email = session?.user?.email || '';
     const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
-    window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+    window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}&metadata_user_id=${userId}&email=${encodeURIComponent(email)}`;
   };
 
   return (

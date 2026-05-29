@@ -248,7 +248,7 @@ export function QuickStart({ initialPhase = 0, initialAuthMode = 'signup', onClo
         if (signUpData?.user) {
           // Success! Redirect to Dodo payments since they haven't paid yet.
           const redirectUrl = encodeURIComponent(window.location.origin + '?payment=success');
-          window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}`;
+          window.location.href = `https://checkout.dodopayments.com/buy/pdt_0Nfs8Vm2dRC9Fwlg5skfL?quantity=1&redirect_url=${redirectUrl}&metadata_user_id=${signUpData.user.id}&email=${encodeURIComponent(signUpData.user.email || '')}`;
           return;
         }
       } else {
